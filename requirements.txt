@@ -1,0 +1,8 @@
+beautifulsoup4==4.12.3
+stem
+requests
+pysocks
+pydantic
+Field
+selenium
+webdriver_manager
