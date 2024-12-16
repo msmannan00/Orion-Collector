@@ -1,0 +1,15 @@
+*idea
+data
+*.pyc
+tor_proxy
+logs/*
+global_raw
+env/*
+.env
+venv/*
+app/data/*
+app/logs/*
+mongo-data/*
+app/raw/model/*
+static/trustly/.well-known/model/toxic-model.zip
+app/api/raw/model/*
