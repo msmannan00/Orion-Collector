@@ -1,33 +1,52 @@
-from dynamic_collector.sample import sample
+from playwright.async_api import async_playwright
+from typing import Dict, Optional
 import requests
+import asyncio
 
-def get_proxy(use_proxy=True):
+
+def get_proxy(use_proxy=True) -> Dict[str, str]:
     if use_proxy:
-        proxies = {
-            'http': 'socks5h://localhost:9150',
-            'https': 'socks5h://localhost:9150',
-        }
+        proxies = {"server": "socks5://127.0.0.1:9150"}
         try:
-            response = requests.get("http://check.torproject.org", proxies=proxies, timeout=10)
+            response = requests.get("http://check.torproject.org", proxies={"http": "socks5h://127.0.0.1:9150"}, timeout=10)
             response.raise_for_status()
+            print("Tor proxy is working correctly.")
             return proxies
-        except requests.ConnectionError:
-            raise RuntimeError("Error: TOR is not running. Please start TOR and try again.")
-        except requests.RequestException as e:
-            raise RuntimeError(f"Error testing TOR connection: {e}")
+        except Exception as ex:
+            print("Failed to initialize proxy:", ex)
     return {}
 
-def main():
-    url = "http://weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd.onion/"
-    use_proxy = True
+
+async def _initialize_webdriver(use_proxy: bool = True) -> Optional[object]:
+    if use_proxy:
+        tor_proxy = "socks5://127.0.0.1:9150"
+        playwright = await async_playwright().start()
+        browser = await playwright.chromium.launch(headless=False, proxy={"server": tor_proxy} if tor_proxy else None)
+    else:
+        playwright = await async_playwright().start()
+        browser = await playwright.chromium.launch(headless=False)
+
+    context = await browser.new_context()
+    return context
+
+
+async def main():
+    url = "http://breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd.onion/"
+    email = "msmannan00@gmail.com"
+    username = "msmannan00"
+    query = {"url": url, "email": email, "username": username}
 
     try:
-        proxies = get_proxy(use_proxy=use_proxy)
+        browser_context = await _initialize_webdriver(use_proxy=True)
+        from dynamic_collector.sample import sample
         sample_instance = sample()
-        result = sample_instance.parse_leak_data(p_data_url=url, proxies=proxies)
+        result = await sample_instance.parse_leak_data(query=query, context=browser_context)
         print(result)
     except Exception as e:
-        print(e)
+        print("Error occurred:", e)
+    finally:
+        pass
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

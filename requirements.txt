@@ -6,3 +6,5 @@ pydantic
 Field
 selenium
 webdriver_manager
+undetected-chromedriver
+playwright

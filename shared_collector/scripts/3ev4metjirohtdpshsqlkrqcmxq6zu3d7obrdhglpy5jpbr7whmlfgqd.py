@@ -35,15 +35,15 @@ class sample:
     entries = re.findall(entry_pattern, html_content, re.DOTALL)
 
     for entry in entries:
-      title = entry[0].strip() if len(entry) > 0 else "Unknown Title"
-      short_description = entry[1].strip() if len(entry) > 1 else "Unknown Description"
-      full_content = entry[2].replace("Link â„–1 Filelist","").replace("<br>", "\n").replace("'+", "").strip() if len(entry) > 2 else "Unknown Content"
-      full_content = full_content.replace("\n", " ")
-      links_raw = entry[3].strip() if len(entry) > 3 else ""
-      links = [link.strip().strip('"') for link in links_raw.split(",") if link.strip()]
-      card = card_extraction_model(m_leak_date="N/A",  # Leak date not available in this JSON structure
-        m_title=title, m_url=p_data_url, m_base_url=p_data_url, m_content=f"{short_description}\n{full_content}", m_important_content=full_content, m_weblink=[], m_dumplink=links, m_extra_tags=[""], m_content_type="general")
-      cards.append(card)
+        title = entry[0].strip() if len(entry) > 0 else "Unknown Title"
+        short_description = entry[1].strip() if len(entry) > 1 else "Unknown Description"
+        full_content = entry[2].replace("Link â„–1 Filelist", "").replace("<br>", "\n").replace("'+", "").strip() if len(entry) > 2 else "Unknown Content"
+        full_content = short_description + ". " + full_content
+        links_raw = entry[3].strip() if len(entry) > 3 else ""
+        links = [link.strip().strip('"') for link in links_raw.split(",") if link.strip()]
+        card = card_extraction_model(m_leak_date="N/A",  # Leak date not available in this JSON structure
+            m_title=title, m_url=p_data_url, m_base_url=p_data_url, m_content=f"{full_content}", m_important_content=full_content, m_weblink=[], m_dumplink=links, m_extra_tags=[""], m_content_type="general")
+        cards.append(card)
 
     data_model = leak_data_model(cards_data=cards, contact_link=self.contact_page(), base_url=p_data_url, content_type=["leak"])
 

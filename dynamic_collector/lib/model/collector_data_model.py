@@ -5,4 +5,5 @@ from typing import List
 class collector_data_model(BaseModel):
     cards_data: List[SkipValidation[collector_extraction_model]] = Field(default_factory=list)
     base_url: str = ""
+    m_network: str = ""
     content_type: List[str] = []

@@ -1,14 +1,14 @@
-import re
 from abc import ABC
-from typing import List, Set, Tuple
-from urllib.parse import urljoin
+from typing import Tuple, List, Set
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import  re
+from shared_collector.lib.interface.leak_extractor_interface import leak_extractor_interface
 from shared_collector.lib.model.card_extraction_model import card_extraction_model
 from shared_collector.lib.model.leak_data_model import leak_data_model
-from shared_collector.lib.interface.leak_extractor_interface import leak_extractor_interface
+from shared_collector.rules.rule_model import RuleModel, FetchProxy, FetchConfig
 
-
-class sample(leak_extractor_interface, ABC):
+class weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self):
@@ -17,13 +17,17 @@ class sample(leak_extractor_interface, ABC):
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(sample, cls).__new__(cls)
+            cls._instance = super(weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
     @property
     def base_url(self) -> str:
         return "http://weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd.onion"
+
+    @property
+    def rule_config(self) -> RuleModel:
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config = FetchConfig.SELENIUM)
 
     @staticmethod
     def clean_text(text: str) -> str:

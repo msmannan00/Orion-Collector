@@ -1,26 +1,35 @@
-from pydantic import BaseModel, Field
+from dataclasses import field
 from typing import List, Optional
+from pydantic import BaseModel
 
 
 class collector_extraction_model(BaseModel):
     m_title: str = ""
-    description: str = ""
-    sections: List[str] = Field(default_factory=list)
-    name: str = ""
-    url: str = ""
-    email_addresses: List[str] = Field(default_factory=list)
-    phone_numbers: List[str] = Field(default_factory=list)
-    addresses: List[str] = Field(default_factory=list)
-    social_media_profiles: List[str] = Field(default_factory=list)
-    websites: List[str] = Field(default_factory=list)
-    company_name: Optional[str] = None
-    industry: Optional[str] = None
-    job_title_or_position: Optional[str] = None
-    associated_entities: List[str] = Field(default_factory=list)
-    aliases_or_alternate_names: List[str] = Field(default_factory=list)
-    logo_or_images: List[str] = Field(default_factory=list)
-    business_categories: List[str] = Field(default_factory=list)
-    services_or_products: List[str] = Field(default_factory=list)
-    public_records: List[str] = Field(default_factory=list)
-    online_activity: List[str] = Field(default_factory=list)
-    last_updated: Optional[str] = None
+    m_url: str = ""
+    m_content: str = ""
+    m_base_url: str = ""
+    m_important_content: str = ""
+    m_content_type: str = "general"
+    m_weblink: List[str] = field(default_factory=list)
+    m_dumplink: List[str] = field(default_factory=list)
+    m_extra_tags: List[str] = field(default_factory=list)
+    m_sections: List[str] = field(default_factory=list)
+    m_name: str = ""
+    m_email_addresses: List[str] = field(default_factory=list)
+    m_phone_numbers: List[str] = field(default_factory=list)
+    m_addresses: List[str] = field(default_factory=list)
+    m_social_media_profiles: List[str] = field(default_factory=list)
+    m_websites: List[str] = field(default_factory=list)
+    m_company_name: Optional[str] = None
+    m_industry: Optional[str] = None
+    m_job_title_or_position: Optional[str] = None
+    m_associated_entities: List[str] = field(default_factory=list)
+    m_aliases_or_alternate_names: List[str] = field(default_factory=list)
+    m_logo_or_images: List[str] = field(default_factory=list)
+    m_business_categories: List[str] = field(default_factory=list)
+    m_services_or_products: List[str] = field(default_factory=list)
+    m_public_records: List[str] = field(default_factory=list)
+    m_online_activity: List[str] = field(default_factory=list)
+    m_leak_date: Optional[str] = None
+    m_last_updated: Optional[str] = None
+
