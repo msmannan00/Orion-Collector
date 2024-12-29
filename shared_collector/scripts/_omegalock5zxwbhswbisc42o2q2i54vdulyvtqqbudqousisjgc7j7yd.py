@@ -61,6 +61,7 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
                     m_title=title,
                     m_url=download_link,
                     m_weblink=[],
+                    m_network=helper_method.get_network_type(self.base_url).value,
                     m_dumplink=[download_link],
                     m_extra_tags=tags,
                     m_content_type="general"
