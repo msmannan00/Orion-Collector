@@ -1,15 +1,26 @@
-from typing import Tuple, List, Set
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from shared_collector.lib.model.card_extraction_model import card_extraction_model
-from shared_collector.lib.model.leak_data_model import leak_data_model
 import re
-from shared_collector.rules.rule_model import RuleModel, FetchProxy, FetchConfig
+from abc import ABC
+from typing import List, Set, Tuple
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
+from crawler.crawler_instance.local_shared_model.leak_data_model import leak_data_model
+from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
+from crawler.crawler_services.shared.helper_method import helper_method
 
+class _ddosecrets(leak_extractor_interface, ABC):
+    _instance = None
 
-class sample:
     def __init__(self):
         self.soup = None
+        self._initialized = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(_ddosecrets, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
     @property
     def base_url(self) -> str:
@@ -26,14 +37,19 @@ class sample:
     def parse_leak_data(self, html_content: str, p_data_url: str) -> Tuple[leak_data_model, Set[str]]:
         self.soup = BeautifulSoup(html_content, 'html.parser')
 
-        data_model = None
+        data_model = leak_data_model(
+            cards_data=[],
+            contact_link=self.contact_page(),
+            base_url=self.base_url,
+            content_type=["leak"]
+        )
         sub_links = []
         if "/article/" in p_data_url:
             cards = self.extract_cards('content', p_data_url)
             data_model = leak_data_model(
                 cards_data=cards,
                 contact_link=self.contact_page(),
-                base_url=p_data_url,
+                base_url=self.base_url,
                 content_type=["leak"]
             )
         else:
@@ -90,11 +106,14 @@ class sample:
             magnet_link = metadata_dict.get("Magnet", "")
             torrent_link = metadata_dict.get("Torrent", "")
             external_link = metadata_dict.get("External Collaboration Link", "")
+            if isinstance(external_link, str):
+                external_link = [external_link]
 
             card_data = card_extraction_model(
                 m_leak_date = leakdate.text.replace("Published on ",""),
                 m_title=title,
                 m_url=url,
+                m_network=helper_method.get_network_type(self.base_url).value,
                 m_base_url=self.base_url,
                 m_content=article_content,
                 m_important_content=article_content,

@@ -1,14 +1,16 @@
+import re
 from abc import ABC
-from typing import Tuple, List, Set
-from bs4 import BeautifulSoup
+from typing import List, Set, Tuple
 from urllib.parse import urljoin
-import  re
-from shared_collector.lib.interface.leak_extractor_interface import leak_extractor_interface
-from shared_collector.lib.model.card_extraction_model import card_extraction_model
-from shared_collector.lib.model.leak_data_model import leak_data_model
-from shared_collector.rules.rule_model import RuleModel, FetchProxy, FetchConfig
+from bs4 import BeautifulSoup
 
-class weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_interface, ABC):
+from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
+from crawler.crawler_instance.local_shared_model.leak_data_model import leak_data_model
+from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
+from crawler.crawler_services.shared.helper_method import helper_method
+
+class _weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self):
@@ -17,7 +19,7 @@ class weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_in
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd, cls).__new__(cls)
+            cls._instance = super(_weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
@@ -49,7 +51,7 @@ class weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_in
         data_model = leak_data_model(
             cards_data=cards_data,
             contact_link=self.contact_page(),
-            base_url=p_data_url,
+            base_url=self.base_url,
             content_type=["leak"]
         )
 
@@ -75,6 +77,7 @@ class weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_in
                 m_url=url,
                 m_base_url=self.base_url,
                 m_content=content,
+                m_network=helper_method.get_network_type(self.base_url).value,
                 m_important_content=content,
                 m_weblink=weblinks,
                 m_dumplink=dumplinks,

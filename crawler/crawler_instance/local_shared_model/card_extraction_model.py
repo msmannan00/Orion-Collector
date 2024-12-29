@@ -1,13 +1,13 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import List, Optional
-from pydantic import BaseModel
 
-
-class collector_extraction_model(BaseModel):
+@dataclass
+class card_extraction_model:
     m_title: str = ""
     m_url: str = ""
     m_content: str = ""
     m_base_url: str = ""
+    m_network: str = ""
     m_important_content: str = ""
     m_content_type: str = "general"
     m_weblink: List[str] = field(default_factory=list)
