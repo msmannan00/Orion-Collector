@@ -25,7 +25,7 @@ from crawler.crawler_instance.local_shared_model.leak_data_model import leak_dat
     - `contact_page`: Returns the URL of the contact page as a string.
 '''
 
-class _dynamic_sample(collector_interface, ABC):
+class _shared_sample(collector_interface, ABC):
     _instance = None
 
     def __init__(self):
@@ -33,7 +33,7 @@ class _dynamic_sample(collector_interface, ABC):
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(_dynamic_sample, cls).__new__(cls)
+            cls._instance = super(_shared_sample, cls).__new__(cls)
         return cls._instance
 
     @property

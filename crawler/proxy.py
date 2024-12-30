@@ -47,7 +47,7 @@ async def get_proxy(use_proxy=True) -> Dict[str, str]:
 async def _initialize_webdriver(playwright, use_proxy: bool = True) -> (BrowserContext, Browser):
   if use_proxy:
     tor_proxy = "socks5://127.0.0.1:9150"
-    browser = await playwright.chromium.launch(headless=True, proxy={"server": tor_proxy})
+    browser = await playwright.chromium.launch(headless=False, proxy={"server": tor_proxy})
   else:
     browser = await playwright.chromium.launch(headless=True)
 

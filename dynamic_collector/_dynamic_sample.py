@@ -22,7 +22,7 @@ from crawler.crawler_instance.local_shared_model.collector_data_model import col
 '''
 
 
-class _sample(collector_interface, ABC):
+class _dynamic_sample(collector_interface, ABC):
     _instance = None
 
     def __init__(self):
@@ -30,7 +30,7 @@ class _sample(collector_interface, ABC):
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(_sample, cls).__new__(cls)
+            cls._instance = super(_dynamic_sample, cls).__new__(cls)
         return cls._instance
 
     @property

@@ -1,6 +1,6 @@
 import json
 from crawler.proxy import get_html_via_tor
-from shared_collector._dynamic_sample import _dynamic_sample
+from shared_collector._shared_sample import _shared_sample
 
 url = "https://example.com"
 max_depth = 2
@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     while sub_urls:
         current_url, current_depth = sub_urls.pop(0)
-        parse_sample = _dynamic_sample()
+        parse_sample = _shared_sample()
 
         if current_url in visited_urls or current_depth > parse_sample.rule_config.m_depth:
             continue
