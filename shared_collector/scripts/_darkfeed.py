@@ -33,8 +33,14 @@ class _darkfeed(collector_interface, ABC):
     data_model = leak_data_model(cards_data=[], contact_link=self.contact_page(), base_url=self.base_url, content_type=["leak"])
 
     today_date = datetime.today().strftime('%Y-%m-%d')
+    allowed_tags = { "tag-data-breach", "tag-ransomware-intelligence"}
 
     for article in self.soup.find_all("article", class_="elementor-post"):
+      classes = set(article.get("class", []))  # Convert class list to set for easy comparison
+
+      if not allowed_tags.intersection(classes):
+        continue
+
       title_link = article.find("h3", class_="elementor-post__title").find("a")
       url = title_link['href'] if title_link else None
       title = title_link.get_text(strip=True) if title_link else None
@@ -48,7 +54,7 @@ class _darkfeed(collector_interface, ABC):
       if url and title and posted_date:
         content_message = f"{title}, To visit or explore more visit the website: {url}"
 
-        card = card_extraction_model(m_title=title, m_url=url, m_base_url=self.base_url, m_content=content_message, m_content_type="leak", m_logo_or_images=[image_url] if image_url else [], m_last_updated=today_date)
+        card = card_extraction_model(m_title=title, m_url=url, m_base_url=self.base_url, m_content=content_message, m_content_type="leak", m_logo_or_images=[image_url] if image_url else [], m_last_updated=today_date, )
         self.extracted_data.append(card)
         data_model.cards_data.append(card)
 
