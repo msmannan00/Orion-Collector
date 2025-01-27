@@ -1,6 +1,6 @@
 import asyncio
 from playwright.async_api import async_playwright
-from crawler.proxy import _initialize_webdriver
+from crawler.request_manager import _initialize_webdriver
 from dynamic_collector._dynamic_sample import _dynamic_sample
 
 url = "http://breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd.onion/"

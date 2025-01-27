@@ -3,8 +3,13 @@ import re
 from urllib.parse import urlparse
 from crawler.constants.enums import network_type
 
-
 class helper_method:
+
+  @staticmethod
+  def clean_text(text: str) -> str:
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
+    return text
 
   @staticmethod
   def get_network_type(url:str):
@@ -21,3 +26,18 @@ class helper_method:
       return network_type.CLEARNET
     except Exception:
       return network_type.INVALID
+
+  @staticmethod
+  def extract_emails(text: str) -> list:
+
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    emails = re.findall(email_pattern, text)
+    return emails
+
+  @staticmethod
+  def extract_phone_numbers(text: str) -> list:
+
+    phone_pattern = r'\+?[0-9]{1,4}?[ -.]?\(?[0-9]{1,4}?\)?[ -.]?[0-9]{1,4}[ -.]?[0-9]{1,9}'
+    phone_numbers = re.findall(phone_pattern, text)
+    return phone_numbers
+
