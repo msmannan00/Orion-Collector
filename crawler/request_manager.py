@@ -87,7 +87,7 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
         model.soup = BeautifulSoup(page.content(), 'html.parser')
         raw_parse_mapping[page.url] = page.content()
         model.parse_leak_data(page)
-      except Exception:
+      except Exception as e:
         pass
       finally:
         timeout_timer.cancel()
