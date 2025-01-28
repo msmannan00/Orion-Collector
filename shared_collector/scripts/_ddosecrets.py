@@ -51,7 +51,6 @@ class _ddosecrets(leak_extractor_interface, ABC):
         page.goto(self.seed_url, wait_until="networkidle")
         self.soup = BeautifulSoup(page.content(), 'html.parser')
 
-        # Extract links to individual articles
         article_divs = self.soup.find_all("div", class_="article")
         article_links = [
             urljoin(self.base_url, div.find("h2").find("a")["href"])
