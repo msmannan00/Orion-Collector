@@ -57,12 +57,12 @@ class _mirror_h(leak_extractor_interface, ABC):
 
     def parse_leak_data(self, page: Page):
         try:
-            # is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
-            # max_pages = 500 if is_crawled else 50000
-            #
-            # if not is_crawled:
-            #     self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
-            max_pages=1
+            is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
+            max_pages = 20 if is_crawled else 500
+
+            if not is_crawled:
+                self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
+
             current_page = 1
             collected_links = []
 
