@@ -149,7 +149,7 @@ class _ransomwiki(leak_extractor_interface, ABC):
                     country = line.split(":")[-1].strip()
                     data["Country"] = country
 
-            self._card_data = card_extraction_model(
+            self._card_data.append(card_extraction_model(
                 m_title=victim,
                 m_url=post_url,
                 m_base_url=self.base_url,
@@ -165,5 +165,5 @@ class _ransomwiki(leak_extractor_interface, ABC):
                 m_phone_numbers=helper_method.extract_phone_numbers(soup.text),
                 m_extra_tags=[],
                 m_content_type="Leak",
-            )
+            ))
 
