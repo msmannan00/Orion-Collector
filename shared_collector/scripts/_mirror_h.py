@@ -60,8 +60,6 @@ class _mirror_h(leak_extractor_interface, ABC):
             is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
             max_pages = 20 if is_crawled else 500
 
-            if not is_crawled:
-                self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
 
             current_page = 1
             collected_links = []
@@ -133,3 +131,6 @@ class _mirror_h(leak_extractor_interface, ABC):
 
         except Exception as ex:
             print(f"An error occurred: {ex}")
+
+        finally:
+            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
