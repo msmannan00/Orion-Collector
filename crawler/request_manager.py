@@ -1,5 +1,4 @@
 import sys
-from os import PathLike
 from threading import Timer
 
 import redis
