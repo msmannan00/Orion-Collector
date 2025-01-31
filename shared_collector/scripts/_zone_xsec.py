@@ -2,7 +2,7 @@ from abc import ABC
 from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
-from playwright.sync_api import Page
+from playwright.sync_api import Page, TimeoutError
 from urllib.parse import urljoin
 
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
@@ -94,7 +94,16 @@ class _zone_xsec(leak_extractor_interface, ABC):
                         web_server = self.safe_find(page, "p:has(strong):has-text('Web Server') strong")
                         date = self.safe_find(page, "p:has(strong):has-text('Saved on') strong")
 
-                        iframe = page.wait_for_selector("iframe", timeout=10000)
+                        # Check if the iframe is already present without waiting
+                        iframe = page.query_selector("iframe")
+                        if not iframe:
+                            try:
+                                # Wait for the iframe to load, but with a shorter timeout
+                                iframe = page.wait_for_selector("iframe", timeout=10000)  # Reduced timeout to 5 seconds
+                            except TimeoutError:
+                                print(f"Iframe not found for link: {link}")
+                                continue
+
                         if iframe:
                             iframe_content_frame = iframe.content_frame()
                             if iframe_content_frame:
@@ -138,8 +147,9 @@ class _zone_xsec(leak_extractor_interface, ABC):
                         )
 
                         self._card_data.append(card_data)
-                    except Exception:
-                        pass
+                    except Exception as ex:
+                        print(f"Error processing link {link}: {ex}")
+                        continue
 
                 current_page += 1
 
