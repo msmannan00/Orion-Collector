@@ -53,7 +53,6 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
     if browser:
       try:
         print("Timeout reached. Closing browser and terminating tasks.")
-        browser.close()
       except Exception:
         pass
 
@@ -75,8 +74,12 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
 
         def capture_response(response):
           if response.request.resource_type == "document" and response.ok:
-            raw_parse_mapping[response.url] = response.text()
-            print("parsed : " + response.url)
+            try:
+              cc = response.text()
+              raw_parse_mapping[response.url] = response.text()
+              print("parsed : " + response.url)
+            except Exception as ex:
+              pass
 
         page.on("response", capture_response)
         page.goto(model.seed_url, wait_until="networkidle")
