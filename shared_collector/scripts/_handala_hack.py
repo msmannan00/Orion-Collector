@@ -70,7 +70,11 @@ class _handala_hack(leak_extractor_interface, ABC):
                 page.wait_for_selector("h2.wp-block-post-title a")
 
                 links = page.query_selector_all("h2.wp-block-post-title a")
-                collected_links = [urljoin(self.base_url, link.get_attribute("href")) for link in links]
+                collected_links = []
+                for link in links:
+                    href = link.get_attribute("href")
+                    full_url = urljoin(self.base_url, href)
+                    collected_links.append(full_url)
 
                 today_date = datetime.today().strftime('%Y-%m-%d')
 
@@ -80,9 +84,7 @@ class _handala_hack(leak_extractor_interface, ABC):
 
                     header = self.safe_find(page, "h1.wp-block-post-title.has-x-large-font-size")
                     date_time = self.safe_find(page, "div.wp-block-post-date time", "datetime")
-
-                    content_element = page.query_selector(
-                        "div.entry-content.wp-block-post-content.has-global-padding.is-layout-constrained.wp-block-post-content-is-layout-constrained")
+                    content_element = page.query_selector("div.entry-content.wp-block-post-content.has-global-padding.is-layout-constrained.wp-block-post-content-is-layout-constrained")
                     content_html = content_element.inner_html() if content_element else ""
                     soup = BeautifulSoup(content_html, 'html.parser')
                     content = soup.get_text(separator="\n", strip=True)
@@ -95,7 +97,9 @@ class _handala_hack(leak_extractor_interface, ABC):
                     else:
                         important_content = content
 
-                    all_links = [a['href'] for a in soup.find_all('a', href=True)]
+                    all_links = []
+                    for a in soup.find_all('a', href=True):
+                        all_links.append(a['href'])
 
                     card_data = card_extraction_model(
                         m_title=header,
