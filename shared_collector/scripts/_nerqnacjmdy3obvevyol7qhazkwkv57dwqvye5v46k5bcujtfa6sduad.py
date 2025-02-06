@@ -90,6 +90,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         visited_pages = set()
+        visited_cards = set()  # Track visited cards to avoid duplicates
 
         while True:
             current_url = page.url
@@ -102,6 +103,12 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
             card_links = page.locator('.card').all()
 
             for card in card_links:
+                card_text = card.inner_text()  # Use card text as an identifier (or card.get_attribute('href') if available)
+
+                if card_text in visited_cards:
+                    continue  # Skip already visited cards
+
+                visited_cards.add(card_text)  # Mark card as visited
                 card.click()
 
                 page.wait_for_selector('.text-block', timeout=5000)
@@ -110,9 +117,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                 detail_soup = BeautifulSoup(detail_html, 'html.parser')
 
                 title = detail_soup.select_one('.title').text.strip() if detail_soup.select_one('.title') else "N/A"
-
                 content = detail_soup.select_one('.desc').text.strip() if detail_soup.select_one('.desc') else "N/A"
-
                 website_elem = detail_soup.select_one('.desc a')
                 website = website_elem['href'].strip() if website_elem else "N/A"
 
@@ -144,6 +149,8 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
 
                 date_time = detail_soup.select_one('.date').text.strip() if detail_soup.select_one('.date') else "N/A"
 
+                dumplinks = [a['href'].strip() for a in detail_soup.find_all('a', href=True) if ".onion" in a['href']]
+
                 self._card_data.append(card_extraction_model(
                     m_title=title,
                     m_content=content,
@@ -158,7 +165,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                     m_company_name=title,
                     m_network=helper_method.get_network_type(self.base_url).value,
                     m_important_content=content,
-                    m_dumplink=[],
+                    m_dumplink=dumplinks,
                     m_email_addresses=helper_method.extract_emails(detail_soup.text),
                     m_industry=industry,
                     m_content_type="Leak",
@@ -174,3 +181,4 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                 page.wait_for_selector('.card', timeout=5000)
             else:
                 break
+
