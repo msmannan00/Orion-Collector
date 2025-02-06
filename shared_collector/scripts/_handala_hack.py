@@ -34,7 +34,7 @@ class _handala_hack(leak_extractor_interface, ABC):
 
     @property
     def base_url(self) -> str:
-        return "https://handala-hack.to/"
+        return "https://handala-hack.to"
 
     @property
     def rule_config(self) -> RuleModel:
@@ -60,14 +60,13 @@ class _handala_hack(leak_extractor_interface, ABC):
 
     def parse_leak_data(self, page: Page):
         try:
-            max_pages = 7
             current_page = 1
-
-            while current_page <= max_pages:
+            while True:
                 full_url = f"{self.seed_url}/page/{current_page}/"
                 page.goto(full_url)
                 page.wait_for_load_state('load')
-                page.wait_for_selector("h2.wp-block-post-title a")
+                if not page.query_selector("h2.wp-block-post-title a"):
+                    break
 
                 links = page.query_selector_all("h2.wp-block-post-title a")
                 collected_links = []
@@ -97,13 +96,19 @@ class _handala_hack(leak_extractor_interface, ABC):
                     else:
                         important_content = content
 
-                    all_links = []
+                    dump_links = []
+                    external_links = []
                     for a in soup.find_all('a', href=True):
-                        all_links.append(a['href'])
+                        if 'class' in a.attrs and 'link link--external' in a['class']:
+                            external_links.append(a['href'])
+                        else:
+                            dump_links.append(a['href'])
 
                     card_data = card_extraction_model(
                         m_title=title,
-                        m_weblink=all_links,
+                        m_network=helper_method.get_network_type(self.base_url).value,
+                        m_weblink=external_links,
+                        m_dumplink=dump_links,
                         m_url=link,
                         m_base_url=self.base_url,
                         m_content=content,
