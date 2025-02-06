@@ -82,7 +82,7 @@ class _handala_hack(leak_extractor_interface, ABC):
                     page.goto(link)
                     page.wait_for_load_state('load')
 
-                    header = self.safe_find(page, "h1.wp-block-post-title.has-x-large-font-size")
+                    title = self.safe_find(page, "h1.wp-block-post-title.has-x-large-font-size")
                     date_time = self.safe_find(page, "div.wp-block-post-date time", "datetime")
                     content_element = page.query_selector("div.entry-content.wp-block-post-content.has-global-padding.is-layout-constrained.wp-block-post-content-is-layout-constrained")
                     content_html = content_element.inner_html() if content_element else ""
@@ -102,13 +102,12 @@ class _handala_hack(leak_extractor_interface, ABC):
                         all_links.append(a['href'])
 
                     card_data = card_extraction_model(
-                        m_title=header,
+                        m_title=title,
                         m_weblink=all_links,
                         m_url=link,
                         m_base_url=self.base_url,
                         m_content=content,
                         m_logo_or_images=image_urls,
-                        m_websites=[],
                         m_important_content=important_content,
                         m_content_type="leak",
                         m_email_addresses=helper_method.extract_emails(content),
