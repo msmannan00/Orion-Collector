@@ -16,20 +16,12 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
     _instance = None
 
     def __init__(self):
-        """
-        Initialize the _shared_sample class instance.
-        Sets up attributes for storing card data, parsing content, and interacting with Redis.
-        """
         self._card_data = []
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
 
     def __new__(cls):
-        """
-        Create a singleton instance of the _shared_sample class.
-        Ensures only one instance of the class is created during runtime.
-        """
         if cls._instance is None:
             cls._instance = super(_nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad, cls).__new__(cls)
             cls._instance._initialized = False
@@ -37,60 +29,29 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
 
     @property
     def seed_url(self) -> str:
-        """
-        Returns the seed URL for the data extraction process.
-        This is the starting point for parsing the required content.
-        """
         return "http://nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad.onion/"
 
     @property
     def base_url(self) -> str:
-        """
-        Returns the base URL for relative URL resolution.
-        Used to create absolute URLs during parsing.
-        """
         return "http://nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad.onion/"
 
     @property
     def rule_config(self) -> RuleModel:
-        """
-        Returns the configuration rules for data fetching.
-        Specifies the use of TOR as the proxy and Selenium as the fetching mechanism.
-        """
         return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
 
     @property
     def card_data(self) -> List[card_extraction_model]:
-        """
-        Returns the list of extracted card data models.
-        Stores all parsed information from the leak extraction process.
-        """
         return self._card_data
 
     def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
-        """
-        Interacts with the Redis database to perform a specified command.
-
-        Args:
-            command (REDIS_COMMANDS): The Redis command to execute (e.g., GET, SET).
-            key (CUSTOM_SCRIPT_REDIS_KEYS): The key for the operation.
-            default_value: The default value to use if the key is not found.
-
-        Returns:
-            None
-        """
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
-        """
-        Returns the URL of the contact page for the shared sample data source.
-        Useful for referencing or navigating to the contact page.
-        """
         return "kairossup@onionmail.com"
 
     def parse_leak_data(self, page: Page):
         visited_pages = set()
-        visited_cards = set()  # Track visited cards to avoid duplicates
+        visited_cards = set()
 
         while True:
             current_url = page.url
@@ -103,12 +64,12 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
             card_links = page.locator('.card').all()
 
             for card in card_links:
-                card_text = card.inner_text()  # Use card text as an identifier (or card.get_attribute('href') if available)
+                card_text = card.inner_text()
 
                 if card_text in visited_cards:
-                    continue  # Skip already visited cards
+                    continue
 
-                visited_cards.add(card_text)  # Mark card as visited
+                visited_cards.add(card_text)
                 card.click()
 
                 page.wait_for_selector('.text-block', timeout=5000)
