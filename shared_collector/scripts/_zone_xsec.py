@@ -45,7 +45,7 @@ class _zone_xsec(leak_extractor_interface, ABC):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
-        return "https://darkfeed.io/aboutus/"
+        return "https://zone-xsec.com/contact"
 
     def safe_find(self, page: Page, selector: str, attr: str = None) -> str:
         try:
