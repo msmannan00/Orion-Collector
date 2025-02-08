@@ -2,7 +2,7 @@ from abc import ABC
 from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
@@ -30,7 +30,7 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
     @property
     def seed_url(self) -> str:
-        return "http://orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id.onion/"
+        return "http://orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id.onion"
 
     @property
     def base_url(self) -> str:
@@ -60,11 +60,11 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         try:
-            # Navigate to the seed URL
+
             page.goto(self.seed_url)
             page.wait_for_load_state('load')
 
-            # Get all card links
+
             card_links = page.query_selector_all("a.blog__card-btn.--button")
             if not card_links:
                 print("No card links found on the page.")
@@ -72,38 +72,38 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
             today_date = datetime.today().strftime('%Y-%m-%d')
 
-            # Extract href attributes from the card links
+
             card_urls = [urljoin(self.base_url, link.get_attribute("href")) for link in card_links]
 
-            # Loop through each card URL and fetch data
+
             for card_url in card_urls:
-                # Navigate to the card URL
+
                 page.goto(card_url)
                 page.wait_for_load_state('load')
 
-                # Extract the HTML content of the card page
+
                 page_html = page.content()
                 self.soup = BeautifulSoup(page_html, 'html.parser')
 
-                # Find the card inner container
+
                 card_inner = self.soup.select_one("div.card__inner")
                 if not card_inner:
                     print(f"No card inner found on the page: {card_url}")
                     continue
 
-                # Extract the required data
+
                 description = self.safe_find(page, "div.card__description-content", attr=None)
                 company_url = self.safe_find(page, "a.card__info-text.--card__info-text-link", attr="href")
                 download_url = self.safe_find(page, "a.card__download.--button", attr="href")
                 image_urls = [urljoin(self.base_url, img['src']) for img in card_inner.select("img.card__photos-img")]
                 card_title = self.safe_find(page, "h1.card__title", attr=None)
 
-                # Initialize variables for dynamic data
+
                 number_of_files = None
                 file_size = None
                 date_of_publication = None
 
-                # Fetch all card info items
+
                 info_items = card_inner.select("div.card__info-item")
                 for item in info_items:
                     title = item.select_one("h2.card__info-item-title.--small-title")
@@ -119,11 +119,12 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                             elif title_text == "Date of publication":
                                 date_of_publication = value_text
 
-                # Create a card_extraction_model object
+
                 card_data = card_extraction_model(
                     m_company_name=card_title,
                     m_weblink=[company_url] if company_url else [],
-                    m_url=download_url,
+                    m_dumplink=download_url,
+                    m_network=helper_method.get_network_type(self.base_url).value,
                     m_base_url=self.base_url,
                     m_content=description,
                     m_logo_or_images=image_urls,
@@ -136,7 +137,7 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                     m_extra_tags=[file_size]
                 )
 
-                # Append the card data to the list
+
                 self._card_data.append(card_data)
 
         except Exception as ex:
