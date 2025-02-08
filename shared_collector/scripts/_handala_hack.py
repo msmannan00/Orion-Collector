@@ -106,18 +106,17 @@ class _handala_hack(leak_extractor_interface, ABC):
 
                     card_data = card_extraction_model(
                         m_title=title,
-                        m_network=helper_method.get_network_type(self.base_url).value,
                         m_weblink=external_links,
                         m_dumplink=dump_links,
                         m_url=link,
                         m_base_url=self.base_url,
                         m_content=content,
                         m_logo_or_images=image_urls,
+                        m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=important_content,
-                        m_content_type="leak",
+                        m_content_type="leaks",
                         m_email_addresses=helper_method.extract_emails(content),
                         m_phone_numbers=helper_method.extract_phone_numbers(content),
-                        m_last_updated=today_date,
                         m_leak_date=date_time
                     )
 

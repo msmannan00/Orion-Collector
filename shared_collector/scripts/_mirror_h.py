@@ -2,7 +2,7 @@ from abc import ABC
 from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
@@ -38,7 +38,7 @@ class _mirror_h(leak_extractor_interface, ABC):
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.NONE, m_fetch_config=FetchConfig.SELENIUM)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
 
     @property
     def card_data(self) -> List[card_extraction_model]:
@@ -124,11 +124,9 @@ class _mirror_h(leak_extractor_interface, ABC):
                         m_content=m_content_container,
                         m_websites=[web_server] if web_server else [],
                         m_important_content=m_important_content_container if m_important_content_container else "",
-                        m_content_type="leak",
-                        m_online_activity=total,
+                        m_content_type="leaks",
                         m_email_addresses=helper_method.extract_emails(m_content_container),
                         m_phone_numbers=helper_method.extract_phone_numbers(m_content_container),
-                        m_last_updated=today_date,
                         m_leak_date=date
                     )
 

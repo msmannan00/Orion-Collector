@@ -1,4 +1,5 @@
 import sys
+import traceback
 from threading import Timer
 
 import redis
@@ -34,13 +35,23 @@ def check_services_status():
     print(f"Error: Redis server is not running or accessible. Details: {ex}")
     sys.exit(1)
 
-def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
+
+def parse_leak_data(blocked_media, proxy: dict, model: leak_extractor_interface) -> tuple:
   default_data_model = leak_data_model(
     cards_data=[],
     contact_link=model.contact_page(),
     base_url=model.base_url,
     content_type=["leak"]
   )
+
+  def get_block_resources(route):
+    request_url = route.request.url.lower()
+
+    if any(request_url.startswith(scheme) for scheme in ["data:image", "data:video", "data:audio"]) or \
+        route.request.resource_type in ["image", "media", "font", "stylesheet"]:
+      route.abort()
+    else:
+      route.continue_()
 
   raw_parse_mapping = {}
   timeout_flag = {"value": False}
@@ -52,6 +63,7 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
     if browser:
       try:
         print("Timeout reached. Closing browser and terminating tasks.")
+        browser.close()
       except Exception:
         pass
 
@@ -63,21 +75,23 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
         browser = p.chromium.launch(proxy=proxy, headless=False)
 
       context = browser.new_context()
-      context.set_default_timeout(60000)
-      context.set_default_navigation_timeout(60000)
+      context.set_default_timeout(600000)
+      context.set_default_navigation_timeout(600000)
       timeout_timer = Timer(model.rule_config.m_timeout, terminate_browser)
       timeout_timer.start()
 
       try:
         page = context.new_page()
 
+        if blocked_media:
+          page.route("**/*", get_block_resources)
+
         def capture_response(response):
           if response.request.resource_type == "document" and response.ok:
             try:
-              cc = response.text()
               raw_parse_mapping[response.url] = response.text()
-              print("parsed : " + response.url)
-            except Exception as ex:
+              print("Parsed:", response.url)
+            except Exception:
               pass
 
         page.on("response", capture_response)
@@ -86,20 +100,32 @@ def parse_leak_data(proxy: dict, model:leak_extractor_interface) -> tuple:
         if timeout_flag["value"]:
           raise TimeoutException("Timeout occurred during navigation.")
 
+        page.evaluate("""
+                  document.querySelectorAll('*').forEach(el => {
+                      if (el.src && el.src.startsWith('data:image')) el.remove();
+                      if (el.src && el.src.startsWith('data:video')) el.remove();
+                      if (el.src && el.src.startsWith('data:audio')) el.remove();
+                      if (el.href && el.href.startsWith('data:')) el.remove();
+                      if (el.innerHTML.includes('data:image') || el.innerHTML.includes('data:video')) el.remove();
+                  });
+              """)
+
         model.soup = BeautifulSoup(page.content(), 'html.parser')
         raw_parse_mapping[page.url] = page.content()
+
         model.parse_leak_data(page)
       except Exception as e:
-        pass
+        error_traceback = traceback.format_exc()
+        print(f"TRACEBACK: {error_traceback}")
       finally:
         timeout_timer.cancel()
 
-  except Exception as e:
-    print(f"Unexpected Error: {e}")
+  except Exception as _:
+    error_traceback = traceback.format_exc()
+    print(f"TRACEBACK: {error_traceback}")
 
   default_data_model.cards_data = model.card_data
   return default_data_model, raw_parse_mapping
-
 
 async def get_proxy(use_proxy=True) -> Dict[str, str]:
   if use_proxy:

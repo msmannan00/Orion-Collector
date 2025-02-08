@@ -1,7 +1,7 @@
 # Local Imports
 import re
 from urllib.parse import urlparse
-from crawler.constants.enums import network_type
+from bs4 import BeautifulSoup
 
 class helper_method:
 
@@ -12,20 +12,20 @@ class helper_method:
     return text
 
   @staticmethod
-  def get_network_type(url:str):
+  def get_network_type(url: str):
     try:
       if not url.startswith("http"):
         url = "http://" + url
       parsed_url = urlparse(url)
       if not parsed_url.scheme or not parsed_url.netloc:
-        return network_type.INVALID
+        return "invalid"
       if re.search(r"\.onion$", parsed_url.netloc, re.IGNORECASE):
-        return network_type.ONION
+        return "onion"
       if re.search(r"\.i2p$", parsed_url.netloc, re.IGNORECASE):
-        return network_type.I2P
-      return network_type.CLEARNET
+        return "i2p"
+      return "clearnet"
     except Exception:
-      return network_type.INVALID
+      return "invalid"
 
   @staticmethod
   def extract_emails(text: str) -> list:
@@ -41,3 +41,11 @@ class helper_method:
     phone_numbers = re.findall(phone_pattern, text)
     return phone_numbers
 
+  @staticmethod
+  def extract_text_from_html(html: str) -> str:
+    """
+    Extracts and cleans text from an HTML string using BeautifulSoup.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text(separator=' ')
+    return helper_method.clean_text(text)

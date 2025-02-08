@@ -72,7 +72,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                 visited_cards.add(card_text)
                 card.click()
 
-                page.wait_for_selector('.text-block', timeout=5000)
+                page.wait_for_selector('.text-block', timeout=15000)
 
                 detail_html = page.content()
                 detail_soup = BeautifulSoup(detail_html, 'html.parser')
@@ -119,17 +119,17 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                     m_addresses=[address] if address != "N/A" else [],
                     m_logo_or_images=image_urls,
                     m_phone_numbers=[phone_number] if phone_number != "N/A" else [],
-                    m_extra_tags=[revenue],
+                    m_revenue = revenue,
                     m_leak_date=date_time,
                     m_url=page.url,
                     m_base_url=self.base_url,
                     m_company_name=title,
-                    m_network=helper_method.get_network_type(self.base_url).value,
+                    m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=content,
                     m_dumplink=dumplinks,
                     m_email_addresses=helper_method.extract_emails(detail_soup.text),
                     m_industry=industry,
-                    m_content_type="Leak",
+                    m_content_type="leaks",
                 ))
 
                 page.go_back()

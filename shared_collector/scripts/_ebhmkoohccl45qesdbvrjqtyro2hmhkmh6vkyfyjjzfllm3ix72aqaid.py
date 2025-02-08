@@ -1,9 +1,8 @@
 from abc import ABC
 from datetime import datetime
 from typing import List
-import time
 from bs4 import BeautifulSoup
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
@@ -119,12 +118,11 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                     m_base_url=self.base_url,
                     m_content=content,
                     m_websites=[],
-                    m_important_content="",
-                    m_content_type="leak",
-                    m_online_activity="",
+                    m_important_content=content,
+                    m_network=helper_method.get_network_type(self.base_url),
+                    m_content_type="leaks",
                     m_email_addresses=[],
                     m_phone_numbers=[],
-                    m_last_updated=today_date,
                     m_leak_date=today_date
                 )
 

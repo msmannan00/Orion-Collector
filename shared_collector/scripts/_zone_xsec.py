@@ -10,6 +10,8 @@ from crawler.crawler_instance.local_shared_model.card_extraction_model import ca
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.shared.helper_method import helper_method
+
 
 class _zone_xsec(leak_extractor_interface, ABC):
     _instance = None
@@ -139,10 +141,9 @@ class _zone_xsec(leak_extractor_interface, ABC):
                             m_base_url=self.base_url,
                             m_content=m_content_container,
                             m_websites=[web_server] if web_server else [],
+                            m_network=helper_method.get_network_type(self.base_url),
                             m_important_content=m_important_content_container if m_important_content_container else "",
-                            m_content_type="leak",
-                            m_online_activity=[team],
-                            m_last_updated=today_date,
+                            m_content_type="leaks",
                             m_leak_date=date
                         )
 
