@@ -61,7 +61,6 @@ class _weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_i
                 title = card.find(class_="title")
                 text_elements = card.find_all(class_="text")
                 link_elements = card.find_all(class_="links")
-                extra_tags = [helper_method.clean_text(tag.get_text(strip=True)) for tag in card.find_all(class_="extra")]
 
                 title_text = helper_method.clean_text(title.get_text(strip=True)) if title else ""
                 content = ' '.join(helper_method.clean_text(text.get_text(strip=True)) for text in text_elements if text)
