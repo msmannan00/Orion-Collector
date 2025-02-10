@@ -110,6 +110,5 @@ class _example(leak_extractor_interface, ABC):
             m_dumplink=[],
             m_email_addresses=helper_method.extract_emails(m_content),
             m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-            m_extra_tags=[],
             m_content_type="organization",
         )
