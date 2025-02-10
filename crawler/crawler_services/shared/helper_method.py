@@ -43,9 +43,6 @@ class helper_method:
 
   @staticmethod
   def extract_text_from_html(html: str) -> str:
-    """
-    Extracts and cleans text from an HTML string using BeautifulSoup.
-    """
     soup = BeautifulSoup(html, "html.parser")
     text = soup.get_text(separator=' ')
     return helper_method.clean_text(text)
