@@ -38,7 +38,7 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM,m_timeout=30000)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
 
     @property
     def card_data(self) -> List[card_extraction_model]:
@@ -101,8 +101,8 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                 actual_data_link = actual_data_link_element['href'] if actual_data_link_element else None
 
                 card_data = card_extraction_model(
-                    m_title=title,
-                    m_weblink=[web_url] if web_url else [],
+                    m_title=f"Leak of {title}",
+                m_weblink=[web_url] if web_url else [],
                     m_url=full_url,
                     m_base_url=self.base_url,
                     m_dumplink=actual_data_link,
