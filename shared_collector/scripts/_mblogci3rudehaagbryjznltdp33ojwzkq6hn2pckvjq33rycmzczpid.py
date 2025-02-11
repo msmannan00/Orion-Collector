@@ -64,7 +64,7 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                     if not cards or len(cards) == last_card_count:
                         no_new_card_attempts += 1
                         if no_new_card_attempts >= 3:
-                            return  # Stop when no new cards appear after 3 checks
+                            return
                     else:
                         no_new_card_attempts = 0
 
@@ -96,13 +96,11 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                             dumplinks = [link.get_attribute("href").strip() for link in dumplink_elements if
                                          link.get_attribute("href")]
 
-                            # **Fix: Move to next card instead of stopping**
                             with page.expect_navigation(wait_until="domcontentloaded"):
                                 page.go_back()
                             page.wait_for_load_state("domcontentloaded")
                             page.wait_for_selector(".leak-card", timeout=10000)
 
-                            # **Store extracted data even if no dump links**
                             self._card_data.append(
                                 card_extraction_model(
                                     m_title=title_text,
@@ -112,7 +110,7 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                                     m_network=helper_method.get_network_type(self.base_url),
                                     m_important_content=content_text,
                                     m_weblink=[],
-                                    m_dumplink=dumplinks,  # Empty list if no links
+                                    m_dumplink=dumplinks,
                                     m_email_addresses=helper_method.extract_emails(content_text),
                                     m_phone_numbers=helper_method.extract_phone_numbers(content_text),
                                     m_content_type="leaks",
