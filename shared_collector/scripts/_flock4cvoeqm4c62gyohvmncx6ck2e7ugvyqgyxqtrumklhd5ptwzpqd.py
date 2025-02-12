@@ -70,10 +70,10 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
 
                     last_card_count = len(cards)
 
-                    for i in range(len(cards)):
+                    for index, card in enumerate(cards):
                         try:
-                            cards = page.query_selector_all("article.post")
-                            card = cards[i]
+                            cards = page.query_selector_all("article.post")  
+                            card = cards[index]
 
                             title_element = card.query_selector("h2.entry-title a")
                             date_element = card.query_selector("span.published")
@@ -121,14 +121,14 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                                 page.go_back()
                             page.wait_for_selector("article.post", timeout=10000)
 
-                        except Exception:
+                        except Exception as e:
                             pass
 
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
                         page.wait_for_timeout(2000)
 
-            except Exception:
+            except Exception as e:
                 break
 
 
