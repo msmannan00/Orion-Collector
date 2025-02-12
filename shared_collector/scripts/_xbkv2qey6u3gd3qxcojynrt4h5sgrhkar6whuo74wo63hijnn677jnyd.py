@@ -92,11 +92,15 @@ class _xbkv2qey6u3gd3qxcojynrt4h5sgrhkar6whuo74wo63hijnn677jnyd(leak_extractor_i
                     size_element = page.query_selector("article > p:nth-child(4)")
                     m_data_size = size_element.inner_text().replace("Data:", "").strip() if size_element else main_page_data_size
 
+                    if not m_revenue or not m_revenue.startswith('$'):
+                        m_revenue = ""
+                    if not m_data_size or not any(char.isdigit() for char in m_data_size):
+                        m_data_size = ""
+
                     card_data = card_extraction_model(
                         m_title=m_title,
                         m_url=page.url,
                         m_base_url=self.base_url,
-
                         m_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=m_content,
