@@ -70,10 +70,10 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
 
                     last_card_count = len(cards)
 
-                    for i in range(len(cards)):
+                    for index, card in enumerate(cards):
                         try:
                             cards = page.query_selector_all(".leak-card")
-                            card = cards[i]
+                            card = cards[index]
 
                             title = card.query_selector("h5")
                             content = card.query_selector("p")
@@ -91,7 +91,7 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                             with page.expect_navigation(wait_until="domcontentloaded"):
                                 card.click()
 
-                            page.wait_for_timeout(2000)  # Let the page fully load
+                            page.wait_for_timeout(2000)
                             dumplink_elements = page.query_selector_all(".download-links a")
                             dumplinks = [link.get_attribute("href").strip() for link in dumplink_elements if
                                          link.get_attribute("href")]
@@ -109,7 +109,6 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                                     m_content=content_text,
                                     m_network=helper_method.get_network_type(self.base_url),
                                     m_important_content=content_text,
-                                    m_weblink=[],
                                     m_dumplink=dumplinks,
                                     m_email_addresses=helper_method.extract_emails(content_text),
                                     m_phone_numbers=helper_method.extract_phone_numbers(content_text),
@@ -127,5 +126,6 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
 
             except Exception:
                 break
+
 
 
