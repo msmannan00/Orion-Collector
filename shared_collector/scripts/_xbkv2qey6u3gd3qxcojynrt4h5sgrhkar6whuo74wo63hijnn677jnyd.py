@@ -77,7 +77,7 @@ class _xbkv2qey6u3gd3qxcojynrt4h5sgrhkar6whuo74wo63hijnn677jnyd(leak_extractor_i
                     m_content = page.text_content('article')
 
                     # Extract date accurately
-                    date_element = page.query_selector("div.flex.justify-between.pb-4.text-xs > p")
+                    date_element = page.query_selector("div.text-sm > span")
                     m_date = date_element.inner_text().strip() if date_element else ""
 
                     # Extract title
