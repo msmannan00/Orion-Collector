@@ -59,38 +59,35 @@ class _xbkv2qey6u3gd3qxcojynrt4h5sgrhkar6whuo74wo63hijnn677jnyd(leak_extractor_i
                 if not links:
                     break
 
-                collected_links = []
+                collected_links= []
                 for link in links:
                     href = link.get_attribute("href")
                     if href:
                         post_id = href.split('/posts/')[1].rstrip('/')
                         if post_id not in processed_posts:
                             full_url = f"{self.base_url}/posts/{post_id}/"
-                            collected_links.append(full_url)
+                            size_element = link.query_selector("p.line-clamp-6.pt-4")
+                            m_data_size = size_element.inner_text().strip() if size_element else ""
+                            collected_links.append((full_url, m_data_size))
                             processed_posts.add(post_id)
 
-                for link in collected_links:
+                for link, main_page_data_size in collected_links:
                     page.goto(link)
                     page.wait_for_selector('.content')
 
-                    # Extracting text content from the article tag
                     m_content = page.text_content('article')
 
-                    # Extract date accurately
                     date_element = page.query_selector("div.text-sm > span")
                     m_date = date_element.inner_text().strip() if date_element else ""
 
-                    # Extract title
                     title_element = page.query_selector("p.text-center.text-4xl.font-bold")
                     m_title = title_element.inner_text().strip() if title_element else ""
 
-                    # Extract revenue
                     revenue_element = page.query_selector("article > p:nth-child(3)")
                     m_revenue = revenue_element.inner_text().replace("Revenue:", "").strip() if revenue_element else ""
 
-                    # Extract data size
                     size_element = page.query_selector("article > p:nth-child(4)")
-                    m_data_size = size_element.inner_text().replace("Data:", "").strip() if size_element else ""
+                    m_data_size = size_element.inner_text().replace("Data:", "").strip() if size_element else main_page_data_size
 
                     card_data = card_extraction_model(
                         m_title=m_title,
