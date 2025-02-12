@@ -117,14 +117,14 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                                 )
                             )
 
-                        except Exception:
+                        except Exception as e:
                             pass
 
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
                         page.wait_for_timeout(2000)
 
-            except Exception:
+            except Exception as e:
                 break
 
 
