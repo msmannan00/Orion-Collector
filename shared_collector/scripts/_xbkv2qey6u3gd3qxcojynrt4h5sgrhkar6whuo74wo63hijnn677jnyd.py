@@ -1,7 +1,6 @@
 from abc import ABC
 from typing import List
 from playwright.sync_api import Page
-from urllib.parse import urljoin
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.card_extraction_model import card_extraction_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
