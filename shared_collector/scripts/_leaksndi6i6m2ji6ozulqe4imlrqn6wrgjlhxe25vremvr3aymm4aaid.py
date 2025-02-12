@@ -50,7 +50,6 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         self._card_data = []
-        processed_urls = set()
 
         while True:
             try:
