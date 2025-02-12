@@ -90,7 +90,6 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                                 title_element.click()
 
                             content_element = page.query_selector("div.entry-content")
-                            content_html = content_element.inner_html() if content_element else ""
 
                             paragraphs = content_element.query_selector_all("p") if content_element else []
                             content_text = "\n".join(
@@ -110,7 +109,6 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                                     m_content=content_text.strip(),
                                     m_network=helper_method.get_network_type(self.base_url),
                                     m_important_content=content_text.strip(),
-                                    m_weblink=[],
                                     m_dumplink=links,
                                     m_email_addresses=helper_method.extract_emails(content_text),
                                     m_phone_numbers=helper_method.extract_phone_numbers(content_text),
@@ -126,7 +124,6 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                         except Exception:
                             pass
 
-                    # Scroll Down to Load More Cards
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
                         page.wait_for_timeout(2000)
