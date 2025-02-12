@@ -120,7 +120,7 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                     m_websites=[],
                     m_important_content=content,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_content_type="leaks",
+                    m_content_type=["leaks"],
                     m_email_addresses=[],
                     m_phone_numbers=[],
                     m_leak_date=today_date

@@ -8,6 +8,6 @@ from shared_collector.scripts._zone_xsec import _zone_xsec
 check_services_status()
 
 if __name__ == "__main__":
-    parse_sample = _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid()
-    parsed_data, raw_parse_mapping = parse_leak_data(blocked_media=True, proxy={"server": "socks5://127.0.0.1:9150"}, model=parse_sample)
+    parse_sample = _3ev4metjirohtdpshsqlkrqcmxq6zu3d7obrdhglpy5jpbr7whmlfgqd()
+    parsed_data, raw_parse_mapping = parse_leak_data(blocked_media=False, proxy={"server": "socks5://127.0.0.1:9150"}, model=parse_sample)
     print(parsed_data)

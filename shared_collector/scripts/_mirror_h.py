@@ -124,7 +124,7 @@ class _mirror_h(leak_extractor_interface, ABC):
                         m_content=m_content_container,
                         m_websites=[web_server] if web_server else [],
                         m_important_content=m_important_content_container if m_important_content_container else "",
-                        m_content_type="leaks",
+                        m_content_type=["leaks"],
                         m_email_addresses=helper_method.extract_emails(m_content_container),
                         m_phone_numbers=helper_method.extract_phone_numbers(m_content_container),
                         m_leak_date=date

@@ -143,7 +143,7 @@ class _zone_xsec(leak_extractor_interface, ABC):
                             m_websites=[web_server] if web_server else [],
                             m_network=helper_method.get_network_type(self.base_url),
                             m_important_content=m_important_content_container if m_important_content_container else "",
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                             m_leak_date=date
                         )
 
