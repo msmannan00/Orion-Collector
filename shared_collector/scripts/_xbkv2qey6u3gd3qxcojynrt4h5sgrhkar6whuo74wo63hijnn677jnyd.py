@@ -83,6 +83,9 @@ class _xbkv2qey6u3gd3qxcojynrt4h5sgrhkar6whuo74wo63hijnn677jnyd(leak_extractor_i
                     title_element = page.query_selector("p.text-center.text-4xl.font-bold")
                     m_title = title_element.inner_text().strip() if title_element else ""
 
+                    href_elements = page.query_selector_all('article a[href]')
+                    m_weblinks = [href.get_attribute('href') for href in href_elements]
+
                     revenue_element = page.query_selector("article > p:nth-child(3)")
                     m_revenue = revenue_element.inner_text().replace("Revenue:", "").strip() if revenue_element else ""
 
@@ -93,10 +96,11 @@ class _xbkv2qey6u3gd3qxcojynrt4h5sgrhkar6whuo74wo63hijnn677jnyd(leak_extractor_i
                         m_title=m_title,
                         m_url=page.url,
                         m_base_url=self.base_url,
+
                         m_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=m_content,
-                        m_weblink=[],
+                        m_weblink=m_weblinks,
                         m_dumplink=[],
                         m_email_addresses=helper_method.extract_emails(m_content),
                         m_phone_numbers=helper_method.extract_phone_numbers(m_content),
