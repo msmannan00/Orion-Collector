@@ -72,7 +72,7 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
 
                     for index, card in enumerate(cards):
                         try:
-                            cards = page.query_selector_all("article.post")  
+                            cards = page.query_selector_all("article.post")
                             card = cards[index]
 
                             title_element = card.query_selector("h2.entry-title a")
@@ -122,13 +122,16 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                             page.wait_for_selector("article.post", timeout=10000)
 
                         except Exception as e:
+                            print({e})
                             pass
+
 
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
                         page.wait_for_timeout(2000)
 
             except Exception as e:
+                print({e})
                 break
 
 
