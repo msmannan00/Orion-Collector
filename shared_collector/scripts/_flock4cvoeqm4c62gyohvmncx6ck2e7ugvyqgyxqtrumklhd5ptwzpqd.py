@@ -123,8 +123,6 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
 
                         except Exception as e:
                             print({e})
-                            pass
-
 
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
@@ -133,5 +131,6 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
             except Exception as e:
                 print({e})
                 break
+
 
 
