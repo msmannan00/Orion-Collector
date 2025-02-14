@@ -53,15 +53,15 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
         post_links = []
 
         try:
-            # Ensure the selector exists before waiting
+
             if not page.is_visible(".post-more-link.f_left"):
                 print("No posts found! Exiting parser.")
                 return
 
-            # Wait for the page to fully load
+
             page.wait_for_selector(".post-more-link.f_left", timeout=15000)
 
-            # Step 1: Collect all post links first
+
             post_elements = page.query_selector_all(".post-more-link.f_left")
 
             for post_element in post_elements:
@@ -75,31 +75,31 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
                 print("No post links extracted! Exiting parser.")
                 return
 
-            # Step 2: Visit each collected link one by one
+
             for post_link in post_links:
                 if post_link in processed_urls:
                     continue
 
                 processed_urls.add(post_link)
                 try:
-                    # Set a timeout for navigation
-                    page.goto(post_link, wait_until="domcontentloaded", timeout=15000)  # 15 seconds timeout
 
-                    # Extract required data safely
+                    page.goto(post_link, wait_until="domcontentloaded", timeout=15000)
+
+
                     def safe_get_text(selector):
                         element = page.query_selector(selector)
                         return element.inner_text().strip() if element else "Unknown"
 
-                    title_text = safe_get_text(".bord-header h2")  # Extracting title
+                    title_text = safe_get_text(".bord-header h2")
                     description_text = safe_get_text(".full-bord p")
                     date_text = safe_get_text(".meta_full.noselect.f_left")
                     file_size_text = safe_get_text(".file-size")
 
-                    # Extract Image URL from .avatar.bg-transparent.shadow-none
+
                     profile_element = page.query_selector(".avatar.bg-transparent.shadow-none img")
                     profile_img = profile_element.get_attribute("src") if profile_element else "Unknown"
 
-                    # Extract download link from onclick attribute
+
                     file_name = page.query_selector(".file-name")
                     download_link = None
                     if file_name:
@@ -107,7 +107,7 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
                         if onclick_attr and "window.open" in onclick_attr:
                             download_link = onclick_attr.split("window.open('")[1].split("', '_blank')")[0]
 
-                    # Store the extracted data
+
                     self._card_data.append(
                         card_extraction_model(
                             m_title=title_text if title_text != "Unknown" else "Extracted Post",
@@ -116,21 +116,21 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
                             m_content=f"Description: {description_text}\nFile Size: {file_size_text}",
                             m_network=helper_method.get_network_type(self.base_url),
                             m_important_content=description_text,
-                            m_weblink=[profile_img] if profile_img != "Unknown" else [],
                             m_dumplink=[download_link] if download_link else [],
                             m_email_addresses=helper_method.extract_emails(description_text),
                             m_phone_numbers=helper_method.extract_phone_numbers(description_text),
                             m_content_type="leaks",
                             m_leak_date=date_text,
+                            m_data_size= file_size_text,
                             m_logo_or_images=[profile_img] if profile_img != "Unknown" else []
                         )
                     )
 
                 except Exception as e:
                     print(f"Error navigating to {post_link}: {e}")
-                    continue  # Skip to the next link if there's an error
+                    continue
 
-                # Go back to the main page
+
                 try:
                     page.go_back()
                     page.wait_for_selector(".post-more-link.f_left", timeout=15000)
