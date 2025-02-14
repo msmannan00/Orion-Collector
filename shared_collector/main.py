@@ -1,6 +1,5 @@
 from crawler.request_manager import check_services_status, parse_leak_data
-from shared_collector.scripts._flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd import \
-    _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd
+from shared_collector.scripts._flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd import _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd
 
 check_services_status()
 
