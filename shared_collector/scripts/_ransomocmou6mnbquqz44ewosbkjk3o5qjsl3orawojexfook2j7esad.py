@@ -96,19 +96,12 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
                     else:
                         important_content = content
 
-                    dump_links = []
-                    external_links = []
-                    for a in soup.find_all('a', href=True):
-                        if 'class' in a.attrs and 'link link--external' in a['class']:
-                            external_links.append(a['href'])
-                        else:
-                            dump_links.append(a['href'])
+                    weblinks = [a['href'] for a in soup.find_all('a', href=True)]
 
                     card_data = card_extraction_model(
                         m_title=title,
-                        m_weblink=external_links,
-                        m_dumplink=dump_links,
                         m_url=link,
+                        m_weblink=weblinks,
                         m_base_url=self.base_url,
                         m_content=content,
                         m_logo_or_images=image_urls,
