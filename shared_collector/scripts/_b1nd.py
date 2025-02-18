@@ -1,7 +1,7 @@
 from abc import ABC
-from datetime import datetime
+
 from typing import List
-from bs4 import BeautifulSoup
+
 from playwright.sync_api import Page
 from urllib.parse import urljoin
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
@@ -59,7 +59,7 @@ class _b1nd(leak_extractor_interface, ABC):
         try:
             print("Starting leak data extraction...")
 
-            outer_list = []  # List to store outer links
+            outer_list = []
             page.goto(self.seed_url)
             page.wait_for_load_state("load")
             print("Fetched seed URL:", self.seed_url)
@@ -77,8 +77,8 @@ class _b1nd(leak_extractor_interface, ABC):
                 page.goto(outer_link)
                 page.wait_for_load_state("load")
 
-                while True:  # Loop for pagination in inner links
-                    inner_list = []  # Reset inner list on each pagination cycle
+                while True:
+                    inner_list = []
                     inner_elements = page.query_selector_all("div.structItem-title a")
 
                     for element in inner_elements:
@@ -98,7 +98,7 @@ class _b1nd(leak_extractor_interface, ABC):
                             m_content = self.safe_find(page, "div.bbWrapper")
                             title = self.safe_find(page, "h1.p-title-value")
 
-                            # Check if content exists and process word count
+
                             if m_content:
                                 words = m_content.split()
                                 if len(words) > 500:
@@ -127,7 +127,7 @@ class _b1nd(leak_extractor_interface, ABC):
                             print(f"Error processing inner link {inner_link}: {e}")
                             continue
 
-                    # Check for pagination within inner pages
+
                     next_button = page.query_selector(".block-router-main .pageNav-jump--next")
                     if next_button:
                         next_url = next_button.get_attribute("href")
@@ -135,7 +135,7 @@ class _b1nd(leak_extractor_interface, ABC):
                             print("Moving to next inner pagination page:", next_url)
                             page.goto(urljoin(self.base_url, next_url))
                             page.wait_for_load_state("load")
-                            continue  # Re-run the loop for the new page
+                            continue
                         else:
                             print("No next button URL found. Ending inner pagination.")
                             break
