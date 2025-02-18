@@ -87,10 +87,8 @@ class _in_the_wild(leak_extractor_interface, ABC):
                             processed_urls.add(vuln_url)
 
                             page.wait_for_timeout(200)
-
                             with page.expect_navigation(wait_until="domcontentloaded"):
                                 vuln_link.click()
-
                             page.wait_for_timeout(200)
 
                             reference_element = page.query_selector(
@@ -114,19 +112,15 @@ class _in_the_wild(leak_extractor_interface, ABC):
                             last_update_date = last_update_element.inner_text().strip() if last_update_element else "Unknown"
 
                             report_cards = page.query_selector_all(".css-tbubqa")
-                            website, social_media_profile = None, None
-
-                            if len(report_cards) > 0:
-                                first_card_link = report_cards[0].query_selector(".chakra-link")
-                                if first_card_link:
-                                    website = first_card_link.get_attribute("href")
+                            website = report_cards[0].query_selector(".chakra-link").get_attribute(
+                                "href") if report_cards else None
+                            social_media_profile = None
 
                             if len(report_cards) > 1:
                                 second_card_link = report_cards[1].query_selector(".chakra-link")
-                                if second_card_link:
-                                    second_card_url = second_card_link.get_attribute("href")
-                                    if second_card_url and second_card_url.startswith("https://github.com"):
-                                        social_media_profile = second_card_url
+                                second_card_url = second_card_link.get_attribute("href") if second_card_link else None
+                                if second_card_url and "github.com" in second_card_url:
+                                    social_media_profile = second_card_url
 
                             page.wait_for_timeout(200)
 
@@ -149,7 +143,6 @@ class _in_the_wild(leak_extractor_interface, ABC):
                             )
 
                             page.wait_for_timeout(500)
-
                             page.go_back()
                             page.wait_for_load_state("domcontentloaded")
                             page.wait_for_selector("table tbody tr", timeout=10000)
@@ -158,13 +151,13 @@ class _in_the_wild(leak_extractor_interface, ABC):
                             print({e})
                             continue
 
-                    for _ in range(3):
-                        page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
-                        page.wait_for_timeout(1000)
+                    page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+                    page.wait_for_timeout(1000)
 
             except Exception as e:
                 print({e})
                 break
+
 
 
 
