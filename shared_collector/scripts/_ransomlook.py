@@ -67,20 +67,22 @@ class _ransomlook(leak_extractor_interface, ABC):
                                 collected_links.append(full_url)
                                 processed_posts.add(post_id)
 
-                for link in collected_links:
+                for link in collected_links[:5]:
                     page.goto(link)
                     page.wait_for_selector('article#main')
 
-                    m_content = page.text_content('article#main')
+                    m_content = page.text_content('article#main').strip().replace('\n', '').replace('        ', '')
 
                     title_element = page.query_selector("article#main > h1")
                     m_title = title_element.inner_text().strip() if title_element else ""
 
                     size_element = page.query_selector("table#table tbody tr td:nth-child(1) center")
-                    m_data_size = size_element.inner_text().strip() if size_element else ""
+                    m_data = size_element.inner_text().strip() if size_element else ""
 
                     records_element = page.query_selector("table#table tbody tr td:nth-child(2)")
                     m_records = records_element.inner_text().strip() if records_element else ""
+
+                    m_data_size = f"{m_data} - {m_records} records" if m_data and m_records else m_data
 
                     date_element = page.query_selector("table#table tbody tr td:nth-child(3)")
                     m_date = date_element.inner_text().strip() if date_element else ""
@@ -95,8 +97,6 @@ class _ransomlook(leak_extractor_interface, ABC):
                         m_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=m_content,
-                        m_email_addresses=helper_method.extract_emails(m_content),
-                        m_phone_numbers=helper_method.extract_phone_numbers(m_content),
                         m_content_type="leaks",
                         m_data_size=m_data_size,
                         m_leak_date=m_date,
