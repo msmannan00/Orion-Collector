@@ -47,7 +47,7 @@ class _b1nd(leak_extractor_interface, ABC):
         return self.seed_url
 
     def safe_find(self, page, selector, attr=None):
-        """Safely find an element and return its text or attribute"""
+
         try:
             element = page.locator(selector).first
             if element.count() > 0:
@@ -112,10 +112,8 @@ class _b1nd(leak_extractor_interface, ABC):
                                 m_title=title,
                                 m_weblink=[inner_link],
                                 m_url=inner_link,
-                                m_addresses=[],
                                 m_base_url=self.base_url,
                                 m_content=m_content if m_content else "",
-                                m_websites=[],
                                 m_network=helper_method.get_network_type(self.base_url),
                                 m_important_content=m_important_content,
                                 m_content_type="leaks",
