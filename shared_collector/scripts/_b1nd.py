@@ -57,12 +57,12 @@ class _b1nd(leak_extractor_interface, ABC):
 
     def parse_leak_data(self, page: Page):
         try:
-            print("Starting leak data extraction...")
+
 
             outer_list = []
             page.goto(self.seed_url)
             page.wait_for_load_state("load")
-            print("Fetched seed URL:", self.seed_url)
+
 
             outer_elements = page.query_selector_all("h3.node-title a")
             for element in outer_elements:
@@ -70,10 +70,10 @@ class _b1nd(leak_extractor_interface, ABC):
                 if href:
                     outer_list.append(urljoin(self.base_url, href))
 
-            print("Total outer links found:", len(outer_list))
+
 
             for outer_link in outer_list:
-                print("\nProcessing outer link:", outer_link)
+
                 page.goto(outer_link)
                 page.wait_for_load_state("load")
 
@@ -86,11 +86,11 @@ class _b1nd(leak_extractor_interface, ABC):
                         if href:
                             inner_list.append(urljoin(self.base_url, href))
 
-                    print(f"Found {len(inner_list)} inner links on page: {page.url}")
+
 
                     for inner_link in inner_list:
                         try:
-                            print("Processing inner link:", inner_link)
+
                             page.goto(inner_link)
                             page.wait_for_load_state("load")
 
@@ -122,7 +122,7 @@ class _b1nd(leak_extractor_interface, ABC):
                             self._card_data.append(card_data)
 
                         except Exception as e:
-                            print(f"Error processing inner link {inner_link}: {e}")
+
                             continue
 
 
@@ -130,19 +130,19 @@ class _b1nd(leak_extractor_interface, ABC):
                     if next_button:
                         next_url = next_button.get_attribute("href")
                         if next_url:
-                            print("Moving to next inner pagination page:", next_url)
+
                             page.goto(urljoin(self.base_url, next_url))
                             page.wait_for_load_state("load")
                             continue
                         else:
-                            print("No next button URL found. Ending inner pagination.")
+
                             break
                     else:
-                        print("No next button found. Moving to next outer link.")
+
                         break
 
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            print("Data extraction completed. Invoking DB update.")
+
             self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
