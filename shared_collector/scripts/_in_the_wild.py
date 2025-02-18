@@ -123,8 +123,10 @@ class _in_the_wild(leak_extractor_interface, ABC):
 
                             if len(report_cards) > 1:
                                 second_card_link = report_cards[1].query_selector(".chakra-link")
-                                if second_card_link and "github.com" in second_card_link.get_attribute("href"):
-                                    social_media_profile = second_card_link.get_attribute("href")
+                                if second_card_link:
+                                    second_card_url = second_card_link.get_attribute("href")
+                                    if second_card_url and second_card_url.startswith("https://github.com"):
+                                        social_media_profile = second_card_url
 
                             page.wait_for_timeout(200)
 
