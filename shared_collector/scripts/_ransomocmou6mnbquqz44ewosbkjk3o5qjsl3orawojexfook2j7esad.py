@@ -59,7 +59,7 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         try:
-            current_page = 13
+            current_page = 1
             while True:
                 full_url = f"{self.seed_url}/page/{current_page}/"
                 page.goto(full_url)
