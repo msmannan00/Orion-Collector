@@ -67,11 +67,10 @@ class _ransomlook(leak_extractor_interface, ABC):
                                 collected_links.append(full_url)
                                 processed_posts.add(post_id)
 
-                for link in collected_links[:5]:
+                for link in collected_links:
                     page.goto(link)
                     page.wait_for_selector('article#main')
 
-                    m_content = page.text_content('article#main').strip().replace('\n', '').replace('        ', '')
 
                     title_element = page.query_selector("article#main > h1")
                     m_title = title_element.inner_text().strip() if title_element else ""
@@ -89,6 +88,8 @@ class _ransomlook(leak_extractor_interface, ABC):
 
                     columns_element = page.query_selector("table#table tbody tr td:nth-child(4)")
                     m_columns = columns_element.inner_text().strip() if columns_element else ""
+
+                    m_content = m_columns.replace("[", "").replace("]", "")
 
                     card_data = card_extraction_model(
                         m_title=m_title,
