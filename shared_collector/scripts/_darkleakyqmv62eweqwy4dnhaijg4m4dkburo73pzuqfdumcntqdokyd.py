@@ -71,7 +71,7 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
                     else:
                         continue
 
-            for index, url in enumerate(hrefs):
+            for url in hrefs:
                 try:
 
                     page.goto(url)
