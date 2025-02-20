@@ -119,7 +119,7 @@ class _bianlianlbc5an4kgnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad(leak_extractor_i
                     next_button.click()
                     page.wait_for_load_state("networkidle")
                 else:
-                    break  
+                    break
 
         except Exception as e:
             print(f"Error parsing leak data: {str(e)}")
