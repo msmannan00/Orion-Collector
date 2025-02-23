@@ -46,10 +46,9 @@ class _leak_lookup(leak_extractor_interface, ABC):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
-        return "https://www.iana.org/help/example-domains"
+        return "https://twitter.com/LeakLookup"
 
     def parse_leak_data(self, page: Page):
-       
         while True:
             rows = page.query_selector_all("table tr")
 
@@ -89,18 +88,15 @@ class _leak_lookup(leak_extractor_interface, ABC):
                             m_content_type="leaks",
                         ))
 
-
                         close_button = page.query_selector("#breachModal .btn-close")
                         if close_button:
                             close_button.click()
                             page.wait_for_timeout(1000)
 
-            next_button = page.query_selector(
-                "a.page-link[aria-controls='datatables-indexed-breaches'][data-dt-idx='next']")
-            if next_button:
+            next_button = page.query_selector("#datatables-indexed-breaches_next a.page-link")
+            if next_button and "disabled" not in next_button.get_attribute("class"):
                 next_button.click()
-                page.wait_for_selector("a.page-link[aria-controls='datatables-indexed-breaches'][data-dt-idx='next']",
-                                       timeout=5000)
+                page.wait_for_selector("table tr", timeout=5000)
                 page.wait_for_timeout(3000)
             else:
                 break
