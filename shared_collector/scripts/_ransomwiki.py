@@ -126,6 +126,6 @@ class _ransomwiki(leak_extractor_interface, ABC):
                 m_dumplink=[],
                 m_email_addresses=helper_method.extract_emails(soup.text),
                 m_phone_numbers=helper_method.extract_phone_numbers(soup.text),
-                m_content_type="leaks",
+                m_content_type=["leaks"],
             ))
 

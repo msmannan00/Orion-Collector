@@ -82,7 +82,7 @@ class _3ev4metjirohtdpshsqlkrqcmxq6zu3d7obrdhglpy5jpbr7whmlfgqd(leak_extractor_i
                     m_dumplink=dump_links,
                     m_email_addresses=helper_method.extract_emails(body_text),
                     m_phone_numbers=helper_method.extract_phone_numbers(body_text),
-                    m_content_type="leaks",
+                    m_content_type=["leaks"],
                 )
 
                 self._card_data.append(card_data)

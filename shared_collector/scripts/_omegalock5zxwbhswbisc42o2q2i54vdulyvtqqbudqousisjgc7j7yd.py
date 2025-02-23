@@ -91,7 +91,7 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
                     m_dumplink=dump_links,
                     m_email_addresses=helper_method.extract_emails(content),
                     m_phone_numbers=helper_method.extract_phone_numbers(content),
-                    m_content_type="leaks",
+                    m_content_type=["leaks"],
                 )
 
                 self._card_data.append(card_data)

@@ -78,6 +78,6 @@ class _weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_i
                     m_dumplink=dumplinks,
                     m_email_addresses= helper_method.extract_emails(content),
                     m_phone_numbers= helper_method.extract_phone_numbers(content),
-                    m_content_type="leaks"
+                    m_content_type=["leaks"]
                 )
                 self._card_data.append(card_data)
