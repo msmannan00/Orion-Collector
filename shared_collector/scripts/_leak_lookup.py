@@ -57,8 +57,15 @@ class _leak_lookup(leak_extractor_interface, ABC):
                 if not link_element:
                     continue
 
-                site_name = link_element.inner_text()
+                site_name = link_element.inner_text().strip()
                 site_url = link_element.get_attribute("href")
+
+                breach_size_element = row.query_selector("td.d-xl-table-cell:nth-of-type(2)")
+                breach_size = breach_size_element.inner_text().strip() if breach_size_element else "Unknown"
+
+                date_indexed_element = row.query_selector("td.d-xl-table-cell:nth-of-type(3)")
+                date_indexed = date_indexed_element.inner_text().strip() if date_indexed_element else "Unknown"
+
                 dropdown_button = row.query_selector("td .dropdown a")
                 if dropdown_button:
                     dropdown_button.click()
@@ -74,17 +81,17 @@ class _leak_lookup(leak_extractor_interface, ABC):
                         modal_content = page.query_selector("#breachModal .modal-body")
                         modal_text = modal_content.inner_text() if modal_content else "No data available"
 
+                        modal_text_cleaned = "\n".join([line.strip() for line in modal_text.split("\n") if line.strip()])
+
                         self._card_data.append(card_extraction_model(
                             m_title=site_name,
                             m_url=site_url,
                             m_base_url=self.base_url,
-                            m_content=modal_text,
+                            m_content=modal_text_cleaned,
                             m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=modal_text,
-                            m_weblink=[],
-                            m_dumplink=[],
-                            m_email_addresses=helper_method.extract_emails(modal_text),
-                            m_phone_numbers=helper_method.extract_phone_numbers(modal_text),
+                            m_important_content=modal_text_cleaned,
+                            m_data_size=breach_size,
+                            m_leak_date=date_indexed,
                             m_content_type="leaks",
                         ))
 
