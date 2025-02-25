@@ -60,6 +60,11 @@ class _leak_lookup(leak_extractor_interface, ABC):
                 site_name = link_element.inner_text().strip()
                 site_url = link_element.get_attribute("href")
 
+                if site_url.startswith("#"):
+                    site_url = f"{self.base_url}/breaches{site_url}"
+                elif not site_url.startswith("http"):
+                    site_url = f"{self.base_url}/{site_url.lstrip('/')}"
+
                 breach_size_element = row.query_selector("td.d-xl-table-cell:nth-of-type(2)")
                 breach_size = breach_size_element.inner_text().strip() if breach_size_element else "Unknown"
 
@@ -78,18 +83,24 @@ class _leak_lookup(leak_extractor_interface, ABC):
                         page.wait_for_selector("#breachModal .modal-body", timeout=5000)
                         page.wait_for_timeout(2000)
 
-                        modal_content = page.query_selector("#breachModal .modal-body")
-                        modal_text = modal_content.inner_text() if modal_content else "No data available"
+                        modal_content_element = page.query_selector("#breachModal .modal-body")
+                        modal_content = modal_content_element.inner_text() if modal_content_element else "No data available"
 
-                        modal_text_cleaned = "\n".join([line.strip() for line in modal_text.split("\n") if line.strip()])
+                        modal_content_cleaned = []
+                        for line in modal_content.split("\n"):
+                            stripped_line = line.strip()
+                            if stripped_line:
+                                modal_content_cleaned.append(stripped_line)
+
+                        modal_content_cleaned = "\n".join(modal_content_cleaned)
 
                         self._card_data.append(card_extraction_model(
                             m_title=site_name,
                             m_url=site_url,
                             m_base_url=self.base_url,
-                            m_content=modal_text_cleaned,
+                            m_content=modal_content_cleaned,
                             m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=modal_text_cleaned,
+                            m_important_content=modal_content_cleaned,
                             m_data_size=breach_size,
                             m_leak_date=date_indexed,
                             m_content_type="leaks",
