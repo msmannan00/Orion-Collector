@@ -1,6 +1,6 @@
 from abc import ABC
 from typing import List
-
+import time
 from playwright.sync_api import Page
 
 from crawler.crawler_instance.local_interface_model.leak_extractor_interface import leak_extractor_interface
@@ -55,47 +55,62 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         return "http://basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd.onion/contact_us.php"
 
     def parse_leak_data(self, page: Page):
-        page.wait_for_selector('.main__contant')  
+        # Wait for the main content to load
+        page.wait_for_selector('.main__contant')
 
-        title = page.title()
+        # Extract card URLs from the main page
+        card_elements = page.query_selector_all('.segment.published')
+        card_urls = [card.get_attribute('onclick').split("window.location.href='")[1].split("'")[0] for card in
+                     card_elements]
 
-        deadline_element = page.query_selector('.deadline:first-of-type')
-        deadline = deadline_element.inner_text().replace("Deadline: ", "") if deadline_element else "N/A"
+        for card_url in card_urls[:3]:
+            page.goto(self.base_url + card_url)
+            page.wait_for_selector('.main__contant')
 
-        views_element = page.query_selector('.deadline:last-of-type')
-        views = views_element.inner_text().replace("Views: ", "") if views_element else "N/A"
+            time.sleep(2)
 
-        country_element = page.query_selector('.count__text')
-        country = country_element.inner_text() if country_element else "N/A"
+            title_element = page.query_selector('.offer__text')
+            title = title_element.inner_text().strip() if title_element else "N/A"
 
-        description_element = page.query_selector('.dsc__text')
-        description = description_element.inner_text() if description_element else "N/A"
+            deadline_element = page.query_selector('.deadline:first-of-type')
+            deadline = deadline_element.inner_text().replace("Deadline: ", "").strip() if deadline_element else "N/A"
 
-        image_urls = []
-        images = page.query_selector_all('img')
-        for img in images:
-            src = img.get_attribute('src')
-            if src:
-                image_urls.append(src)
+            views_element = page.query_selector('.deadline:last-of-type')
+            views = views_element.inner_text().replace("Views: ", "").strip() if views_element else "N/A"
 
-        hrefs = []
-        links = page.query_selector_all('a')
-        for link in links:
-            href = link.get_attribute('href')
-            if href:
-                hrefs.append(href)
+            country_element = page.query_selector('.count__text')
+            country = country_element.inner_text().strip() if country_element else "N/A"
 
-        card_data = card_extraction_model(
-            m_title=title,
-            m_url=page.url,
-            m_base_url=self.base_url,
-            m_content=f"Deadline: {deadline}\nViews: {views}\nCountry: {country}\nDescription: {description}",
-            m_network=helper_method.get_network_type(self.base_url),
-            m_important_content=f"Deadline: {deadline}\nViews: {views}\nCountry: {country}\nDescription: {description}",
-            m_weblink=hrefs,
-            m_dumplink=image_urls,
-            m_email_addresses=helper_method.extract_emails(description),
-            m_phone_numbers=helper_method.extract_phone_numbers(description),
-            m_content_type="leaks",
-        )
-        self._card_data.append(card_data)
+            description_element = page.query_selector('.dsc__text')
+            description = description_element.inner_text().strip() if description_element else "N/A"
+
+            image_urls = []
+            images = page.query_selector_all('img')
+            for img in images:
+                src = img.get_attribute('src')
+                if src:
+                    image_urls.append(src)
+
+            hrefs = []
+            links = page.query_selector_all('a')
+            for link in links:
+                href = link.get_attribute('href')
+                if href:
+                    hrefs.append(href)
+
+            card_data = card_extraction_model(
+                m_title=title,
+                m_url=page.url,
+                m_base_url=self.base_url,
+                m_content=description,
+                m_network=helper_method.get_network_type(self.base_url),
+                m_important_content=description,
+                m_weblink=hrefs,
+                m_logo_or_images=image_urls,
+                m_country_name=country,
+                m_email_addresses=helper_method.extract_emails(description),
+                m_phone_numbers=helper_method.extract_phone_numbers(description),
+                m_content_type="leaks",
+            )
+
+            self._card_data.append(card_data)
