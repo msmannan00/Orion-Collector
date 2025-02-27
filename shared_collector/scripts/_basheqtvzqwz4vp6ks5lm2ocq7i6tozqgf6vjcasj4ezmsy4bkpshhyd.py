@@ -61,7 +61,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         card_urls = [card.get_attribute('onclick').split("window.location.href='")[1].split("'")[0] for card in
                      card_elements]
 
-        for card_url in card_urls[:3]:
+        for card_url in card_urls:
             page.goto(self.base_url + card_url)
             page.wait_for_selector('.main__contant')
 
@@ -99,6 +99,16 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                     if href:
                         dumps.append(href)
 
+            web_link = []
+            links = page.query_selector_all('a')
+            for link in links:
+                div_element = link.query_selector('.segment__block.active.download')
+                if div_element:
+                    href = link.get_attribute('href')
+                    if href:
+                        full_href = self.base_url + href if not href.startswith('http') else href
+                        web_link.append(full_href)
+
             card_data = card_extraction_model(
                 m_title=title,
                 m_url=page.url,
@@ -107,6 +117,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
                 m_dumplink=dumps,
+                m_weblink=web_link,
                 m_leak_date=deadline,
                 m_logo_or_images=image_urls,
                 m_country_name=country,
