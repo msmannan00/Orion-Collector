@@ -55,10 +55,8 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         return "http://basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd.onion/contact_us.php"
 
     def parse_leak_data(self, page: Page):
-        # Wait for the main content to load
         page.wait_for_selector('.main__contant')
 
-        # Extract card URLs from the main page
         card_elements = page.query_selector_all('.segment.published')
         card_urls = [card.get_attribute('onclick').split("window.location.href='")[1].split("'")[0] for card in
                      card_elements]
@@ -89,14 +87,17 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
             for img in images:
                 src = img.get_attribute('src')
                 if src:
-                    image_urls.append(src)
+                    full_src = self.base_url + src if not src.startswith('http') else src
+                    image_urls.append(full_src)
 
-            hrefs = []
+            dumps = []
             links = page.query_selector_all('a')
             for link in links:
-                href = link.get_attribute('href')
-                if href:
-                    hrefs.append(href)
+                div_element = link.query_selector('.segment__block__small.published.download')
+                if div_element:
+                    href = link.get_attribute('href')
+                    if href:
+                        dumps.append(href)
 
             card_data = card_extraction_model(
                 m_title=title,
@@ -105,7 +106,8 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_content=description,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
-                m_weblink=hrefs,
+                m_dumplink=dumps,
+                m_leak_date=deadline,
                 m_logo_or_images=image_urls,
                 m_country_name=country,
                 m_email_addresses=helper_method.extract_emails(description),
