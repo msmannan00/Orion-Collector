@@ -73,9 +73,6 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
             deadline_element = page.query_selector('.deadline:first-of-type')
             deadline = deadline_element.inner_text().replace("Deadline: ", "").strip() if deadline_element else "N/A"
 
-            views_element = page.query_selector('.deadline:last-of-type')
-            views = views_element.inner_text().replace("Views: ", "").strip() if views_element else "N/A"
-
             country_element = page.query_selector('.count__text')
             country = country_element.inner_text().strip() if country_element else "N/A"
 
@@ -118,7 +115,6 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_important_content=description,
                 m_dumplink=dumps,
                 m_weblink=web_link,
-                m_industry=views,
                 m_leak_date=deadline,
                 m_logo_or_images=image_urls,
                 m_country_name=country,
