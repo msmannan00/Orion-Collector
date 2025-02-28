@@ -118,6 +118,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_important_content=description,
                 m_dumplink=dumps,
                 m_weblink=web_link,
+                m_industry=views,
                 m_leak_date=deadline,
                 m_logo_or_images=image_urls,
                 m_country_name=country,
