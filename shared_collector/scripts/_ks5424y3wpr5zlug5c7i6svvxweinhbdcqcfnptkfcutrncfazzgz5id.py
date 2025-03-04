@@ -65,37 +65,54 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 full_url = f"{self.base_url}/posts.php{href}"
                 link_urls.append(full_url)
 
-        for url in link_urls[:3]:
+        for url in link_urls:
             page.goto(url)
 
             title = page.query_selector('st').inner_text() if page.query_selector('st') else ""
+            card_title = page.query_selector('card in h h1').inner_text() if page.query_selector('card in h h1') else ""
             description = page.query_selector('card in p').inner_text() if page.query_selector('card in p') else ""
+            payment_title = page.query_selector('card.rs h2').inner_text() if page.query_selector('card.rs h2') else ""
             payment_info = page.query_selector('card.rs in cont p').inner_text() if page.query_selector('card.rs in cont p') else ""
+
+            description = f"{card_title}: {description}" if card_title and description else description
+            payment_info = f"{payment_title}: {payment_info}" if payment_title and payment_info else payment_info
+
+            content = f"{description}{payment_info}"
+            words = content.split()
+            if len(words) > 500:
+                important_content = ' '.join(words[:500])
+            else:
+                important_content = content
+
 
             gallery_images = page.query_selector_all('gallery img')
             images = [img.get_attribute('src').strip() for img in gallery_images if
                       img.get_attribute('src') and img.get_attribute('src').endswith('.png')]
 
-            download_urls = []
-            for btn in page.query_selector_all('a.btn'):
-                onclick = btn.get_attribute('onclick')
-                if onclick and "showdir" in onclick:
-                    download_url = f"{self.base_url}/download_path_here"  # Replace with the correct logic if available
-                    download_urls.append(download_url)
+            download_url = ""
+            download_btn = page.query_selector('a.btn[onclick*="showdir"]')
+            if download_btn:
+                onclick = download_btn.get_attribute('onclick')
+                if onclick:
+                    start = onclick.find("'") + 1
+                    end = onclick.rfind("'")
+                    if start != -1 and end != -1:
+                        download_url = onclick[start:end].strip()
+                        if not download_url.startswith('http'):
+                            download_url = f"http://{download_url}"
 
-            combined_content = f"{description}{payment_info}"
+
 
             self._card_data.append(card_extraction_model(
                 m_title=title,
                 m_url=url,
                 m_base_url=self.base_url,
-                m_content=combined_content,
+                m_content=content,
                 m_network=helper_method.get_network_type(self.base_url),
-                m_important_content=combined_content,
-                m_weblink=[],
-                m_dumplink=download_urls,
-                m_email_addresses=helper_method.extract_emails(combined_content),
-                m_phone_numbers=helper_method.extract_phone_numbers(combined_content),
+                m_important_content=important_content,
+                m_dumplink=[download_url],
+                m_email_addresses=helper_method.extract_emails(content),
+                m_phone_numbers=helper_method.extract_phone_numbers(content),
                 m_content_type="leaks",
                 m_logo_or_images=images,
             ))
