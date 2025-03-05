@@ -67,7 +67,8 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
 
             try:
                 icon.click()
-            except:
+            except Exception as e:
+                print(e)
                 continue
 
             content_element = page.query_selector(".box .white")
