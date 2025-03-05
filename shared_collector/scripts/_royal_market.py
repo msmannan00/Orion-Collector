@@ -1,5 +1,4 @@
 from abc import ABC
-from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page
@@ -63,34 +62,34 @@ class _royal_market(leak_extractor_interface, ABC):
             page.goto(self.seed_url)
             page.wait_for_load_state('load')
 
-            # Get the HTML content of the page
+
             page_html = page.content()
             self.soup = BeautifulSoup(page_html, 'html.parser')
 
-            # Find all unordered lists with class "mainrow col-md-12"
+
             list_items = self.soup.select("ul.mainrow.col-md-12")
             if not list_items:
-                print("No list items with class 'mainrow col-md-12' found on the page.")
+
                 return
 
-            today_date = datetime.today().strftime('%Y-%m-%d')
+
 
             for item in list_items:
-                # Extract href from <a> tags with class "miniurl downhead-head"
+
                 link_element = item.select_one("a.miniurl.downhead-head")
                 item_url = link_element.get('href') if link_element else None
                 if item_url and not item_url.startswith(('http://', 'https://')):
                     item_url = urljoin(self.base_url, item_url)
 
-                # Extract ONLY text from <h2> tags with class "downhead-head"
+
                 title_element = item.select_one("h2.downhead-head")
                 title = title_element.get_text(strip=True) if title_element else None
 
-                # Extract text from <p> tags with class "downhead-desc inline-desc"
+
                 desc_element = item.select_one("p.downhead-desc.inline-desc")
                 description = desc_element.get_text(strip=True) if desc_element else None
 
-                # Create card data
+
                 card_data = card_extraction_model(
                     m_company_name=title,
                     m_title=title,
@@ -102,7 +101,7 @@ class _royal_market(leak_extractor_interface, ABC):
                     m_content_type="leaks",
                     m_email_addresses=helper_method.extract_emails(description) if description else [],
                     m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
-                    
+
                 )
 
                 self._card_data.append(card_data)
