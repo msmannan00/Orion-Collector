@@ -63,7 +63,7 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
             page_html = page.content()
             self.soup = BeautifulSoup(page_html, 'html.parser')
 
-            # Extract product links
+
             product_links = []
             product_cards = self.soup.select("a.product-card")
 
@@ -73,7 +73,7 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                     item_url = urljoin(self.base_url, item_url)
                 product_links.append(item_url)
 
-            # Visit each product link
+
             for product_url in product_links:
                 page.goto(product_url)
                 page.wait_for_load_state('load')
@@ -81,22 +81,22 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                 product_html = page.content()
                 product_soup = BeautifulSoup(product_html, 'html.parser')
 
-                # Extract title (first h2 tag)
+
                 title_element = product_soup.find("h2")
                 title = title_element.get_text(strip=True) if title_element else "not found"
 
-                # Remove "About " from the beginning of the title
-                if title.lower().startswith("about "):
-                    title = title[6:]  # Remove the first 6 characters ("About ")
 
-                # Extract content (all h2 and p elements)
+                if title.lower().startswith("about "):
+                    title = title[6:]
+
+
                 content_elements = product_soup.find_all(["h2", "p"])
                 content = "\n".join(elem.get_text(strip=True) for elem in content_elements if elem)
 
-                # Extract important content (first 500 characters of content)
+
                 important_content = content[:500] if content else ""
 
-                # Extract images (all img tags)
+
                 image_elements = product_soup.find_all("img")
                 logos = [img.get("src") for img in image_elements if img.get("src")]
 
@@ -104,9 +104,9 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                 dump_link_element = product_soup.find("a", class_="download-button")
                 dumplink = dump_link_element["href"] if dump_link_element else "not found"
 
-                # Store extracted data
+
                 card_data = card_extraction_model(
-                    m_company_name=title,  # Updated title without "About "
+                    m_company_name=title,
                     m_title=title,
                     m_url=product_url,
                     m_network=helper_method.get_network_type(self.base_url),
@@ -117,7 +117,7 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                     m_email_addresses=helper_method.extract_emails(content) if content else [],
                     m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
                     m_logo_or_images=logos,
-                    m_dumplink=dumplink  # Added the dump link
+                    m_dumplink=dumplink
                 )
 
                 self._card_data.append(card_data)
