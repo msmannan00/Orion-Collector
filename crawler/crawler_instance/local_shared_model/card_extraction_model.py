@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
 
-
 @dataclass
 class card_extraction_model:
     m_title: str
@@ -12,7 +11,7 @@ class card_extraction_model:
     m_content: str
     m_important_content: str
     m_network: str
-    m_content_type: str
+    m_content_type: List[str] = field(default_factory=list)
     m_weblink: List[str] = field(default_factory=list)
     m_dumplink: List[str] = field(default_factory=list)
     m_name: str = ""
@@ -39,5 +38,8 @@ class card_extraction_model:
         if self.m_network not in VALID_NETWORK_TYPES:
             raise ValueError(f"Invalid network type provided: {self.m_network}. Must be one of {', '.join(VALID_NETWORK_TYPES)}.")
 
-        if self.m_content_type not in VALID_CONTENT_TYPES:
-            raise ValueError(f"Invalid content type provided: {self.m_content_type}. Must be one of {', '.join(VALID_CONTENT_TYPES)}.")
+        if not isinstance(self.m_content_type, list):
+            raise ValueError("m_content_type must be a list of valid content types.")
+
+        if not all(content in VALID_CONTENT_TYPES for content in self.m_content_type):
+            raise ValueError(f"Invalid content type(s) provided: {self.m_content_type}. Must be a subset of {', '.join(VALID_CONTENT_TYPES)}.")

@@ -36,10 +36,20 @@ class helper_method:
 
   @staticmethod
   def extract_phone_numbers(text: str) -> list:
-
-    phone_pattern = r'\+?[0-9]{1,4}?[ -.]?\(?[0-9]{1,4}?\)?[ -.]?[0-9]{1,4}[ -.]?[0-9]{1,9}'
+    phone_pattern = r'\(?\b\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}\b'
     phone_numbers = re.findall(phone_pattern, text)
-    return phone_numbers
+
+    filtered_phone_numbers = []
+    for number in phone_numbers:
+      digits_only = re.sub(r'[^0-9]', '', number)
+
+      if 7 <= len(digits_only) <= 15:
+        if '(' in text[text.find(number):text.find(number) + len(number)]:
+          filtered_phone_numbers.append(number)
+        else:
+          filtered_phone_numbers.append(number)
+
+    return filtered_phone_numbers
 
   @staticmethod
   def extract_text_from_html(html: str) -> str:
