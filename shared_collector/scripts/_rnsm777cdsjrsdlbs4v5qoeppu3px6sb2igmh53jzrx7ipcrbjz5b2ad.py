@@ -142,7 +142,7 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
                             m_content=description,
                             m_important_content=description,
                             m_logo_or_images=[],
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                             m_data_size=leak_size,
                             m_email_addresses=helper_method.extract_emails(description) if description else [],
                             m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],

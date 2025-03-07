@@ -107,7 +107,7 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
                         m_logo_or_images=image_urls,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=important_content,
-                        m_content_type="leaks",
+                        m_content_type=["leaks"],
                         m_email_addresses=helper_method.extract_emails(content),
                         m_phone_numbers=helper_method.extract_phone_numbers(content),
 

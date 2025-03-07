@@ -116,7 +116,7 @@ class _b1nd(leak_extractor_interface, ABC):
                                 m_content=m_content if m_content else "",
                                 m_network=helper_method.get_network_type(self.base_url),
                                 m_important_content=m_important_content,
-                                m_content_type="leaks",
+                                m_content_type=["leaks"],
                                 m_leak_date=m_leak_date if m_leak_date else ""
                             )
                             self._card_data.append(card_data)

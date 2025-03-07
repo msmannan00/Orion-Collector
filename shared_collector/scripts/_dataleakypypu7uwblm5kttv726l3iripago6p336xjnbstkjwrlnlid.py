@@ -90,7 +90,7 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
                 m_dumplink=[full_data_link],
                 m_email_addresses=helper_method.extract_emails(content),
                 m_phone_numbers=helper_method.extract_phone_numbers(content),
-                m_content_type="leaks",
+                m_content_type=["leaks"],
             ))
 
             close_button = page.query_selector(".close div")

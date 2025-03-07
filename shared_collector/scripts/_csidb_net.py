@@ -103,7 +103,7 @@ class _csidb_net(leak_extractor_interface, ABC):
                     m_base_url=self.base_url,
                     m_content=summary,
                     m_important_content=important_content,
-                    m_content_type="hacking",
+                    m_content_type=["hacking"],
                     m_email_addresses=helper_method.extract_emails(summary),
                     m_phone_numbers=helper_method.extract_phone_numbers(summary),
                     m_leak_date=incident_date,

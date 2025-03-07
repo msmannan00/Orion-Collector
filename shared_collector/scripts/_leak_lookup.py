@@ -103,7 +103,7 @@ class _leak_lookup(leak_extractor_interface, ABC):
                             m_important_content=modal_content_cleaned,
                             m_data_size=breach_size,
                             m_leak_date=date_indexed,
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                         ))
 
                         close_button = page.query_selector("#breachModal .btn-close")

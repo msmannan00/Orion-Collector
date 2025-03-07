@@ -88,7 +88,7 @@ class _7ukmkdtyxdkdivtjad57klqnd3kdsmq6tp45rrsxqnu76zzv3jvitlqd(leak_extractor_i
                             m_important_content=imp_content,
                             m_email_addresses=helper_method.extract_emails(content_text),
                             m_phone_numbers=helper_method.extract_phone_numbers(content_text),
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                             m_dumplink=dumplinks,
                         )
                     )

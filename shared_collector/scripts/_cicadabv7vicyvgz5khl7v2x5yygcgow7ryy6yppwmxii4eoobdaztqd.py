@@ -141,7 +141,7 @@ class _cicadabv7vicyvgz5khl7v2x5yygcgow7ryy6yppwmxii4eoobdaztqd(leak_extractor_i
                         m_content=description,
                         m_important_content=description,
                         m_logo_or_images=[logo_image] if logo_image else [],
-                        m_content_type="leaks",
+                        m_content_type=["leaks"],
                         m_data_size=data_size,
                         m_email_addresses=helper_method.extract_emails(description) if description else [],
                         m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],

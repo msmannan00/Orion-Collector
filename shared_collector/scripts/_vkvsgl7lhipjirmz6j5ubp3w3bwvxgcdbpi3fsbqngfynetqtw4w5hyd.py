@@ -86,6 +86,6 @@ class _vkvsgl7lhipjirmz6j5ubp3w3bwvxgcdbpi3fsbqngfynetqtw4w5hyd(leak_extractor_i
                 m_dumplink=[],
                 m_email_addresses=helper_method.extract_emails(m_content),
                 m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-                m_content_type="leaks",
+                m_content_type=["leaks"],
             )
 

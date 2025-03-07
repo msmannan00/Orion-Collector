@@ -98,7 +98,7 @@ class _royal_market(leak_extractor_interface, ABC):
                     m_base_url=self.base_url,
                     m_content=description,
                     m_important_content=description,
-                    m_content_type="leaks",
+                    m_content_type=["leaks"],
                     m_email_addresses=helper_method.extract_emails(description) if description else [],
                     m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
 

@@ -135,7 +135,7 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
                             m_important_content=content_text[:500],
                             m_email_addresses=helper_method.extract_emails(content_text),
                             m_phone_numbers=helper_method.extract_phone_numbers(content_text),
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                             m_leak_date=leak_date,
                             m_logo_or_images=slick_images,
                             m_dumplink=[dumplinks],

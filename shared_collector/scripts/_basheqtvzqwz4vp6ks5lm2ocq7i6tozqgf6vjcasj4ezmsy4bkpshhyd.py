@@ -120,7 +120,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_country_name=country,
                 m_email_addresses=helper_method.extract_emails(description),
                 m_phone_numbers=helper_method.extract_phone_numbers(description),
-                m_content_type="leaks",
+                m_content_type=["leaks"],
             )
 
             self._card_data.append(card_data)

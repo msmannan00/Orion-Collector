@@ -98,7 +98,7 @@ class _bianlianlbc5an4kgnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad(leak_extractor_i
                             m_dumplink=dump_links,
                             m_email_addresses=helper_method.extract_emails(description),
                             m_phone_numbers=helper_method.extract_phone_numbers(description),
-                            m_content_type="leaks",
+                            m_content_type=["leaks"],
                             m_revenue=revenue,
                             m_data_size=data_size
                         )

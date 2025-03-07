@@ -98,7 +98,7 @@ class _ransomlook(leak_extractor_interface, ABC):
                         m_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=m_content,
-                        m_content_type="leaks",
+                        m_content_type=["leaks"],
                         m_data_size=m_data_size,
                         m_leak_date=m_date,
 

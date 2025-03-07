@@ -136,7 +136,7 @@ class _in_the_wild(leak_extractor_interface, ABC):
                                     m_leak_date=last_update_date,
                                     m_websites=[website] if website else [],
                                     m_social_media_profiles=[social_media_profile] if social_media_profile else [],
-                                    m_content_type="leaks",
+                                    m_content_type=["leaks"],
                                     m_email_addresses=helper_method.extract_emails(description_text),
                                     m_phone_numbers=helper_method.extract_phone_numbers(description_text),
                                 )

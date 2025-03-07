@@ -101,7 +101,7 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
                         m_base_url=self.base_url,
                         m_content=content,
                         m_important_content=imp_content,
-                        m_content_type="leaks",
+                        m_content_type=["leaks"],
                         m_email_addresses=helper_method.extract_emails(content) if content else [],
                         m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
 

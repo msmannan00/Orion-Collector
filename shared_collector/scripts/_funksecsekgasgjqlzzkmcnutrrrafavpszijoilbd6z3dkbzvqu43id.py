@@ -113,7 +113,7 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                     m_base_url=self.base_url,
                     m_content=content,
                     m_important_content=important_content,
-                    m_content_type="leaks",
+                    m_content_type=["leaks"],
                     m_email_addresses=helper_method.extract_emails(content) if content else [],
                     m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
                     m_logo_or_images=logos,

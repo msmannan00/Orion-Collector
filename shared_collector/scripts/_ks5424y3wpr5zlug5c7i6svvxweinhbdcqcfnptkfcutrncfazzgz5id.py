@@ -113,6 +113,6 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 m_dumplink=[download_url],
                 m_email_addresses=helper_method.extract_emails(content),
                 m_phone_numbers=helper_method.extract_phone_numbers(content),
-                m_content_type="leaks",
+                m_content_type=["leaks"],
                 m_logo_or_images=images,
             ))
