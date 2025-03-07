@@ -53,7 +53,7 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(collector_interf
         return collector_model
 
       try:
-        await page.locator("#SearchType").wait_for(timeout=10000)
+        await page.locator("#SearchType").wait_for(timeout=120000)
 
         for search_type, query_value in [("Username", username), ("Email", email)]:
           if not query_value:
@@ -67,7 +67,7 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(collector_interf
             await search_button.click()
 
             result_panel_locator = page.locator(".ResultPanel")
-            await result_panel_locator.wait_for(timeout=10000)
+            await result_panel_locator.wait_for(timeout=120000)
 
             spans = await result_panel_locator.locator("span").all()
             public_records = [
