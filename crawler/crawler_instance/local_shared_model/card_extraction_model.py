@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List, Optional
 
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
@@ -23,7 +24,7 @@ class card_extraction_model:
     m_websites: List[str] = field(default_factory=list)
     m_company_name: Optional[str] = None
     m_logo_or_images: List[str] = field(default_factory=list)
-    m_leak_date: Optional[str] = None
+    m_leak_date: Optional[date] = None
     m_data_size: Optional[str] = None
     m_country_name: Optional[str] = None
     m_revenue: Optional[str] = None
@@ -43,3 +44,9 @@ class card_extraction_model:
 
         if not all(content in VALID_CONTENT_TYPES for content in self.m_content_type):
             raise ValueError(f"Invalid content type(s) provided: {self.m_content_type}. Must be a subset of {', '.join(VALID_CONTENT_TYPES)}.")
+
+        if isinstance(self.m_leak_date, str):
+            try:
+                self.m_leak_date = datetime.strptime(self.m_leak_date, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValueError(f"Invalid date format for m_leak_date: {self.m_leak_date}. Expected format: YYYY-MM-DD.")
