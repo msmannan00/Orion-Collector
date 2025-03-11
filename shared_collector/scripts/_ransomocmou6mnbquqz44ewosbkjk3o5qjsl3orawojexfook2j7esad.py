@@ -73,8 +73,6 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
                     href = link.get_attribute("href")
                     full_url = urljoin(self.base_url, href)
                     collected_links.append(full_url)
-                print(collected_links)
-
 
                 for link in collected_links:
                     page.goto(link)
