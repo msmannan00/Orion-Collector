@@ -36,7 +36,7 @@ def check_services_status():
     sys.exit(1)
 
 
-def parse_leak_data(blocked_media, proxy: dict, model: leak_extractor_interface) -> tuple:
+def parse_leak_data(proxy: dict, model: leak_extractor_interface) -> tuple:
   default_data_model = leak_data_model(
     cards_data=[],
     contact_link=model.contact_page(),
@@ -83,7 +83,7 @@ def parse_leak_data(blocked_media, proxy: dict, model: leak_extractor_interface)
       try:
         page = context.new_page()
 
-        if blocked_media:
+        if model.rule_config.m_resoource_block:
           page.route("**/*", get_block_resources)
 
         def capture_response(response):
@@ -94,21 +94,11 @@ def parse_leak_data(blocked_media, proxy: dict, model: leak_extractor_interface)
             except Exception:
               pass
 
-        page.on("response", capture_response)
+        context.on("response", capture_response)
         page.goto(model.seed_url, wait_until="networkidle")
 
         if timeout_flag["value"]:
           raise TimeoutException("Timeout occurred during navigation.")
-
-        page.evaluate("""
-                  document.querySelectorAll('*').forEach(el => {
-                      if (el.src && el.src.startsWith('data:image')) el.remove();
-                      if (el.src && el.src.startsWith('data:video')) el.remove();
-                      if (el.src && el.src.startsWith('data:audio')) el.remove();
-                      if (el.href && el.href.startsWith('data:')) el.remove();
-                      if (el.innerHTML.includes('data:image') || el.innerHTML.includes('data:video')) el.remove();
-                  });
-              """)
 
         model.soup = BeautifulSoup(page.content(), 'html.parser')
         raw_parse_mapping[page.url] = page.content()

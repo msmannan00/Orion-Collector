@@ -1,7 +1,6 @@
 # Local Imports
 import re
-from datetime import datetime
-from typing import Optional
+import datetime
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
@@ -30,7 +29,7 @@ class helper_method:
       return "invalid"
 
   @staticmethod
-  def extract_and_convert_date(text: str) -> Optional[datetime.date]:
+  def extract_and_convert_date(text: str) -> datetime.date:
     for pattern, fmt in [
       (r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"),
       (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"),
@@ -40,10 +39,10 @@ class helper_method:
     ]:
       if match := re.search(pattern, text):
         try:
-          return datetime.strptime(match.group(0), fmt).date()
+          return datetime.datetime.strptime(match.group(0), fmt).date()
         except ValueError:
           continue
-    return None
+    return datetime.date.today()
 
   @staticmethod
   def extract_emails(text: str) -> list:

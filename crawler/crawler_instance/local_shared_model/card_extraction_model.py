@@ -50,3 +50,8 @@ class card_extraction_model:
                 self.m_leak_date = datetime.strptime(self.m_leak_date, "%Y-%m-%d").date()
             except ValueError:
                 raise ValueError(f"Invalid date format for m_leak_date: {self.m_leak_date}. Expected format: YYYY-MM-DD.")
+
+    class Config:
+        json_encoders = {
+            date: lambda v: v.strftime("%Y-%m-%d") if v else None
+        }
