@@ -65,8 +65,6 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
             page.goto(self.base_url + card_url)
             page.wait_for_selector('.main__contant')
 
-            time.sleep(2)
-
             title_element = page.query_selector('.offer__text')
             title = title_element.inner_text().strip() if title_element else "N/A"
 
@@ -84,8 +82,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
             for img in images:
                 src = img.get_attribute('src')
                 if src:
-                    full_src = self.base_url + src if not src.startswith('http') else src
-                    image_urls.append(full_src)
+                    image_urls.append(src)
 
             dumps = []
             links = page.query_selector_all('a')
@@ -103,8 +100,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 if div_element:
                     href = link.get_attribute('href')
                     if href:
-                        full_href = self.base_url + href if not href.startswith('http') else href
-                        web_link.append(full_href)
+                        web_link.append(href)
 
             card_data = card_extraction_model(
                 m_title=title,
