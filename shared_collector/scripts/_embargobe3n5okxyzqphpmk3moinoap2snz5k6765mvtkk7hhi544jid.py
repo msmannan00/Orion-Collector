@@ -63,30 +63,20 @@ class _embargobe3n5okxyzqphpmk3moinoap2snz5k6765mvtkk7hhi544jid(leak_extractor_i
             page_count = 1
 
             while more_pages:
-                print(f"Processing page {page_count}...")
-
-
                 card_elements = page.query_selector_all("div.p-4.border-1.surface-border.surface-card.border-round")
                 if not card_elements:
-                    print(f"No leak data cards found on page {page_count}.")
                     break
-
-                print(f"Found {len(card_elements)} cards on page {page_count}")
 
                 for card in card_elements:
                     try:
-
                         company_name_element = card.query_selector("div.text-2xl.font-bold")
                         company_name = company_name_element.inner_text() if company_name_element else None
-
 
                         description_element = card.query_selector("div.blog-preview span")
                         description = description_element.inner_text() if description_element else None
 
-
                         image_element = card.query_selector("img.blog-image")
                         image_url = image_element.get_attribute("src") if image_element else None
-
 
                         date_element = card.query_selector("div.flex.flex-wrap.justify-content-end.gap-2 span")
                         date_of_publication = date_element.inner_text() if date_element else None
@@ -108,32 +98,22 @@ class _embargobe3n5okxyzqphpmk3moinoap2snz5k6765mvtkk7hhi544jid(leak_extractor_i
 
                         self._card_data.append(card_data)
 
-                    except Exception as card_ex:
-                        print(f"Error processing card: {card_ex}")
+                    except Exception:
                         continue
-
 
                 next_page_button = page.query_selector("button.p-paginator-next:not([disabled])")
 
                 if next_page_button:
-                    print(f"Moving to page {page_count + 1}...")
                     try:
-
                         next_page_button.click()
-
                         page.wait_for_load_state('networkidle')
-
                         page.wait_for_selector("div.p-4.border-1.surface-border.surface-card.border-round",
                                                state="visible", timeout=10000)
                         page_count += 1
-                    except Exception as nav_ex:
-                        print(f"Error navigating to next page: {nav_ex}")
+                    except Exception:
                         more_pages = False
                 else:
-                    print("No more pages to process.")
                     more_pages = False
-
-            print(f"Successfully processed {len(self._card_data)} cards across {page_count} pages")
 
         except Exception as ex:
             print(f"An error occurred in parse_leak_data: {ex}")
