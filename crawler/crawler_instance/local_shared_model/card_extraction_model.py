@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES

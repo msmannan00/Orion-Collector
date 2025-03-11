@@ -1,5 +1,7 @@
 # Local Imports
 import re
+from datetime import datetime
+from typing import Optional
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
@@ -26,6 +28,22 @@ class helper_method:
       return "clearnet"
     except Exception:
       return "invalid"
+
+  @staticmethod
+  def extract_and_convert_date(text: str) -> Optional[datetime.date]:
+    for pattern, fmt in [
+      (r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"),
+      (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"),
+      (r'(\d{2}-\d{2}-\d{4})', "%d-%m-%Y"),
+      (r'(\d{2}/\d{2}/\d{4})', "%m/%d/%Y"),
+      (r'(\d{1,2} \w+ \d{4})', "%d %B %Y")
+    ]:
+      if match := re.search(pattern, text):
+        try:
+          return datetime.strptime(match.group(0), fmt).date()
+        except ValueError:
+          continue
+    return None
 
   @staticmethod
   def extract_emails(text: str) -> list:
