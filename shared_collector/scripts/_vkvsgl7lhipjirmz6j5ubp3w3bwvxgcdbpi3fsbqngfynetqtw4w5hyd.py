@@ -57,7 +57,6 @@ class _vkvsgl7lhipjirmz6j5ubp3w3bwvxgcdbpi3fsbqngfynetqtw4w5hyd(leak_extractor_i
         return "https://www.iana.org/help/example-domains"
 
     def parse_leak_data(self, page: Page):
-        page.wait_for_selector('card-body')
         title_elements = page.query_selector_all('div.card-body.p-3.pt-2 a.h5')
 
         title_urls_list = [element.get_attribute('href') for element in title_elements]
