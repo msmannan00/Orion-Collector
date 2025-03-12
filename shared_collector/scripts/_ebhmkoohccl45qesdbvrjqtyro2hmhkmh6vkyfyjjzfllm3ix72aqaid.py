@@ -94,8 +94,7 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                 image_urls = []
                 for img in soup.select('div.advert_imgs_block img'):
                     img_src = img.get('src')
-                    full_img_url = urljoin(self.base_url, img_src)
-                    image_urls.append(full_img_url)
+                    image_urls.append(img_src)
 
                 actual_data_link_element = soup.select_one('div.advert_action a')
                 actual_data_link = actual_data_link_element['href'] if actual_data_link_element else None
