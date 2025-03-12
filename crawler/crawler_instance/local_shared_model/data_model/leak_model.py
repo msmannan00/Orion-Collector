@@ -1,57 +1,66 @@
-from dataclasses import dataclass, field
-from datetime import datetime, date
+from pydantic import BaseModel, Field, field_validator, model_validator
+from datetime import date, datetime
 from typing import List, Optional
-
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
 
-@dataclass
-class leak_model:
+class leak_model(BaseModel):
     m_title: str
     m_url: str
     m_base_url: str
     m_content: str
     m_important_content: str
     m_network: str
-    m_content_type: List[str] = field(default_factory=list)
-    m_weblink: List[str] = field(default_factory=list)
-    m_dumplink: List[str] = field(default_factory=list)
+    m_content_type: List[str] = Field(default_factory=list)
+    m_weblink: List[str] = Field(default_factory=list)
+    m_dumplink: List[str] = Field(default_factory=list)
     m_name: str = ""
-    m_email_addresses: List[str] = field(default_factory=list)
+    m_email_addresses: List[str] = Field(default_factory=list)
     m_industry: Optional[str] = None
-    m_phone_numbers: List[str] = field(default_factory=list)
-    m_addresses: List[str] = field(default_factory=list)
-    m_social_media_profiles: List[str] = field(default_factory=list)
-    m_websites: List[str] = field(default_factory=list)
+    m_phone_numbers: List[str] = Field(default_factory=list)
+    m_addresses: List[str] = Field(default_factory=list)
+    m_social_media_profiles: List[str] = Field(default_factory=list)
+    m_websites: List[str] = Field(default_factory=list)
     m_company_name: Optional[str] = None
-    m_logo_or_images: List[str] = field(default_factory=list)
+    m_logo_or_images: List[str] = Field(default_factory=list)
     m_leak_date: Optional[date] = None
     m_data_size: Optional[str] = None
     m_country_name: Optional[str] = None
     m_revenue: Optional[str] = None
 
-    def __post_init__(self):
-        required_fields = ["m_title", "m_url", "m_content", "m_base_url", "m_important_content"]
+    @field_validator('m_leak_date', mode='before')
+    def parse_leak_date(cls, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValueError(f"Invalid date format for m_leak_date: {value}. Expected format: YYYY-MM-DD.")
+        return value
 
+    @model_validator(mode='after')
+    def check_required_fields_and_enums(self):
+        # Check required fields
+        required_fields = ["m_title", "m_url", "m_content", "m_base_url", "m_important_content"]
         for field_name in required_fields:
             if getattr(self, field_name) is None:
                 raise ValueError(f"The field '{field_name}' is required and cannot be None.")
 
+        # Validate network type
         if self.m_network not in VALID_NETWORK_TYPES:
             raise ValueError(f"Invalid network type provided: {self.m_network}. Must be one of {', '.join(VALID_NETWORK_TYPES)}.")
 
+        # Validate content type is a list
         if not isinstance(self.m_content_type, list):
             raise ValueError("m_content_type must be a list of valid content types.")
 
+        # Validate content types against VALID_CONTENT_TYPES
         if not all(content in VALID_CONTENT_TYPES for content in self.m_content_type):
             raise ValueError(f"Invalid content type(s) provided: {self.m_content_type}. Must be a subset of {', '.join(VALID_CONTENT_TYPES)}.")
 
-        if isinstance(self.m_leak_date, str):
-            try:
-                self.m_leak_date = datetime.strptime(self.m_leak_date, "%Y-%m-%d").date()
-            except ValueError:
-                raise ValueError(f"Invalid date format for m_leak_date: {self.m_leak_date}. Expected format: YYYY-MM-DD.")
+        return self
 
-    class Config:
-        json_encoders = {
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "json_encoders": {
             date: lambda v: v.strftime("%Y-%m-%d") if v else None
         }
+    }

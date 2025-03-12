@@ -1,23 +1,28 @@
-from dataclasses import dataclass, field
-from datetime import datetime, date
+from pydantic import BaseModel, Field, field_validator
+from datetime import date, datetime
 from typing import Optional, List
 
-@dataclass
-class defacement_model:
-    m_location: str
-    m_attacker: str
+class defacement_model(BaseModel):
+    m_location: List[str]
+    m_attacker: List[str]
     m_team: str
-    m_web_server: str
+    m_web_server: List[str]
     m_base_url: str
-    m_ip: str
-    m_date_of_leak: Optional[date]
-    m_web_url: str
+    m_ip: List[str]
+    m_date_of_leak: Optional[date] = None
+    m_web_url: List[str]
     m_screenshot: Optional[str] = None
-    m_mirror_links: List[str] = field(default_factory=list)
+    m_mirror_links: List[str] = Field(default_factory=list)
 
-    def __post_init__(self):
-        if isinstance(self.m_date_of_leak, str):
+    @field_validator('m_date_of_leak', mode='before')
+    def parse_date_of_leak(cls, value):
+        if isinstance(value, str):
             try:
-                self.d_date_of_leak = datetime.strptime(self.m_date_of_leak, "%Y-%m-%d").date()
+                return datetime.strptime(value, "%Y-%m-%d").date()
             except ValueError:
-                raise ValueError(f"Invalid date format for d_date_of_leak: {self.d_date_of_leak}. Expected format: YYYY-MM-DD.")
+                raise ValueError(f"Invalid date format for m_date_of_leak: {value}. Expected format: YYYY-MM-DD.")
+        return value
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
