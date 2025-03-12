@@ -87,52 +87,25 @@ class _zone_xsec(defacement_collector_interface, ABC):
                         page.wait_for_load_state("load")
                         page.wait_for_selector(".panel.panel-danger")
 
-                        web_url = self.safe_find(page, "#url")
+
                         ip = self.safe_find(page, "p:has(strong):has-text('IP') strong")
                         defacer = self.safe_find(page, "p:has(strong):has-text('Defacer') strong")
                         location = self.safe_find(page, "p:has(strong):has-text('Location') strong")
                         web_server = self.safe_find(page, "p:has(strong):has-text('Web Server') strong")
                         date = self.safe_find(page, "p:has(strong):has-text('Saved on') strong")
+                        team = self.safe_find(page, "p:has(strong):has-text('Team') strong")
 
-                        iframe = page.query_selector("iframe")
-                        if not iframe:
-                            try:
-                                iframe = page.wait_for_selector("iframe", timeout=10000)  # Reduced timeout to 5 seconds
-                            except TimeoutError:
-                                print(f"Iframe not found for link: {link}")
-                                continue
 
-                        if iframe:
-                            iframe_content_frame = iframe.content_frame()
-                            if iframe_content_frame:
-                                iframe_content_frame.wait_for_load_state("load")
-                                iframe_html = iframe_content_frame.content()
-                                soup = BeautifulSoup(iframe_html, "html.parser")
-
-                                m_content_container = soup.get_text(separator="\n", strip=True)
-                                if len(m_content_container.split()) > 500:
-                                    words = m_content_container.split()
-                                    m_important_content_container = " ".join(words[:500])
-                                    m_content_container = " ".join(words[500:])
-                                else:
-                                    m_important_content_container = m_content_container
-                                    m_content_container = ""
-                            else:
-                                m_content_container = ""
-                                m_important_content_container = ""
-                        else:
-                            m_content_container = ""
-                            m_important_content_container = ""
 
                         card_data = defacement_model(
-                            m_web_server=[web_url] if web_url else [],
+                            m_web_server=web_server,
                             m_web_url=link,
-                            m_ip=[location, ip] if location and ip else [],
+                            m_ip=ip,
                             m_base_url=self.base_url,
                             m_date_of_leak = helper_method.extract_and_convert_date(date),
-                            m_team="",
+                            m_team=team,
                             m_location=location,
-                            m_attacker=""
+                            m_attacker=defacer
                         )
 
                         self._card_data.append(card_data)
