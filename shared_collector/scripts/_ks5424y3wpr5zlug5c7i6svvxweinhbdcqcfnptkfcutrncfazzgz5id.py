@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import List
+from urllib.parse import urlparse
 
 from playwright.sync_api import Page
 
@@ -65,7 +66,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 full_url = f"{self.base_url}/posts.php{href}"
                 link_urls.append(full_url)
 
-        for url in link_urls:
+        for url in link_urls[:2]:
             page.goto(url)
 
             title = page.query_selector('st').inner_text() if page.query_selector('st') else ""
@@ -84,10 +85,13 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
             else:
                 important_content = content
 
-
             gallery_images = page.query_selector_all('gallery img')
-            images = [img.get_attribute('src').strip() for img in gallery_images if
-                      img.get_attribute('src') and img.get_attribute('src').endswith('.png')]
+            images = []
+            for img in gallery_images:
+                img_src = img.get_attribute('src')
+                if img_src and img_src.endswith('.png'):
+                    parsed_url = urlparse(img_src)
+                    images.append(parsed_url.path.strip())
 
             download_url = ""
             download_btn = page.query_selector('a.btn[onclick*="showdir"]')
