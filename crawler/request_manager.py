@@ -10,9 +10,8 @@ from playwright.async_api import Browser, BrowserContext
 from playwright.sync_api import sync_playwright
 from selenium.common import TimeoutException
 
-from crawler.crawler_instance.local_interface_model.defacement.defacement_collector_interface import defacement_collector_interface
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
-from crawler.crawler_instance.local_interface_model.leak.leak_data_model import leak_data_model
+from crawler.crawler_instance.local_interface_model.leak.model.leak_data_model import leak_data_model
 from crawler.crawler_instance.local_shared_model.rule_model import FetchProxy
 
 
@@ -38,7 +37,7 @@ def check_services_status():
     sys.exit(1)
 
 
-def parse_leak_data(proxy: dict, model: leak_extractor_interface|defacement_collector_interface) -> tuple:
+def parse_leak_data(proxy: dict, model: leak_extractor_interface|leak_extractor_interface) -> tuple:
   default_data_model = leak_data_model(
     cards_data=[],
     contact_link=model.contact_page(),
