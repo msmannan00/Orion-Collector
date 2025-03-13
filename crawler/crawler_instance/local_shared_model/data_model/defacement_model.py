@@ -8,6 +8,8 @@ class defacement_model(BaseModel):
     m_team: str
     m_web_server: List[str]
     m_base_url: str
+    m_network: str
+    m_content: str
     m_ip: List[str]
     m_date_of_leak: Optional[date] = None
     m_web_url: List[str]
