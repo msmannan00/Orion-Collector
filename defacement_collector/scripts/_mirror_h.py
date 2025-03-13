@@ -63,9 +63,9 @@ class _mirror_h(leak_extractor_interface, ABC):
         try:
             is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
             if is_crawled:
-                max_pages = 20
+                max_pages = 1
             else:
-                max_pages = 500
+                max_pages = 2
 
             current_page = 1
 
@@ -96,34 +96,26 @@ class _mirror_h(leak_extractor_interface, ABC):
                     attacker = self.safe_find(page, "//td[i[contains(@class, 'mdi-account')]]/following-sibling::td/strong/a")
                     total = self.safe_find(page, "//td[i[contains(@class, 'mdi-clipboard-plus')]]/following-sibling::td/strong")
                     date = self.safe_find(page, "//td[i[contains(@class, 'mdi-calendar')]]/following-sibling::td/strong")
-                    report_type = self.safe_find(page, "//td[i[contains(@class, 'mdi-arch')]]/following-sibling::td/strong")
 
                     iframe = page.query_selector("iframe")
                     if iframe:
                         iframe_content = iframe.content_frame().content()
                         soup = BeautifulSoup(iframe_content, 'html.parser')
-                        m_content_container = soup.get_text(separator="\n", strip=True)
-
-                        words = m_content_container.split()
-                        if len(words) > 500:
-                            m_important_content_container = " ".join(words[:500])
-                            m_content_container = " ".join(words[500:])
-                        else:
-                            m_important_content_container = m_content_container
-                            m_content_container = ""
+                        content = soup.get_text(strip=True)
                     else:
-                        m_content_container = ""
-                        m_important_content_container = ""
+                        content = ""
 
                     card_data = defacement_model(
-                        m_location=location,
-                        m_attacker=attacker,
-                        m_ip=server_ip,
-                        m_date_of_leak=date,
-                        m_web_server=web_server,
-                        m_web_url=web_url,
+                        m_location=[location] if location else [],
+                        m_attacker=[attacker] if attacker else [],
+                        m_ip=[server_ip] if server_ip else [],
+                        m_date_of_leak=helper_method.extract_and_convert_date(date),
+                        m_web_server=[web_server] if web_server else [],
+                        m_web_url=[web_url] if web_url else [],
                         m_base_url=self.base_url,
-
+                        m_network=helper_method.get_network_type(self.base_url),
+                        m_team=total,
+                        m_content=content,
 
                     )
 
