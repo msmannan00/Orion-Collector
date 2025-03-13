@@ -82,8 +82,6 @@ class _mirror_h(leak_extractor_interface, ABC):
                     if 'zone' in href:
                         collected_links.append(urljoin(self.base_url, href))
 
-                today_date = datetime.today().strftime('%Y-%m-%d')
-
                 for link in collected_links:
                     page.goto(link)
                     page.wait_for_load_state('load')
