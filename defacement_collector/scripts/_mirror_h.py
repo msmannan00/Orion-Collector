@@ -63,9 +63,9 @@ class _mirror_h(leak_extractor_interface, ABC):
         try:
             is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
             if is_crawled:
-                max_pages = 1
+                max_pages = 100
             else:
-                max_pages = 2
+                max_pages = 1000
 
             current_page = 1
 
