@@ -3,8 +3,7 @@ from typing import List
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, TimeoutError
 from urllib.parse import urljoin
-
-from crawler.crawler_instance.local_interface_model.defacement.defacement_collector_interface import defacement_collector_interface
+from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.defacement_model import defacement_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig, ThreatType
@@ -12,8 +11,7 @@ from crawler.crawler_services.redis_manager.redis_controller import redis_contro
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 
-
-class _zone_xsec(defacement_collector_interface, ABC):
+class _zone_xsec(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self):
@@ -37,7 +35,7 @@ class _zone_xsec(defacement_collector_interface, ABC):
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.NONE, m_fetch_config=FetchConfig.SELENIUM, threat_type=ThreatType.DEFACEMENT)
+        return RuleModel(m_fetch_proxy=FetchProxy.NONE, m_fetch_config=FetchConfig.SELENIUM, m_threat_type=ThreatType.DEFACEMENT)
 
     @property
     def card_data(self) -> List[leak_model]:
@@ -60,52 +58,57 @@ class _zone_xsec(defacement_collector_interface, ABC):
     def parse_leak_data(self, page: Page):
         try:
             is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
-            if is_crawled:
-                max_pages = 20
-            else:
-                max_pages = 500
+            max_pages = 20 if is_crawled else 500
 
             current_page = 1
-
             while current_page <= max_pages:
                 full_url = f"{self.seed_url}/page={current_page}"
                 page.goto(full_url)
                 page.wait_for_load_state("load")
                 page.wait_for_selector("a[title='Show Mirror']")
 
-                links = page.query_selector_all("a[title='Show Mirror']")
-                collected_links = []
+                links = [urljoin(self.base_url, link.get_attribute("href"))
+                         for link in page.query_selector_all("a[title='Show Mirror']")
+                         if link.get_attribute("href")]
+
                 for link in links:
-                    href = link.get_attribute("href")
-                    if href:
-                        collected_links.append(urljoin(self.base_url, href))
-
-
-                for link in collected_links:
                     try:
                         page.goto(link)
                         page.wait_for_load_state("load")
                         page.wait_for_selector(".panel.panel-danger")
-
-
                         ip = self.safe_find(page, "p:has(strong):has-text('IP') strong")
                         defacer = self.safe_find(page, "p:has(strong):has-text('Defacer') strong")
                         location = self.safe_find(page, "p:has(strong):has-text('Location') strong")
                         web_server = self.safe_find(page, "p:has(strong):has-text('Web Server') strong")
                         date = self.safe_find(page, "p:has(strong):has-text('Saved on') strong")
                         team = self.safe_find(page, "p:has(strong):has-text('Team') strong")
+                        iframe = page.query_selector("iframe")
+                        if not iframe:
+                            try:
+                                iframe = page.wait_for_selector("iframe", timeout=10000)
+                            except TimeoutError:
+                                print(f"Iframe not found for link: {link}")
+                                continue
 
-
+                        m_mirror = ""
+                        if iframe:
+                            iframe_content_frame = iframe.content_frame()
+                            if iframe_content_frame:
+                                iframe_content_frame.wait_for_load_state("load")
+                                m_mirror = iframe_content_frame.content()
 
                         card_data = defacement_model(
-                            m_web_server=web_server,
-                            m_web_url=link,
-                            m_ip=ip,
+                            m_web_server=[web_server],
+                            m_web_url=[link],
+                            m_ip=[ip],
+                            m_content="",
                             m_base_url=self.base_url,
-                            m_date_of_leak = helper_method.extract_and_convert_date(date),
+                            m_date_of_leak=helper_method.extract_and_convert_date(date),
                             m_team=team,
-                            m_location=location,
-                            m_attacker=defacer
+                            m_location=[location],
+                            m_attacker=[defacer],
+                            m_mirror_links=[m_mirror],
+                            m_network=helper_method.get_network_type(self.base_url),
                         )
 
                         self._card_data.append(card_data)
