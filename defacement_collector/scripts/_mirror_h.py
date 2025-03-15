@@ -98,10 +98,12 @@ class _mirror_h(leak_extractor_interface, ABC):
                     iframe = page.query_selector("iframe")
                     if iframe:
                         iframe_content = iframe.content_frame().content()
+                        iframe_url = iframe.get_attribute("src")
                         soup = BeautifulSoup(iframe_content, 'html.parser')
                         content = soup.get_text(strip=True)
                     else:
                         content = ""
+                        iframe_url=""
 
                     card_data = defacement_model(
                         m_location=[location] if location else [],
@@ -114,6 +116,7 @@ class _mirror_h(leak_extractor_interface, ABC):
                         m_network=helper_method.get_network_type(self.base_url),
                         m_team=total,
                         m_content=content,
+                        m_mirror_links=[iframe_url] if iframe_url else []
 
                     )
 
