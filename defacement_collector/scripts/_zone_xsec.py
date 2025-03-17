@@ -85,7 +85,7 @@ class _zone_xsec(leak_extractor_interface, ABC):
                         iframe = page.query_selector("iframe")
                         if not iframe:
                             try:
-                                iframe = page.wait_for_selector("iframe", timeout=10000)
+                                iframe = page.wait_for_selector("iframe")
                             except TimeoutError:
 
                                 continue
