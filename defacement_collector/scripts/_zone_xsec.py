@@ -87,15 +87,14 @@ class _zone_xsec(leak_extractor_interface, ABC):
                             try:
                                 iframe = page.wait_for_selector("iframe", timeout=10000)
                             except TimeoutError:
-                                print(f"Iframe not found for link: {link}")
+
                                 continue
 
                         m_mirror = ""
                         if iframe:
-                            iframe_content_frame = iframe.content_frame()
-                            if iframe_content_frame:
-                                iframe_content_frame.wait_for_load_state("load")
-                                m_mirror = iframe_content_frame.content()
+                            iframe_src = iframe.get_attribute("src")
+                            if iframe_src:
+                                m_mirror = iframe_src
 
                         card_data = defacement_model(
                             m_web_server=[web_server],
