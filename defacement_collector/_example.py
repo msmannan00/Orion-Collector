@@ -4,6 +4,7 @@ from typing import List
 from playwright.sync_api import Page
 
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_shared_model.data_model.defacement_model import defacement_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
@@ -98,17 +99,18 @@ class _example(leak_extractor_interface, ABC):
         Returns:
             None
         """
-        m_content = ""
-        self._card_data = leak_model(
-            m_title=page.title(),
-            m_url=page.url,
+        m_content = "This is a sample defacement content."
+        self._card_data = defacement_model(
+            m_location=["United States", "California"],
+            m_attacker=["HackerX", "AnonUser"],
+            m_team="CyberCrew",
+            m_web_server=["Apache/2.4.41", "nginx/1.18.0"],
             m_base_url=self.base_url,
+            m_network=helper_method.get_network_type(self.base_url),
             m_content=m_content,
-            m_network=helper_method.get_network_type(self.base_url).value,
-            m_important_content=m_content,
-            m_weblink=[],
-            m_dumplink=[],
-            m_email_addresses=helper_method.extract_emails(m_content),
-            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-            m_content_type="organization",
+            m_ip=["192.168.1.1", "10.0.0.1"],
+            m_date_of_leak="2025-03-17",
+            m_web_url=["https://example.com/defaced", "https://example.com/hacked"],
+            m_screenshot="https://example.com/screenshot.png",
+            m_mirror_links=["https://mirror1.example.com", "https://mirror2.example.com"]
         )

@@ -104,11 +104,11 @@ class _example(leak_extractor_interface, ABC):
             m_url=page.url,
             m_base_url=self.base_url,
             m_content=m_content,
-            m_network=helper_method.get_network_type(self.base_url).value,
+            m_network=helper_method.get_network_type(self.base_url),
             m_important_content=m_content,
             m_weblink=[],
             m_dumplink=[],
             m_email_addresses=helper_method.extract_emails(m_content),
             m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-            m_content_type="organization",
+            m_content_type=["leaks"],
         )

@@ -2,8 +2,10 @@ from abc import ABC
 from typing import Dict
 from playwright.async_api import BrowserContext
 from crawler.crawler_instance.local_interface_model.api.api_collector_interface import api_collector_interface
+from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
+from crawler.crawler_services.shared.helper_method import helper_method
 
 '''
  Implementation Guidelines:
@@ -43,7 +45,7 @@ class _example(api_collector_interface, ABC):
             >> print(instance.base_url)
             "http://sample.onion"
         """
-        return "http://sample.onion"
+        return "https://example.com"
 
     @property
     def rule_config(self) -> RuleModel:
@@ -59,26 +61,31 @@ class _example(api_collector_interface, ABC):
         return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
 
     async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
-        """
-        Parses leak data by navigating the page using Playwright's context.
+        p_data_url = self.base_url
+        email = query.get("email", "john.doe@gmail.com")
+        username = query.get("username", "johndoe123")
 
-        Args:
-            query (Dict[str, str]): Query dictionary containing "url", "email", and "username".
-            context (BrowserContext): Playwright's BrowserContext for interacting with web pages.
-
-        Returns:
-            api_data_model: A model containing the parsed data.
-        """
-        p_data_url = query.get("url", "")
         collector_model = api_data_model(base_url=p_data_url, content_type=["email", "username"])
-        collector_model.cards_data = []
+        combined_records = set()
 
         page = await context.new_page()
-        try:
-            await page.goto(p_data_url)
-        except Exception as e:
-            pass
-        finally:
-            await page.close()
+        await page.goto(p_data_url)
 
+        combined_records.update(["Adobe Breach 2013", "LinkedIn Leak 2016"])
+
+        collector_model.cards_data = [leak_model(
+            m_title="Breach Found",
+            m_url=p_data_url,
+            m_base_url=p_data_url,
+            m_content="Data breach detected.",
+            m_important_content="Records exposed.",
+            m_network=helper_method.get_network_type(p_data_url),
+            m_content_type=["stolen"],
+            m_weblink=[],
+            m_dumplink=list(combined_records),
+            m_email_addresses=[email],
+            m_name=username
+        )]
+
+        await page.close()
         return collector_model
