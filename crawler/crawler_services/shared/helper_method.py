@@ -2,15 +2,19 @@
 import re
 import datetime
 from urllib.parse import urlparse
+
+import unicodedata
 from bs4 import BeautifulSoup
 
 class helper_method:
 
   @staticmethod
-  def clean_text(text: str) -> str:
+  def clean_text(text):
+    text = unicodedata.normalize("NFKC", text)
     text = re.sub(r'\s+', ' ', text)
-    text = text.strip()
-    return text
+    text = re.sub(r'[\u2066\u2067\u2068\u2069\u202A-\u202E]', '', text)
+    text = ''.join(char for char in text if char.isprintable())
+    return text.strip()
 
   @staticmethod
   def get_network_type(url: str):

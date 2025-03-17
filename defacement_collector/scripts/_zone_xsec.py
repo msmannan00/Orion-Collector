@@ -1,6 +1,5 @@
 from abc import ABC
 from typing import List
-from bs4 import BeautifulSoup
 from playwright.sync_api import Page, TimeoutError
 from urllib.parse import urljoin
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface

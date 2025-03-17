@@ -1,5 +1,4 @@
 from abc import ABC
-from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page
