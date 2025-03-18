@@ -35,7 +35,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
 
   @property
   def rule_config(self) -> RuleModel:
-    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
+    return RuleModel(m_fetch_proxy=FetchProxy.NONE, m_fetch_config=FetchConfig.SELENIUM)
 
   @property
   def card_data(self) -> List[leak_model]:
@@ -80,7 +80,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
         soup = BeautifulSoup(page.content(), "html.parser")
         card_content = helper_method.clean_text(soup.get_text(separator=" ", strip=True))
         card_title = helper_method.clean_text(page.locator('h2').first.inner_text())
-        extracted_text = card_content
+        extracted_text = card_content  # Reuse cleaned text to avoid redundant parsing
         current_url = page.url
 
         leak_data = leak_model(
