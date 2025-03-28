@@ -1,6 +1,7 @@
 # Local Imports
 import re
 import datetime
+from time import sleep
 from urllib.parse import urlparse
 import base64
 import unicodedata
@@ -17,9 +18,12 @@ class helper_method:
     return text.strip()
 
   @staticmethod
-  def get_screenshot_base64(page):
+  def get_screenshot_base64(page, search_string):
     page.wait_for_load_state("load")
-    return base64.b64encode(page.screenshot()).decode('utf-8')
+    element = page.locator(f":text('{search_string}')").first
+    element.scroll_into_view_if_needed()
+    screenshot_bytes = page.screenshot()
+    return base64.b64encode(screenshot_bytes).decode('utf-8')
 
   @staticmethod
   def get_network_type(url: str):
