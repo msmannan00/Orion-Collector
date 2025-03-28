@@ -2,7 +2,7 @@
 import re
 import datetime
 from urllib.parse import urlparse
-
+import base64
 import unicodedata
 from bs4 import BeautifulSoup
 
@@ -15,6 +15,11 @@ class helper_method:
     text = re.sub(r'[\u2066\u2067\u2068\u2069\u202A-\u202E]', '', text)
     text = ''.join(char for char in text if char.isprintable())
     return text.strip()
+
+  @staticmethod
+  def get_screenshot_base64(page):
+    page.wait_for_load_state("load")
+    return base64.b64encode(page.screenshot()).decode('utf-8')
 
   @staticmethod
   def get_network_type(url: str):

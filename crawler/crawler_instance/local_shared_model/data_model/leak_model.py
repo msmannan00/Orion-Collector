@@ -10,6 +10,7 @@ class leak_model(BaseModel):
     m_content: str
     m_important_content: str
     m_network: str
+    m_screenshot: str
     m_content_type: List[str] = Field(default_factory=list)
     m_weblink: List[str] = Field(default_factory=list)
     m_dumplink: List[str] = Field(default_factory=list)
@@ -38,21 +39,17 @@ class leak_model(BaseModel):
 
     @model_validator(mode='after')
     def check_required_fields_and_enums(self):
-        # Check required fields
-        required_fields = ["m_title", "m_url", "m_content", "m_base_url", "m_important_content"]
+        required_fields = ["m_title", "m_url", "m_content", "m_base_url", "m_important_content", "m_screenshot"]
         for field_name in required_fields:
             if getattr(self, field_name) is None:
                 raise ValueError(f"The field '{field_name}' is required and cannot be None.")
 
-        # Validate network type
         if self.m_network not in VALID_NETWORK_TYPES:
             raise ValueError(f"Invalid network type provided: {self.m_network}. Must be one of {', '.join(VALID_NETWORK_TYPES)}.")
 
-        # Validate content type is a list
         if not isinstance(self.m_content_type, list):
             raise ValueError("m_content_type must be a list of valid content types.")
 
-        # Validate content types against VALID_CONTENT_TYPES
         if not all(content in VALID_CONTENT_TYPES for content in self.m_content_type):
             raise ValueError(f"Invalid content type(s) provided: {self.m_content_type}. Must be a subset of {', '.join(VALID_CONTENT_TYPES)}.")
 
