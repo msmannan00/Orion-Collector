@@ -3,7 +3,6 @@ from playwright.async_api import async_playwright
 
 from api_collector._example import _example
 from crawler.request_manager import _initialize_webdriver
-from api_collector.scripts._breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd import _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd
 
 email = "msmannan00@gmail.com"
 username = "msmannan00"

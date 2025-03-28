@@ -103,6 +103,8 @@ class _example(leak_extractor_interface, ABC):
         self._card_data = defacement_model(
             m_location=["United States", "California"],
             m_attacker=["HackerX", "AnonUser"],
+            m_screenshot="",
+            m_url=self.base_url,
             m_team="CyberCrew",
             m_web_server=["Apache/2.4.41", "nginx/1.18.0"],
             m_base_url=self.base_url,
@@ -111,6 +113,5 @@ class _example(leak_extractor_interface, ABC):
             m_ip=["192.168.1.1", "10.0.0.1"],
             m_date_of_leak="2025-03-17",
             m_web_url=["https://example.com/defaced", "https://example.com/hacked"],
-            m_screenshot="https://example.com/screenshot.png",
             m_mirror_links=["https://mirror1.example.com", "https://mirror2.example.com"]
         )

@@ -77,6 +77,7 @@ class _example(api_collector_interface, ABC):
             m_title="Breach Found",
             m_url=p_data_url,
             m_base_url=p_data_url,
+            m_screenshot="",
             m_content="Data breach detected.",
             m_important_content="Records exposed.",
             m_network=helper_method.get_network_type(p_data_url),

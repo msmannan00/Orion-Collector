@@ -6,6 +6,9 @@ from urllib.parse import urlparse
 import base64
 import unicodedata
 from bs4 import BeautifulSoup
+from cffi.model import qualify
+from playwright.sync_api import Page
+
 
 class helper_method:
 
@@ -18,10 +21,10 @@ class helper_method:
     return text.strip()
 
   @staticmethod
-  def get_screenshot_base64(page, search_string):
+  def get_screenshot_base64(page: Page, search_string):
     page.wait_for_load_state("load")
     element = page.locator(f":text('{search_string}')").first
-    element.scroll_into_view_if_needed()
+    element.evaluate("element => element.scrollIntoView({ block: 'start' })")
     screenshot_bytes = page.screenshot()
     return base64.b64encode(screenshot_bytes).decode('utf-8')
 
