@@ -79,7 +79,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
         page.goto(dumplink, wait_until="domcontentloaded")
         soup = BeautifulSoup(page.content(), "html.parser")
         card_content = helper_method.clean_text(soup.get_text(separator=" ", strip=True))
-        card_title = helper_method.clean_text(page.locator('h2').first.inner_text())
+        card_title = helper_method.clean_text(page.locator('h1').nth(1).inner_text()[1:])
         extracted_text = card_content  # Reuse cleaned text to avoid redundant parsing
         current_url = page.url
 
