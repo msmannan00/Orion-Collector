@@ -84,8 +84,8 @@ def parse_leak_data(proxy: dict, model: leak_extractor_interface|leak_extractor_
       try:
         page = context.new_page()
 
-        # if model.rule_config.m_resoource_block:
-        #   page.route("**/*", get_block_resources)
+        if model.rule_config.m_resoource_block:
+          page.route("**/*", get_block_resources)
 
         def capture_response(response):
           if not response.url.__contains__("ads") and response.request.resource_type == "document" and response.ok:

@@ -80,10 +80,6 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
                         description_element = buy_page.query_selector(".order-details tr:nth-child(4) td")
                         description = description_element.inner_text().strip() if description_element else "No description"
 
-
-                        buy_page.close()
-                        page.bring_to_front()
-
                         self._card_data.append(
                             leak_model(
                                 m_screenshot=helper_method.get_screenshot_base64(page, database),
@@ -100,6 +96,8 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
                                 m_leak_date=helper_method.extract_and_convert_date(year),
                             )
                         )
+                        buy_page.close()
+                        page.bring_to_front()
 
                     except Exception as e:
                         print(f"Error processing row: {e}")

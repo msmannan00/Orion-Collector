@@ -1,10 +1,12 @@
 # Local Imports
 import re
 import datetime
+from asyncio import sleep
 from urllib.parse import urlparse
 import base64
 import unicodedata
 from bs4 import BeautifulSoup
+
 
 class helper_method:
 
@@ -19,6 +21,7 @@ class helper_method:
   @staticmethod
   def get_screenshot_base64(page, search_string):
     page.wait_for_load_state("load")
+    page.add_style_tag(content="*,*::before,*::after{transition:none!important;animation:none!important;animation-delay:0s!important;animation-duration:0s!important;scroll-behavior:auto!important;}")
     element = page.locator(f":text('{search_string}')").first
     element.evaluate("element => element.scrollIntoView({ block: 'start' })")
     screenshot_bytes = page.screenshot()
