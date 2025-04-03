@@ -1,4 +1,3 @@
-import re
 from abc import ABC
 from typing import List
 
@@ -16,7 +15,8 @@ from crawler.crawler_services.shared.helper_method import helper_method
 class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_interface, ABC):
     _instance = None
 
-    def __init__(self):
+    def __init__(self, callback=None):
+        self.callback = callback
         self._card_data = []
         self.soup = None
         self._initialized = None
@@ -49,6 +49,11 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
 
     def contact_page(self) -> str:
         return "kairossup@onionmail.com"
+
+    def append_leak_data(self, leak: leak_model) -> None:
+        self._card_data.append(leak)
+        if self.callback:
+            self.callback()
 
     def parse_leak_data(self, page: Page):
         visited_pages = set()
@@ -113,7 +118,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
 
                 dumplinks = [a['href'].strip() for a in detail_soup.find_all('a', href=True) if ".onion" in a['href']]
                 title = title.split("\\")[0]
-                self._card_data.append(leak_model(
+                self.append_leak_data(leak_model(
                     m_screenshot=helper_method.get_screenshot_base64(page, title),
                     m_title=title,
                     m_content=content,

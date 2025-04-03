@@ -15,7 +15,8 @@ from crawler.crawler_services.shared.helper_method import helper_method
 class _ddosecrets(leak_extractor_interface, ABC):
     _instance = None
 
-    def __init__(self):
+    def __init__(self, callback=None):
+        self.callback = callback
         self._card_data = []
         self.soup = None
         self._initialized = None
@@ -48,6 +49,11 @@ class _ddosecrets(leak_extractor_interface, ABC):
 
     def contact_page(self) -> str:
         return "https://ddosecrets.com/about"
+
+    def append_leak_data(self, leak: leak_model) -> None:
+        self._card_data.append(leak)
+        if self.callback:
+            self.callback()
 
     def parse_leak_data(self, page: Page):
         page.goto(self.seed_url, wait_until="networkidle")
@@ -135,7 +141,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_data_size=download_size,
                 )
 
-                self._card_data.append(card)
+                self.append_leak_data(card)
 
             except Exception as e:
                 print(f"Error processing {article_url}: {e}")

@@ -71,7 +71,7 @@ def parse_leak_data(proxy: dict, model: leak_extractor_interface|leak_extractor_
   try:
     with sync_playwright() as p:
       if model.rule_config.m_fetch_proxy is FetchProxy.NONE:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
       else:
         browser = p.chromium.launch(proxy=proxy, headless=False)
 

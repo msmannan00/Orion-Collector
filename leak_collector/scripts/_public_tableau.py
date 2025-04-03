@@ -1,7 +1,7 @@
 import re
 from abc import ABC
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Callable
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
@@ -15,13 +15,15 @@ from crawler.crawler_services.shared.helper_method import helper_method
 class _public_tableau(leak_extractor_interface, ABC):
     _instance = None
 
-    def __init__(self):
+    def __init__(self, callback=None):
+        self.callback = callback
         self._card_data = []
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+        self.callback = callback  # Optional, no-param callback
 
-    def __new__(cls):
+    def __new__(cls, callback: Optional[Callable[[], None]] = None):
         if cls._instance is None:
             cls._instance = super(_public_tableau, cls).__new__(cls)
             cls._instance._initialized = False
@@ -48,6 +50,11 @@ class _public_tableau(leak_extractor_interface, ABC):
 
     def contact_page(self) -> str:
         return "https://privacyrights.org/contact"
+
+    def append_leak_data(self, leak: leak_model) -> None:
+        self._card_data.append(leak)
+        if self.callback:
+            self.callback()
 
     def parse_leak_data(self, page: Page):
         is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
@@ -127,10 +134,9 @@ class _public_tableau(leak_extractor_interface, ABC):
                         data_dict.get("Organization Type", ""),
                         data_dict.get("Information Impacted", "")
                     ]
-
                     m_content = "\n".join(content_parts).strip()
 
-                    self._card_data.append(leak_model(
+                    leak = leak_model(
                         m_title=company_name,
                         m_section=content_parts,
                         m_url=page.url,
@@ -157,15 +163,15 @@ class _public_tableau(leak_extractor_interface, ABC):
                         m_country_name="United States",
                         m_states=[data_dict["Breach Location State"]]
                         if "Breach Location State" in data_dict else [],
-                    ))
+                    )
+                    self.append_leak_data(leak)
 
                 y_position += 20
                 hover_count += 1
                 if hover_count % 15 == 0:
                     page.mouse.wheel(0, 280)
                     y_position = default_y_position
-        except Exception as ex:
+        except Exception:
             pass
         finally:
             self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
-
