@@ -50,6 +50,9 @@ class _public_tableau(leak_extractor_interface, ABC):
         return "https://privacyrights.org/contact"
 
     def parse_leak_data(self, page: Page):
+        is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, False)
+        max_pages = 100 if is_crawled else 50000
+
         page.evaluate("""
             const cursor = document.createElement('div');
             cursor.id = 'fake-cursor';
@@ -79,11 +82,11 @@ class _public_tableau(leak_extractor_interface, ABC):
         previous_content = None
         self._card_data = []
 
-        for _ in range(100000):
-            page.mouse.move(x_position, y_position)
-            page.evaluate(f'moveFakeCursor({x_position}, {y_position});')
+        try:
+            for _ in range(max_pages):
+                page.mouse.move(x_position, y_position)
+                page.evaluate(f'moveFakeCursor({x_position}, {y_position});')
 
-            try:
                 page.wait_for_selector(".tab-tooltipContainer", timeout=5000)
                 tooltip_element = page.query_selector(".tab-tooltipContainer")
                 if tooltip_element:
@@ -155,12 +158,14 @@ class _public_tableau(leak_extractor_interface, ABC):
                         m_states=[data_dict["Breach Location State"]]
                         if "Breach Location State" in data_dict else [],
                     ))
-                    print("::::::::::::::::::::::::")
-            except:
-                pass
 
-            y_position += 20
-            hover_count += 1
-            if hover_count % 15 == 0:
-                page.mouse.wheel(0, 280)
-                y_position = default_y_position
+                y_position += 20
+                hover_count += 1
+                if hover_count % 15 == 0:
+                    page.mouse.wheel(0, 280)
+                    y_position = default_y_position
+        except Exception as ex:
+            pass
+        finally:
+            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
+

@@ -12,7 +12,7 @@ class leak_model(BaseModel):
     m_content: str
     m_important_content: str
     m_network: str
-    m_section: Optional[str] = Field(default_factory=list)
+    m_section: Optional[List[str]] = Field(default_factory=list)
     m_content_type: List[str] = Field(default_factory=list)
 
     m_screenshot: base64
