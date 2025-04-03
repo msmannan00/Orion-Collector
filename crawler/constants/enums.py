@@ -8,6 +8,7 @@ VALID_NETWORK_TYPES = [
 VALID_CONTENT_TYPES = [
     "general",
     "forums",
+    "tracking",
     "news",
     "stolen",
     "drugs",

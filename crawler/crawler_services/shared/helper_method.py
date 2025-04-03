@@ -1,7 +1,6 @@
 # Local Imports
 import re
 import datetime
-from asyncio import sleep
 from urllib.parse import urlparse
 import base64
 import unicodedata
@@ -20,12 +19,28 @@ class helper_method:
 
   @staticmethod
   def get_screenshot_base64(page, search_string):
-    page.wait_for_load_state("load")
-    page.add_style_tag(content="*,*::before,*::after{transition:none!important;animation:none!important;animation-delay:0s!important;animation-duration:0s!important;scroll-behavior:auto!important;}")
-    element = page.locator(f":text('{search_string}')").first
-    element.evaluate("element => element.scrollIntoView({ block: 'start' })")
-    screenshot_bytes = page.screenshot()
-    return base64.b64encode(screenshot_bytes).decode('utf-8')
+    try:
+      page.wait_for_load_state("load", timeout=10_000)
+
+      # Disable animations
+      page.add_style_tag(content=(
+        "*,*::before,*::after{"
+        "transition:none!important;"
+        "animation:none!important;"
+        "animation-delay:0s!important;"
+        "animation-duration:0s!important;"
+        "scroll-behavior:auto!important;"
+        "}"
+      ))
+
+      element = page.locator(f":text('{search_string}')").first
+      element.wait_for(timeout=10_000)
+      element.evaluate("element => element.scrollIntoView({ block: 'start' })")
+
+      screenshot_bytes = page.screenshot()
+      return base64.b64encode(screenshot_bytes).decode('utf-8')
+    except Exception as _:
+      return ""
 
   @staticmethod
   def get_network_type(url: str):

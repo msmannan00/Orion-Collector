@@ -117,7 +117,7 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
                             slick_images.append(img_src.strip())
 
                     download_element = page.query_selector('li.download__list-item a.counter_link')
-                    dumplinks = download_element.get_attribute("href") if download_element else None
+                    dumplinks = download_element.get_attribute("href") if download_element else ""
 
                     with page.expect_navigation(wait_until="domcontentloaded"):
                         page.go_back()

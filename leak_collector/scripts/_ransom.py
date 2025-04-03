@@ -124,7 +124,7 @@ class _ransom(leak_extractor_interface, ABC):
                 m_important_content=description,
                 m_weblink=[website],
                 m_leak_date=helper_method.extract_and_convert_date(published),
-                m_addresses=[country],
+                m_location_info=[country],
                 m_dumplink=[],
                 m_email_addresses=helper_method.extract_emails(soup.text),
                 m_phone_numbers=helper_method.extract_phone_numbers(soup.text),

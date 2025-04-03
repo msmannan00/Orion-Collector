@@ -131,7 +131,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_dumplink=dumplinks,
                     m_leak_date=published_date,
                     m_company_name=source,
-                    m_addresses=countries,
+                    m_location_info=countries,
                     m_data_size=download_size,
                 )
 

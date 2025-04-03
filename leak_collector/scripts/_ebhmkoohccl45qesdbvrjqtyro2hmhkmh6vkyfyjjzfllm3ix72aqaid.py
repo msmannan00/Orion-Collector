@@ -114,7 +114,7 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                     m_title=title,
                     m_weblink=[web_url] if web_url else [],
                     m_url=full_url,
-                    m_addresses=[],
+                    m_location_info=[],
                     m_base_url=self.base_url,
                     m_content=content,
                     m_websites=[],
