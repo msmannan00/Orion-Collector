@@ -1,6 +1,7 @@
 import sys
 import traceback
 from threading import Timer
+from time import sleep
 
 import redis
 import requests
@@ -71,7 +72,7 @@ def parse_leak_data(proxy: dict, model: leak_extractor_interface|leak_extractor_
   try:
     with sync_playwright() as p:
       if model.rule_config.m_fetch_proxy is FetchProxy.NONE:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
       else:
         browser = p.chromium.launch(proxy=proxy, headless=False)
 
@@ -96,7 +97,7 @@ def parse_leak_data(proxy: dict, model: leak_extractor_interface|leak_extractor_
               pass
 
         context.on("response", capture_response)
-        page.goto(model.seed_url, wait_until="networkidle")
+        page.goto(model.seed_url, wait_until="load")
 
         if timeout_flag["value"]:
           raise TimeoutException("Timeout occurred during navigation.")
