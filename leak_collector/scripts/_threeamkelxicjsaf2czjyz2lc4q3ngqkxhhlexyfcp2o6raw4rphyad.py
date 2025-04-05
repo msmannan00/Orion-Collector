@@ -22,6 +22,9 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad, cls).__new__(cls)
@@ -48,7 +51,7 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -120,25 +123,26 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
                         if onclick_attr and "window.open" in onclick_attr:
                             download_link = onclick_attr.split("window.open('")[1].split("', '_blank')")[0]
 
-
-                    self.append_leak_data(
-                        leak_model(
-                            m_screenshot=helper_method.get_screenshot_base64(page, description_text),
-                            m_title=title_text if title_text != "Unknown" else "Extracted Post",
-                            m_url=post_link,
-                            m_base_url=self.base_url,
-                            m_content=f"Description: {description_text}\nFile Size: {file_size_text}",
-                            m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=description_text,
-                            m_dumplink=[download_link] if download_link else [],
-                            m_email_addresses=helper_method.extract_emails(description_text),
-                            m_phone_numbers=helper_method.extract_phone_numbers(description_text),
-                            m_content_type=["leaks"],
-                            m_leak_date=helper_method.extract_and_convert_date(date_text),
-                            m_data_size= file_size_text,
-                            m_logo_or_images=[profile_img] if profile_img != "Unknown" else []
-                        )
+                    card_data = leak_model(
+                        m_screenshot=helper_method.get_screenshot_base64(page, description_text),
+                        m_title=title_text if title_text != "Unknown" else "Extracted Post",
+                        m_url=post_link,
+                        m_base_url=self.base_url,
+                        m_content=f"Description: {description_text}\nFile Size: {file_size_text}",
+                        m_network=helper_method.get_network_type(self.base_url),
+                        m_important_content=description_text,
+                        m_dumplink=[download_link] if download_link else [],
+                        m_content_type=["leaks"],
+                        m_leak_date=helper_method.extract_and_convert_date(date_text),
+                        m_data_size=file_size_text,
+                        m_logo_or_images=[profile_img] if profile_img != "Unknown" else []
                     )
+
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(description_text),
+                        m_phone_numbers=helper_method.extract_phone_numbers(description_text),
+                    )
+                    self.append_leak_data(card_data, entity_data)
 
                 except Exception as e:
                     print(f"Error navigating to {post_link}: {e}")

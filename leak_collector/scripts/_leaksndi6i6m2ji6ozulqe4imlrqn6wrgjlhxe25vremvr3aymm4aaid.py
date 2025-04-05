@@ -23,6 +23,9 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid, cls).__new__(cls)
@@ -49,7 +52,7 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -93,22 +96,26 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
                         description_element = buy_page.query_selector(".order-details tr:nth-child(4) td")
                         description = description_element.inner_text().strip() if description_element else "No description"
 
-                        self.append_leak_data(
-                            leak_model(
-                                m_screenshot=helper_method.get_screenshot_base64(page, database),
-                                m_title=database,
-                                m_url=page.url,
-                                m_base_url=self.base_url,
-                                m_content=description if description else f"{year} | {database} | {site} | {records} | {price}",
-                                m_network=helper_method.get_network_type(self.base_url),
-                                m_important_content=description if description else f"{year} | {database} | {site} | {records} | {price}",
-                                m_weblink=[site],
-                                m_email_addresses=helper_method.extract_emails(description),
-                                m_phone_numbers=helper_method.extract_phone_numbers(description),
-                                m_content_type=["leaks"],
-                                m_leak_date=helper_method.extract_and_convert_date(year),
-                            )
+                        card_data = leak_model(
+                            m_screenshot=helper_method.get_screenshot_base64(page, database),
+                            m_title=database,
+                            m_url=page.url,
+                            m_base_url=self.base_url,
+                            m_content=description if description else f"{year} | {database} | {site} | {records} | {price}",
+                            m_network=helper_method.get_network_type(self.base_url),
+                            m_important_content=description if description else f"{year} | {database} | {site} | {records} | {price}",
+                            m_weblink=[site],
+                            m_content_type=["leaks"],
+                            m_leak_date=helper_method.extract_and_convert_date(year),
                         )
+
+                        entity_data = entity_model(
+                            m_email_addresses=helper_method.extract_emails(description),
+                            m_phone_numbers=helper_method.extract_phone_numbers(description),
+                        )
+
+                        self.append_leak_data(card_data, entity_data)
+
                         buy_page.close()
                         page.bring_to_front()
 

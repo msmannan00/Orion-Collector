@@ -22,6 +22,9 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd, cls).__new__(cls)
@@ -48,7 +51,7 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -103,12 +106,15 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
                     m_important_content=important_content,
                     m_weblink=[page_url],
                     m_dumplink=dump_links,
-                    m_email_addresses=helper_method.extract_emails(content),
-                    m_phone_numbers=helper_method.extract_phone_numbers(content),
                     m_content_type=["leaks"],
                 )
 
-                self.append_leak_data(card_data)
+                entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(content),
+                    m_phone_numbers=helper_method.extract_phone_numbers(content),
+                )
+
+                self.append_leak_data(card_data, entity_data)
 
             except Exception as e:
                 print(f"Error processing {page_url}: {e}")

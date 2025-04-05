@@ -51,11 +51,15 @@ class leak_extractor_interface(ABC):
         pass
 
     @abstractmethod
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, value):
         """Interact with Redis using the given command, key, and value."""
         pass
 
     @abstractmethod
-    def append_leak_data(self, leak: leak_model, entity: entity_model) -> None:
+    def append_leak_data(self, leak: leak_model, entity: entity_model):
         """Append a single leak_model instance to the collected card data."""
+        pass
+
+    def init_callback(self, callback):
+        """pass callback model triggered on leak parsed"""
         pass

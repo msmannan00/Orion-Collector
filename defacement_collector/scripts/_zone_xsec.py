@@ -20,8 +20,11 @@ class _zone_xsec(leak_extractor_interface, ABC):
         self._card_data = []
         self._entity_data = []
         self.soup = None
-        self._initialized = False
+        self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
+        self.callback = callback
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -54,14 +57,14 @@ class _zone_xsec(leak_extractor_interface, ABC):
     def contact_page(self) -> str:
         return "https://zone-xsec.com/contact"
 
-    def append_leak_data(self, leak: leak_model, entity: entity_model):
+    def append_leak_data(self, leak: defacement_model, entity: entity_model):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
             self.callback()
 
     @staticmethod
-    def safe_find(page: Page, selector: str, attr: str = None) -> str:
+    def safe_find(page: Page, selector: str, attr: str = None):
         try:
             element = page.query_selector(selector)
             if element:
@@ -117,7 +120,6 @@ class _zone_xsec(leak_extractor_interface, ABC):
                         card_data = defacement_model(
                             m_web_server=[web_server],
                             m_web_url=[extracted_url],
-                            m_ip=[ip],
                             m_content="",
                             m_base_url=self.base_url,
                             m_url=link,
@@ -129,7 +131,11 @@ class _zone_xsec(leak_extractor_interface, ABC):
                             m_network=helper_method.get_network_type(self.base_url),
                         )
 
-                        self.append_leak_data(card_data)
+                        entity_data = entity_model(
+                            m_ip=[ip],
+                        )
+
+                        self.append_leak_data(card_data, entity_data)
 
                     except Exception as ex:
                         print(f"Error processing link {link}: {ex}")

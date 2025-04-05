@@ -25,6 +25,9 @@ class _mirror_h(leak_extractor_interface, ABC):
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_mirror_h, cls).__new__(cls)
@@ -51,13 +54,13 @@ class _mirror_h(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://mirror-h.org/contact"
 
-    def append_leak_data(self, leak: leak_model, entity: entity_model):
+    def append_leak_data(self, leak: defacement_model, entity: entity_model):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
@@ -121,7 +124,6 @@ class _mirror_h(leak_extractor_interface, ABC):
                     card_data = defacement_model(
                         m_location=[location] if location else [],
                         m_attacker=[attacker] if attacker else [],
-                        m_ip=[server_ip] if server_ip else [],
                         m_date_of_leak=helper_method.extract_and_convert_date(date),
                         m_web_server=[web_server] if web_server else [],
                         m_web_url=[web_url] if web_url else [],
@@ -129,11 +131,15 @@ class _mirror_h(leak_extractor_interface, ABC):
                         m_network=helper_method.get_network_type(self.base_url),
                         m_team=total,
                         m_content=content,
+                        m_url=link,
                         m_mirror_links=[iframe_url] if iframe_url else []
-
                     )
 
-                    self.append_leak_data(card_data)
+                    entity_data = entity_model(
+                        m_ip=[server_ip] if server_ip else [],
+                    )
+
+                    self.append_leak_data(card_data, entity_data)
 
                 current_page += 1
 

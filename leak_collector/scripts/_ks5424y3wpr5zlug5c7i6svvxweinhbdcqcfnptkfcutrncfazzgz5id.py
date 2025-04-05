@@ -23,6 +23,9 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
 
         if cls._instance is None:
@@ -54,7 +57,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
 
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
@@ -112,7 +115,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                         if not download_url.startswith('http'):
                             download_url = f"http://{download_url}"
 
-            self.append_leak_data(leak_model(
+            card_data = leak_model(
                 m_screenshot=helper_method.get_screenshot_base64(page, title),
                 m_title=title,
                 m_url=url,
@@ -121,8 +124,13 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=important_content,
                 m_dumplink=[download_url],
-                m_email_addresses=helper_method.extract_emails(content),
-                m_phone_numbers=helper_method.extract_phone_numbers(content),
                 m_content_type=["leaks"],
                 m_logo_or_images=images,
-            ))
+            )
+
+            entity_data = entity_model(
+                m_email_addresses=helper_method.extract_emails(content),
+                m_phone_numbers=helper_method.extract_phone_numbers(content),
+            )
+
+            self.append_leak_data(card_data, entity_data)

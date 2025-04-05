@@ -3,7 +3,6 @@ from typing import Dict, List
 
 from playwright.async_api import BrowserContext
 
-from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel
@@ -34,5 +33,5 @@ class api_collector_interface(ABC):
         pass
 
     @abstractmethod
-    def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
+    def parse_leak_data(self, query: Dict[str, str], context: BrowserContext):
         pass

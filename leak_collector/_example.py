@@ -20,11 +20,14 @@ class _example(leak_extractor_interface, ABC):
         Initialize the _example class instance.
         Optionally accepts a callback function (no params) to be called after each leak is added.
         """
+        self.callback = callback
         self._card_data = []
         self._entity_data = []
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
         self.callback = callback
 
     def __new__(cls, callback=None):
@@ -53,7 +56,7 @@ class _example(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -74,7 +77,7 @@ class _example(leak_extractor_interface, ABC):
         Parses leak data from the given Playwright page and appends a leak_model to card data.
         """
         m_content = ""
-        leak = leak_model(
+        card_data = leak_model(
             m_title=page.title(),
             m_url=page.url,
             m_base_url=self.base_url,
@@ -84,9 +87,11 @@ class _example(leak_extractor_interface, ABC):
             m_important_content=m_content,
             m_weblink=[],
             m_dumplink=[],
-            m_email_addresses=helper_method.extract_emails(m_content),
-            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
             m_content_type=["leaks"],
         )
-        entity = [entity_model("m_email_addresses", helper_method.extract_emails(m_content), helper_method.generate_data_hash(page.url))]
-        self.append_leak_data(leak, )
+
+        entity_data = entity_model(
+            m_email_addresses=helper_method.extract_emails(m_content),
+            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+        )
+        self.append_leak_data(card_data, entity_data)

@@ -23,6 +23,9 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd, cls).__new__(cls)
@@ -52,7 +55,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
 
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
@@ -129,10 +132,13 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_weblink=web_link,
                 m_leak_date=deadline,
                 m_logo_or_images=image_urls,
-                m_country_name=country,
-                m_email_addresses=helper_method.extract_emails(description),
-                m_phone_numbers=helper_method.extract_phone_numbers(description),
                 m_content_type=["leaks"],
             )
 
-            self.append_leak_data(card_data)
+            entity_data = entity_model(
+                m_country_name=country,
+                m_email_addresses=helper_method.extract_emails(description),
+                m_phone_numbers=helper_method.extract_phone_numbers(description),
+            )
+
+            self.append_leak_data(card_data, entity_data)

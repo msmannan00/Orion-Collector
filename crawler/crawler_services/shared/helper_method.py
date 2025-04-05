@@ -3,9 +3,12 @@ import hashlib
 import json
 import re
 import datetime
+from pathlib import Path
 from urllib.parse import urlparse
 import base64
 import unicodedata
+from uuid import uuid4
+
 from bs4 import BeautifulSoup
 
 
@@ -34,9 +37,9 @@ class helper_method:
   @staticmethod
   def get_screenshot_base64(page, search_string):
     try:
+      page.set_viewport_size({"width": 1100, "height": 800})
       page.wait_for_load_state("load", timeout=10_000)
 
-      # Disable animations
       page.add_style_tag(content=(
         "*,*::before,*::after{"
         "transition:none!important;"
@@ -51,9 +54,9 @@ class helper_method:
       element.wait_for(timeout=10_000)
       element.evaluate("element => element.scrollIntoView({ block: 'start' })")
 
-      screenshot_bytes = page.screenshot()
+      screenshot_bytes = page.screenshot(full_page=False, type="jpeg", quality=30)
       return base64.b64encode(screenshot_bytes).decode('utf-8')
-    except Exception as _:
+    except Exception:
       return ""
 
   @staticmethod
@@ -74,13 +77,7 @@ class helper_method:
 
   @staticmethod
   def extract_and_convert_date(text: str) -> datetime.date:
-    for pattern, fmt in [
-      (r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"),
-      (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"),
-      (r'(\d{2}-\d{2}-\d{4})', "%d-%m-%Y"),
-      (r'(\d{2}/\d{2}/\d{4})', "%m/%d/%Y"),
-      (r'(\d{1,2} \w+ \d{4})', "%d %B %Y")
-    ]:
+    for pattern, fmt in [(r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"), (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"), (r'(\d{2}-\d{2}-\d{4})', "%d-%m-%Y"), (r'(\d{2}/\d{2}/\d{4})', "%m/%d/%Y"), (r'(\d{1,2} \w+ \d{4})', "%d %B %Y")]:
       if match := re.search(pattern, text):
         try:
           return datetime.datetime.strptime(match.group(0), fmt).date()

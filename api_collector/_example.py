@@ -5,7 +5,6 @@ from crawler.crawler_instance.local_interface_model.api.api_collector_interface 
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
-from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
 from crawler.crawler_services.shared.helper_method import helper_method
 
 '''
@@ -74,12 +73,11 @@ class _example(api_collector_interface, ABC):
         self._card_data.append(leak)
         self._entity_data.append(entity)
 
-    async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
+    async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext):
         p_data_url = self.base_url
         email = query.get("email", "john.doe@gmail.com")
         username = query.get("username", "johndoe123")
 
-        collector_model = api_data_model(base_url=p_data_url, content_type=["email", "username"])
         combined_records = set()
 
         page = await context.new_page()
@@ -87,7 +85,7 @@ class _example(api_collector_interface, ABC):
 
         combined_records.update(["Adobe Breach 2013", "LinkedIn Leak 2016"])
 
-        collector_model.cards_data = [leak_model(
+        card_data = leak_model(
             m_title="Breach Found",
             m_url=p_data_url,
             m_base_url=p_data_url,
@@ -98,9 +96,12 @@ class _example(api_collector_interface, ABC):
             m_content_type=["stolen"],
             m_weblink=[],
             m_dumplink=list(combined_records),
+        )
+
+        entity_data = entity_model(
             m_email_addresses=[email],
             m_name=username
-        )]
+        )
 
+        self.append_leak_data(card_data, entity_data)
         await page.close()
-        return collector_model

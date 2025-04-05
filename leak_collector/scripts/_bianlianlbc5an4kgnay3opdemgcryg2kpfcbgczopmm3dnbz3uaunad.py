@@ -18,7 +18,12 @@ class _bianlianlbc5an4kgnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad(leak_extractor_i
         self.callback = callback
         self._card_data = []
         self._entity_data = []
+        self.soup = None
+        self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
+        self.callback = callback
 
     def __new__(cls):
         if cls._instance is None:
@@ -45,7 +50,7 @@ class _bianlianlbc5an4kgnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -110,14 +115,17 @@ class _bianlianlbc5an4kgnay3opdemgcryg2kpfcbgczopmm3dnbz3uaunad(leak_extractor_i
                             m_weblink=weblink,
                             m_logo_or_images=images,
                             m_dumplink=dump_links,
-                            m_email_addresses=helper_method.extract_emails(description),
-                            m_phone_numbers=helper_method.extract_phone_numbers(description),
                             m_content_type=["leaks"],
                             m_revenue=revenue,
                             m_data_size=data_size
                         )
 
-                        self.append_leak_data(card_data)
+                        entity_data = entity_model(
+                            m_email_addresses=helper_method.extract_emails(description),
+                            m_phone_numbers=helper_method.extract_phone_numbers(description),
+                        )
+
+                        self.append_leak_data(card_data, entity_data)
 
                         page.go_back()
                         page.wait_for_load_state("networkidle")

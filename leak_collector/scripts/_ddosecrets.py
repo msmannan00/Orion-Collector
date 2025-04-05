@@ -24,6 +24,9 @@ class _ddosecrets(leak_extractor_interface, ABC):
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_ddosecrets, cls).__new__(cls)
@@ -50,7 +53,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -97,7 +100,6 @@ class _ddosecrets(leak_extractor_interface, ABC):
                 metadata_div = content_div.find("div", class_="metadata")
                 source = ""
                 countries = []
-                types = []
                 download_size = ""
                 dumplinks = []
 
@@ -108,9 +110,6 @@ class _ddosecrets(leak_extractor_interface, ABC):
 
                     country_elements = metadata_div.find_all("a", href=lambda h: h and "/country/" in h)
                     countries = [country.get_text(strip=True) for country in country_elements]
-
-                    type_elements = metadata_div.find_all("a", href=lambda h: h and "/type/" in h)
-                    types = [leak_type.get_text(strip=True) for leak_type in type_elements]
 
                     size_element = metadata_div.find("p", string=lambda t: t and "Download Size:" in t)
                     if size_element:
@@ -131,7 +130,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                         urljoin(self.base_url, a["href"]) for a in article_content.find_all("a", href=True)
                     )
 
-                card = leak_model(
+                card_data = leak_model(
                     m_screenshot=helper_method.get_screenshot_base64(page, title),
                     m_title=title,
                     m_url=article_url,
@@ -143,12 +142,15 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_network=helper_method.get_network_type(self.base_url),
                     m_dumplink=dumplinks,
                     m_leak_date=published_date,
-                    m_company_name=source,
-                    m_location_info=countries,
                     m_data_size=download_size,
                 )
 
-                self.append_leak_data(card)
+                entity_data = entity_model(
+                    m_company_name=source,
+                    m_location_info=countries,
+                )
+
+                self.append_leak_data(card_data, entity_data)
 
             except Exception as e:
                 print(f"Error processing {article_url}: {e}")

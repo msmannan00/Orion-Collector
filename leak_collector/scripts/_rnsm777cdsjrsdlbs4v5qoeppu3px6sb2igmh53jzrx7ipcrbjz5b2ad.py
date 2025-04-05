@@ -26,6 +26,9 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
         self._initialized = None
         self._redis_instance = redis_controller()
 
+    def init_callback(self, callback=None):
+        self.callback = callback
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(_rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad, cls).__new__(cls)
@@ -52,7 +55,7 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -145,11 +148,9 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
 
                         card_data = leak_model(
                             m_screenshot=helper_method.get_screenshot_base64(page, title),
-                            m_company_name=title,
                             m_title=title,
                             m_url=item_url,
                             m_weblink=[],
-
                             m_network=helper_method.get_network_type(self.base_url),
                             m_base_url=self.base_url,
                             m_content=description,
@@ -157,13 +158,15 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
                             m_logo_or_images=[],
                             m_content_type=["leaks"],
                             m_data_size=leak_size,
-                            m_email_addresses=helper_method.extract_emails(description) if description else [],
-                            m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
                             m_leak_date=helper_method.extract_and_convert_date(date_text),
-
                         )
 
-                        self.append_leak_data(card_data)
+                        entity_data = entity_model(
+                            m_email_addresses=helper_method.extract_emails(description) if description else [],
+                            m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
+                            m_company_name=title,
+                        )
+                        self.append_leak_data(card_data, entity_data)
 
             return all_leak_urls
 

@@ -1,5 +1,4 @@
 from abc import ABC
-from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page
@@ -24,6 +23,9 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
+        self.callback = callback
 
     def __new__(cls):
         if cls._instance is None:
@@ -51,7 +53,7 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -84,9 +86,6 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                 print("No card links found on the page.")
                 return
 
-            today_date = datetime.today().strftime('%Y-%m-%d')
-
-
             card_urls = [urljoin(self.base_url, link.get_attribute("href")) for link in card_links]
 
 
@@ -109,12 +108,10 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                 description = self.safe_find(page, "div.card__description-content", attr=None)
                 company_url = self.safe_find(page, "a.card__info-text.--card__info-text-link", attr="href")
                 download_url = self.safe_find(page, "a.card__download.--button", attr="href")
-                image_urls = [urljoin(self.base_url, img['src']) for img in card_inner.select("img.card__photos-img")]
                 card_title = self.safe_find(page, "h1.card__title", attr=None)
 
 
                 number_of_files = None
-                file_size = None
                 date_of_publication = None
 
 
@@ -128,8 +125,6 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                             value_text = value.get_text(strip=True)
                             if title_text == "Number of files":
                                 number_of_files = value_text
-                            elif title_text == "Files size":
-                                file_size = value_text
                             elif title_text == "Date of publication":
                                 date_of_publication = value_text
 
@@ -138,7 +133,6 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
                 card_data = leak_model(
                     m_screenshot=helper_method.get_screenshot_base64(page, card_title),
-                    m_company_name=card_title,
                     m_title=card_title,
                     m_url=self.base_url,
                     m_weblink=[company_url] if company_url else [],
@@ -149,13 +143,16 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                     m_important_content = description,
                     m_content_type=["leaks"],
                     m_data_size=number_of_files,
-                    m_email_addresses=helper_method.extract_emails(description) if description else [],
-                    m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
                     m_leak_date=helper_method.extract_and_convert_date(date_of_publication),
                 )
 
+                entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(description) if description else [],
+                    m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
+                    m_company_name=card_title,
+                )
 
-                self.append_leak_data(card_data)
+                self.append_leak_data(card_data, entity_data)
 
         except Exception as ex:
             print(f"An error occurred: {ex}")

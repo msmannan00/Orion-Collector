@@ -22,11 +22,14 @@ class _example(leak_extractor_interface, ABC):
         Sets up attributes for storing card data, parsing content, and interacting with Redis.
         Optionally accepts a no-argument callback function.
         """
+        self.callback = callback
         self._card_data = []
         self._entity_data = []
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
         self.callback = callback
 
     def __new__(cls, callback=None):
@@ -55,13 +58,13 @@ class _example(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://www.iana.org/help/example-domains"
 
-    def append_leak_data(self, leak: leak_model, entity: entity_model):
+    def append_leak_data(self, leak: defacement_model, entity: entity_model):
         """
         Appends a defacement_model object to the internal card data list.
         Calls the callback function if it is provided.
@@ -77,7 +80,7 @@ class _example(leak_extractor_interface, ABC):
         """
         m_content = "This is a sample defacement content."
 
-        defacement = defacement_model(
+        card_data = defacement_model(
             m_location=["United States", "California"],
             m_attacker=["HackerX", "AnonUser"],
             m_screenshot="",
@@ -87,10 +90,13 @@ class _example(leak_extractor_interface, ABC):
             m_base_url=self.base_url,
             m_network=helper_method.get_network_type(self.base_url),
             m_content=m_content,
-            m_ip=["192.168.1.1", "10.0.0.1"],
-            m_date_of_leak="2025-03-17",
             m_web_url=["https://example.com/defaced", "https://example.com/hacked"],
             m_mirror_links=["https://mirror1.example.com", "https://mirror2.example.com"]
         )
 
-        self.append_leak_data(defacement)
+        entity_data = entity_model(
+            m_ip=["192.168.1.1", "10.0.0.1"],
+        )
+
+        self.append_leak_data(card_data, entity_data)
+

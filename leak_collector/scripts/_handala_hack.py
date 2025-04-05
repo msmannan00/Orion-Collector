@@ -1,5 +1,4 @@
 from abc import ABC
-from datetime import datetime
 from typing import List
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page
@@ -24,6 +23,9 @@ class _handala_hack(leak_extractor_interface, ABC):
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
+        self.callback = callback
 
     def __new__(cls):
         if cls._instance is None:
@@ -51,7 +53,7 @@ class _handala_hack(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -88,8 +90,6 @@ class _handala_hack(leak_extractor_interface, ABC):
                     href = link.get_attribute("href")
                     full_url = urljoin(self.base_url, href)
                     collected_links.append(full_url)
-
-                today_date = datetime.today().strftime('%Y-%m-%d')
 
                 for link in collected_links:
                     page.goto(link)
@@ -130,12 +130,16 @@ class _handala_hack(leak_extractor_interface, ABC):
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=important_content,
                         m_content_type=["leaks"],
-                        m_email_addresses=helper_method.extract_emails(content),
-                        m_phone_numbers=helper_method.extract_phone_numbers(content),
                         m_leak_date=helper_method.extract_and_convert_date(date_time)
                     )
 
-                    self.append_leak_data(card_data)
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(content),
+                        m_phone_numbers=helper_method.extract_phone_numbers(content),
+                    )
+
+                    self.append_leak_data(card_data, entity_data)
+
 
                 current_page += 1
 
