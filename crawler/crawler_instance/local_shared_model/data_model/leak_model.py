@@ -15,7 +15,7 @@ class leak_model(BaseModel):
     m_section: Optional[List[str]] = Field(default_factory=list)
     m_content_type: List[str] = Field(default_factory=list)
 
-    m_screenshot: base64
+    m_screenshot: str
     m_weblink: List[str] = Field(default_factory=list)
     m_dumplink: List[str] = Field(default_factory=list)
     m_websites: List[str] = Field(default_factory=list)
