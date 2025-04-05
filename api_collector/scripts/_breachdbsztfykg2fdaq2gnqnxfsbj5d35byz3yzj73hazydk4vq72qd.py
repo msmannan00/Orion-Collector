@@ -27,7 +27,7 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
 
   @property
   def rule_config(self) -> RuleModel:
-    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, threat_type=ThreatType.API)
+    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, m_threat_type=ThreatType.API)
 
   @staticmethod
   def clean_text(text: str) -> str:
@@ -101,6 +101,4 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
       except Exception as _:
         return collector_model
     finally:
-      pass
-
-    return collector_model
+      return collector_model
