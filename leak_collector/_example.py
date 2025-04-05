@@ -4,6 +4,7 @@ from typing import List
 from playwright.sync_api import Page
 
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
@@ -20,6 +21,7 @@ class _example(leak_extractor_interface, ABC):
         Optionally accepts a callback function (no params) to be called after each leak is added.
         """
         self._card_data = []
+        self._entity_data = []
         self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
@@ -47,18 +49,23 @@ class _example(leak_extractor_interface, ABC):
     def card_data(self) -> List[leak_model]:
         return self._card_data
 
+    @property
+    def entity_data(self) -> List[entity_model]:
+        return self._entity_data
+
     def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://www.iana.org/help/example-domains"
 
-    def append_leak_data(self, leak: leak_model) -> None:
+    def append_leak_data(self, leak: leak_model, entity: entity_model):
         """
         Appends a leak_model object to the internal card data list.
         Invokes the callback if one is provided.
         """
         self._card_data.append(leak)
+        self._entity_data.append(entity)
         if self.callback:
             self.callback()
 
@@ -81,4 +88,5 @@ class _example(leak_extractor_interface, ABC):
             m_phone_numbers=helper_method.extract_phone_numbers(m_content),
             m_content_type=["leaks"],
         )
-        self.append_leak_data(leak)
+        entity = [entity_model("m_email_addresses", helper_method.extract_emails(m_content), helper_method.generate_data_hash(page.url))]
+        self.append_leak_data(leak, )

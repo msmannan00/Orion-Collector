@@ -1,6 +1,4 @@
-import base64
-
-from pydantic import BaseModel, Field, field_validator, model_validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import date, datetime
 from typing import List, Optional
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
@@ -14,30 +12,14 @@ class leak_model(BaseModel):
     m_network: str
     m_section: Optional[List[str]] = Field(default_factory=list)
     m_content_type: List[str] = Field(default_factory=list)
-
-    m_screenshot: base64
+    m_screenshot: str
     m_weblink: List[str] = Field(default_factory=list)
     m_dumplink: List[str] = Field(default_factory=list)
     m_websites: List[str] = Field(default_factory=list)
     m_logo_or_images: List[str] = Field(default_factory=list)
-
-    m_email_addresses: List[str] = Field(default_factory=list)
-    m_phone_numbers: List[str] = Field(default_factory=list)
-
-    m_states: List[str] = Field(default_factory=list)
-    m_location_info: List[str] = Field(default_factory=list)
-
-    m_social_media_profiles: List[str] = Field(default_factory=list)
-
     m_leak_date: Optional[date] = None
-
     m_data_size: Optional[str] = None
     m_revenue: Optional[str] = None
-
-    m_name: str = ""
-    m_industry: Optional[str] = None
-    m_company_name: Optional[str] = None
-    m_country_name: Optional[str] = None
 
     @field_validator('m_leak_date', mode='before')
     def parse_leak_date(cls, value):

@@ -1,8 +1,9 @@
 import re
 from abc import ABC
-from typing import Dict
+from typing import Dict, List
 from playwright.async_api import BrowserContext
 from crawler.crawler_instance.local_interface_model.api.api_collector_interface import api_collector_interface
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig, ThreatType
@@ -14,6 +15,8 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
 
   def __init__(self):
     self._initialized = None
+    self._card_data = []
+    self._entity_data = []
 
   def __new__(cls):
     if cls._instance is None:
@@ -27,7 +30,19 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
 
   @property
   def rule_config(self) -> RuleModel:
-    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, threat_type=ThreatType.API)
+    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, m_threat_type=ThreatType.API)
+
+  @property
+  def card_data(self) -> List[leak_model]:
+    return self._card_data
+
+  @property
+  def entity_data(self) -> List[entity_model]:
+    return self._entity_data
+
+  def append_leak_data(self, leak: leak_model, entity: entity_model):
+    self._card_data.append(leak)
+    self._entity_data.append(entity)
 
   @staticmethod
   def clean_text(text: str) -> str:
@@ -46,7 +61,7 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
     username_list = set()
 
     try:
-      page = await context.new_page()
+      page = context.new_page()
       await page.goto(p_data_url)
       page_content = await page.content()
       if "This site can’t be reached" in page_content or "ERR_" in page_content:
@@ -101,6 +116,4 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
       except Exception as _:
         return collector_model
     finally:
-      pass
-
-    return collector_model
+      return collector_model

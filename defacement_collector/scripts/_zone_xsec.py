@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 import requests
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.defacement_model import defacement_model
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig, ThreatType
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
@@ -17,6 +18,7 @@ class _zone_xsec(leak_extractor_interface, ABC):
     def __init__(self, callback=None):
         self.callback = callback
         self._card_data = []
+        self._entity_data = []
         self.soup = None
         self._initialized = False
         self._redis_instance = redis_controller()
@@ -42,14 +44,19 @@ class _zone_xsec(leak_extractor_interface, ABC):
     def card_data(self) -> List[leak_model]:
         return self._card_data
 
+    @property
+    def entity_data(self) -> List[entity_model]:
+        return self._entity_data
+
     def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://zone-xsec.com/contact"
 
-    def append_leak_data(self, leak: leak_model) -> None:
+    def append_leak_data(self, leak: leak_model, entity: entity_model):
         self._card_data.append(leak)
+        self._entity_data.append(entity)
         if self.callback:
             self.callback()
 

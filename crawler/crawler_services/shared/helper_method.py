@@ -1,4 +1,6 @@
 # Local Imports
+import hashlib
+import json
 import re
 import datetime
 from urllib.parse import urlparse
@@ -8,6 +10,18 @@ from bs4 import BeautifulSoup
 
 
 class helper_method:
+
+  @staticmethod
+  def generate_data_hash(data):
+    if isinstance(data, dict):
+      data_copy = {key: value for key, value in data.items() if key not in {'m_update_date', 'm_base_url', 'm_url'}}
+      data_string = json.dumps(data_copy, sort_keys=True)
+    elif isinstance(data, str):
+      data_string = data
+    else:
+      raise ValueError("Input must be a dictionary or a string")
+
+    return hashlib.sha256(data_string.encode('utf-8')).hexdigest()
 
   @staticmethod
   def clean_text(text):

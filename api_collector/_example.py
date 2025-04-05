@@ -1,7 +1,8 @@
 from abc import ABC
-from typing import Dict
+from typing import Dict, List
 from playwright.async_api import BrowserContext
 from crawler.crawler_instance.local_interface_model.api.api_collector_interface import api_collector_interface
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
@@ -28,7 +29,8 @@ class _example(api_collector_interface, ABC):
     _instance = None
 
     def __init__(self):
-        pass
+        self._card_data = []
+        self._entity_data = []
 
     def __new__(cls):
         if cls._instance is None:
@@ -59,6 +61,18 @@ class _example(api_collector_interface, ABC):
             FetchProxy.TOR FetchConfig.SELENIUM
         """
         return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
+
+    @property
+    def card_data(self) -> List[leak_model]:
+        return self._card_data
+
+    @property
+    def entity_data(self) -> List[entity_model]:
+        return self._entity_data
+
+    def append_leak_data(self, leak: leak_model, entity: entity_model):
+        self._card_data.append(leak)
+        self._entity_data.append(entity)
 
     async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
         p_data_url = self.base_url
