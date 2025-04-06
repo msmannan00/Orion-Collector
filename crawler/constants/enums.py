@@ -1,16 +1,9 @@
-from enum import Enum
-
 VALID_NETWORK_TYPES = [
     "clearnet",
     "i2p",
     "onion",
     "invalid"
 ]
-
-class ENTITY_KEYS:
-    M_EMAIL_ADDRESSES = "m_email_addresses"
-    M_PHONE_NUMBERS = "m_phone_numbers"
-
 
 VALID_CONTENT_TYPES = [
     "general",
