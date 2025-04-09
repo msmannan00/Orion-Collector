@@ -102,24 +102,19 @@ class _example(api_collector_interface, ABC):
         Returns:
             api_data_model: A model populated with the discovered card and entity data.
         """
-    # Extract base URL and query parameters
     p_data_url = self.base_url
     email = query.get("email", "john.doe@gmail.com")
     username = query.get("username", "johndoe123")
 
-    # Prepare the collector model with metadata
     collector_model = api_data_model(base_url=p_data_url, content_type=["email", "username"])
 
     combined_records = set()
 
-    # Navigate to the target page
     page = await context.new_page()
     await page.goto(p_data_url)
 
-    # Simulated scraping logic — actual implementation would extract data dynamically
     combined_records.update(["Adobe Breach 2013", "LinkedIn Leak 2016"])
 
-    # Create and populate leak data model
     card_data = leak_model(
       m_title="Breach Found",
       m_url=p_data_url,
@@ -133,13 +128,11 @@ class _example(api_collector_interface, ABC):
       m_dumplink=list(combined_records),
     )
 
-    # Create and populate entity model
     entity_data = entity_model(
       m_email_addresses=[email],
       m_name=username
     )
 
-    # Store results internally and assign to return model
     self.append_leak_data(card_data, entity_data)
     collector_model.cards_data = self.card_data
     return collector_model
