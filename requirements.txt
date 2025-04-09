@@ -3,7 +3,6 @@ stem==1.8.2
 requests==2.32.3
 pysocks==1.7.1
 pydantic==2.11.2
-selenium==4.31.0
 webdriver_manager==4.0.2
 undetected-chromedriver==3.5.5
 playwright==1.51.0

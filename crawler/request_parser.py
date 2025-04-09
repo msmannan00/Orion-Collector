@@ -3,8 +3,6 @@ from playwright.sync_api import sync_playwright, Route
 from bs4 import BeautifulSoup
 import traceback
 
-from selenium.common import TimeoutException
-
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_interface_model.leak.model.leak_data_model import leak_data_model
 from crawler.crawler_instance.local_shared_model.rule_model import FetchProxy
@@ -72,9 +70,6 @@ class RequestParser:
             page.route("**/*", self._handle_route)
 
           page.goto(self.model.seed_url, wait_until="load")
-
-          if self.timeout_flag:
-            raise TimeoutException("Timeout occurred during navigation.")
 
           self.model.soup = BeautifulSoup(page.content(), 'html.parser')
           self.model.parse_leak_data(page)

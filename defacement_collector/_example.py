@@ -30,9 +30,16 @@ class _example(leak_extractor_interface, ABC):
         self._redis_instance = redis_controller()
 
     def init_callback(self, callback=None):
+        """
+        Initialize or update the callback function that will be triggered upon parsing new leak data.
+        """
         self.callback = callback
 
     def __new__(cls, callback=None):
+        """
+        Implements singleton behavior to ensure only one instance of the class exists.
+        Optionally accepts a no-argument callback function.
+        """
         if cls._instance is None:
             cls._instance = super(_example, cls).__new__(cls)
             cls._instance._initialized = False
@@ -40,28 +47,38 @@ class _example(leak_extractor_interface, ABC):
 
     @property
     def seed_url(self) -> str:
+        """Return the seed URL to start crawling from."""
         return "https://example.com/"
 
     @property
     def base_url(self) -> str:
+        """Return the base domain URL of the source."""
         return "https://example.com/"
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
+        """Return the crawling rule configuration."""
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT)
 
     @property
     def card_data(self) -> List[leak_model]:
+        """Return the list of parsed leak models (card data)."""
         return self._card_data
 
     @property
     def entity_data(self) -> List[entity_model]:
+        """Return the list of parsed leak models (entity data)."""
         return self._entity_data
 
     def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+        """
+        Interact with Redis using the given command and key.
+        Returns the result of invoking a Redis trigger with the current class name as context.
+        """
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
+        """Return the contact page URL of the data source."""
         return "https://www.iana.org/help/example-domains"
 
     def append_leak_data(self, leak: defacement_model, entity: entity_model):
@@ -77,6 +94,7 @@ class _example(leak_extractor_interface, ABC):
     def parse_leak_data(self, page: Page):
         """
         Parses defacement data from the given Playwright page and appends a defacement_model.
+        This is an example implementation that creates hardcoded sample leak and entity data.
         """
         m_content = "This is a sample defacement content."
 
@@ -99,4 +117,3 @@ class _example(leak_extractor_interface, ABC):
         )
 
         self.append_leak_data(card_data, entity_data)
-

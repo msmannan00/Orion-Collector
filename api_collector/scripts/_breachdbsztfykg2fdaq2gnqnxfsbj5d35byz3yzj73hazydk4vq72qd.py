@@ -30,7 +30,7 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
 
   @property
   def rule_config(self) -> RuleModel:
-    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, m_threat_type=ThreatType.API)
+    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT, m_threat_type=ThreatType.API)
 
   @property
   def card_data(self) -> List[leak_model]:
@@ -115,3 +115,5 @@ class _breachdbsztfykg2fdaq2gnqnxfsbj5d35byz3yzj73hazydk4vq72qd(api_collector_in
         m_name=", ".join(username_list)
       )
       self.append_leak_data(card_data, entity_data)
+      collector_model.cards_data = self.card_data
+      return collector_model
