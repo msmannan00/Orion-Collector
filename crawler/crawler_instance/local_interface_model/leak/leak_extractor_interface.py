@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 from playwright.async_api import Page
+
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_interface_model.leak.model.leak_data_model import leak_data_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel
@@ -37,17 +39,27 @@ class leak_extractor_interface(ABC):
         """Return the list of parsed leak models (card data)."""
         pass
 
+    @property
+    @abstractmethod
+    def entity_data(self) -> List[entity_model]:
+        """Return the list of parsed leak models (entity data)."""
+        pass
+
     @abstractmethod
     def contact_page(self) -> str:
         """Return the contact page URL of the data source."""
         pass
 
     @abstractmethod
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, value) -> None:
+    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, value):
         """Interact with Redis using the given command, key, and value."""
         pass
 
     @abstractmethod
-    def append_leak_data(self, leak: leak_model) -> None:
+    def append_leak_data(self, leak: leak_model, entity: entity_model):
         """Append a single leak_model instance to the collected card data."""
+        pass
+
+    def init_callback(self, callback):
+        """pass callback model triggered on leak parsed"""
         pass

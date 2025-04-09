@@ -1,10 +1,12 @@
 from abc import ABC
-from typing import Dict
+from typing import Dict, List
 from playwright.async_api import BrowserContext
+
 from crawler.crawler_instance.local_interface_model.api.api_collector_interface import api_collector_interface
+from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
-from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
 from crawler.crawler_services.shared.helper_method import helper_method
 
 '''
@@ -25,68 +27,112 @@ from crawler.crawler_services.shared.helper_method import helper_method
 
 
 class _example(api_collector_interface, ABC):
-    _instance = None
+  _instance = None
 
-    def __init__(self):
-        pass
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(_example, cls).__new__(cls)
-        return cls._instance
-
-    @property
-    def base_url(self) -> str:
+  def __init__(self):
+    """
+        Initialize the class instance.
+        Sets up containers for card data and entity data storage.
         """
+    self._card_data = []
+    self._entity_data = []
+
+  def __new__(cls):
+    """
+        Implements singleton pattern to ensure only one instance exists.
+        """
+    if cls._instance is None:
+      cls._instance = super(_example, cls).__new__(cls)
+    return cls._instance
+
+  @property
+  def base_url(self) -> str:
+    """
         Returns the base URL for the class.
 
         Example:
-            >> instance = _sample()
+            >> instance = _example()
             >> print(instance.base_url)
-            "http://sample.onion"
+            "https://example.com"
         """
-        return "https://example.com"
+    return "https://example.com"
 
-    @property
-    def rule_config(self) -> RuleModel:
-        """
+  @property
+  def rule_config(self) -> RuleModel:
+    """
         Returns the RuleModel configuration for this implementation.
 
         Example:
-            >> instance = _sample()
+            >> instance = _example()
             >> config = instance.rule_config
             >> print(config.m_fetch_proxy, config.m_fetch_config)
-            FetchProxy.TOR FetchConfig.SELENIUM
+            FetchProxy.TOR FetchConfig.PLAYRIGHT
         """
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM)
+    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT)
 
-    async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
-        p_data_url = self.base_url
-        email = query.get("email", "john.doe@gmail.com")
-        username = query.get("username", "johndoe123")
+  @property
+  def card_data(self) -> List[leak_model]:
+    """
+        Returns the list of parsed leak_model objects (breach records).
+        """
+    return self._card_data
 
-        collector_model = api_data_model(base_url=p_data_url, content_type=["email", "username"])
-        combined_records = set()
+  @property
+  def entity_data(self) -> List[entity_model]:
+    """
+        Returns the list of parsed entity_model objects (associated metadata).
+        """
+    return self._entity_data
 
-        page = await context.new_page()
-        await page.goto(p_data_url)
+  def append_leak_data(self, leak: leak_model, entity: entity_model):
+    """
+        Appends a single leak_model and its corresponding entity_model to internal storage.
+        """
+    self._card_data.append(leak)
+    self._entity_data.append(entity)
 
-        combined_records.update(["Adobe Breach 2013", "LinkedIn Leak 2016"])
+  async def parse_leak_data(self, query: Dict[str, str], context: BrowserContext):
+    """
+        Asynchronously parses breach data from the given context using the provided query.
 
-        collector_model.cards_data = [leak_model(
-            m_title="Breach Found",
-            m_url=p_data_url,
-            m_base_url=p_data_url,
-            m_screenshot="",
-            m_content="Data breach detected.",
-            m_important_content="Records exposed.",
-            m_network=helper_method.get_network_type(p_data_url),
-            m_content_type=["stolen"],
-            m_weblink=[],
-            m_dumplink=list(combined_records),
-            m_email_addresses=[email],
-            m_name=username
-        )]
+        Args:
+            query (Dict[str, str]): Dictionary with keys like 'email' and 'username'.
+            context (BrowserContext): The Playwright browser context used for scraping.
 
-        await page.close()
-        return collector_model
+        Returns:
+            api_data_model: A model populated with the discovered card and entity data.
+        """
+    p_data_url = self.base_url
+    email = query.get("email", "john.doe@gmail.com")
+    username = query.get("username", "johndoe123")
+
+    collector_model = api_data_model(base_url=p_data_url, content_type=["email", "username"])
+
+    combined_records = set()
+
+    page = await context.new_page()
+    await page.goto(p_data_url)
+
+    combined_records.update(["Adobe Breach 2013", "LinkedIn Leak 2016"])
+
+    card_data = leak_model(
+      m_title="Breach Found",
+      m_url=p_data_url,
+      m_base_url=p_data_url,
+      m_screenshot="",
+      m_content="Data breach detected.",
+      m_important_content="Records exposed.",
+      m_network=helper_method.get_network_type(p_data_url),
+      m_content_type=["stolen"],
+      m_weblink=[],
+      m_dumplink=list(combined_records),
+    )
+
+    entity_data = entity_model(
+      m_email_addresses=[email],
+      m_name=username
+    )
+
+    self.append_leak_data(card_data, entity_data)
+    collector_model.cards_data = self.card_data
+    return collector_model

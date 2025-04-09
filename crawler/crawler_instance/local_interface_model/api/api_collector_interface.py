@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, List
 
 from playwright.async_api import BrowserContext
 
-from crawler.crawler_instance.local_interface_model.api.api_data_model import api_data_model
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
+from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel
 
 class api_collector_interface(ABC):
@@ -19,7 +20,18 @@ class api_collector_interface(ABC):
         """Return the rule configuration."""
         pass
 
+    @property
     @abstractmethod
+    def card_data(self) -> List[leak_model]:
+        """Return the list of parsed leak models (card data)."""
+        pass
 
-    def parse_leak_data(self, query: Dict[str, str], context: BrowserContext) -> api_data_model:
+    @property
+    @abstractmethod
+    def entity_data(self) -> List[entity_model]:
+        """Return the list of parsed leak models (entity data)."""
+        pass
+
+    @abstractmethod
+    def parse_leak_data(self, query: Dict[str, str], context: BrowserContext):
         pass
