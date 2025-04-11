@@ -1,46 +1,36 @@
 from abc import ABC
 from typing import List
+import re
 from bs4 import BeautifulSoup
 import time
+from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import telegram_chat_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
-from playwright.sync_api import sync_playwright  # Playwright import for sync usage
+import json
 
 
 class _telegram_extractor(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self, callback=None):
+        self.callback = callback
         self._card_data = []
+        self._entity_data = []
+        self.soup = None
         self._initialized = None
         self._redis_instance = redis_controller()
+
+    def init_callback(self, callback=None):
         self.callback = callback
-        self.browser = None
-        self.context = None
-        self.page = None
 
-    def __new__(cls, callback=None):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(_telegram_extractor, cls).__new__(cls)
-            cls._instance._initialized = False
+            cls._instance = super().__new__(cls)
         return cls._instance
-
-    def _initialize_browser(self):
-        """Initialize Playwright browser and page."""
-        with sync_playwright() as p:
-            self.browser = p.chromium.launch(headless=True)  # Start browser in headless mode
-            print("Browser initialized")
-            self.context = self.browser.new_context()  # New context for isolation
-            self.page = self.context.new_page()  # Open a new page
-            print("Page initialized")
-
-    def close_browser(self):
-        """Close Playwright browser."""
-        if self.browser:
-            self.browser.close()
 
     @property
     def seed_url(self) -> str:
@@ -51,8 +41,12 @@ class _telegram_extractor(leak_extractor_interface, ABC):
         return "https://web.telegram.org/"
 
     @property
+    def entity_data(self) -> List[entity_model]:
+        return self._entity_data
+
+    @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.SELENIUM, m_resoource_block=False)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT, m_resoource_block=False)
 
     @property
     def card_data(self) -> List[telegram_chat_model]:
@@ -64,89 +58,185 @@ class _telegram_extractor(leak_extractor_interface, ABC):
     def contact_page(self) -> str:
         return "https://web.telegram.org/"
 
-    def append_leak_data(self, chat: telegram_chat_model) -> None:
-        self._card_data.append(chat)
+    def append_leak_data(self, leak: telegram_chat_model, entity: entity_model):
+        self._card_data.append(leak)
+        self._entity_data.append(entity)
         if self.callback:
             self.callback()
 
-    def parse_leak_data(self, page=None):
-        print("Please scan the QR code to log in.")
-
-        def wait_for_main_columns(self):
-            """Wait for the main columns to appear after login using page locator."""
-            while True:
-                try:
-                    # Use locator to wait for the main columns element to be visible
-                    main_columns_locator = page.locator("#main-columns")
-                    main_columns_locator.wait_for(state="visible")
-                    print("Main columns are loaded.")
-                    break  # Exit the loop once the main columns are visible
-                except Exception as e:
-                    print(f"Waiting for main columns: {e}")
-                time.sleep(2)
-
-        def scroll_to_top():
-            """Scroll to the top of the chat if possible."""
-            try:
-                scrollable_div = self.page.query_selector(".scrollable-y")
-                self.page.evaluate("arguments[0].scrollTop = 0;", scrollable_div)
-            except Exception as e:
-                print(f"Scroll error: {e}")
-
-        def click_chat(chat):
-            """Click on the chat element to open the chat window."""
-            try:
-                chat.click()  # Playwright has a click method on elements directly
-                time.sleep(2)
-            except Exception as e:
-                print(f"Click error: {e}")
-
-        def extract_from_html(html: str):
-            """Extract chat data from the HTML of a message."""
-            soup = BeautifulSoup(html, 'html.parser')
-            try:
-                return telegram_chat_model(
-                    message_id=soup.find('div', class_='document-container')['data-mid'],
-                    content_html=str(soup),
-                    timestamp=soup.find('div', class_='time-inner')['title'],
-                    views=soup.find('span', class_='post-views').text.strip() if soup.find('span',
-                                                                                           class_='post-views') else None,
-                    file_name=soup.find('middle-ellipsis-element').text if soup.find(
-                        'middle-ellipsis-element') else None,
-                    file_size=soup.find('div', class_='document-size').text.strip() if soup.find('div',
-                                                                                                 class_='document-size') else None,
-                    forwarded_from=soup.find('span', class_='peer-title').text.strip() if soup.find('span',
-                                                                                                    class_='peer-title') else None,
-                    peer_id=soup.find('div', class_='document-container')['data-peer-id']
-                )
-            except Exception as e:
-                print(f"Error parsing HTML: {e}")
-                return None
-
-        # Wait until main columns are available
-        wait_for_main_columns(self)
-
-        last_active = None
+    @staticmethod
+    def wait_for_main_columns(page):
         while True:
             try:
-                # Locate active chat elements
-                chat_elements = self.page.query_selector_all("ul a.chatlist-chat")
-                for chat in chat_elements:
-                    if "active" in chat.get_attribute("class") and chat != last_active:
-                        click_chat(chat)
-                        last_active = chat
-                        time.sleep(3)
+                main_columns_locator = page.locator("#main-columns")
+                main_columns_locator.wait_for(state="visible")
+                print("Main columns are loaded.")
+                break
+            except Exception as e:
+                print(f"Waiting for main columns: {e}")
+            time.sleep(2)
 
-                        # Locate message elements and parse
-                        messages = self.page.query_selector_all(
-                            "div.bubble.channel-post.with-beside-button.hide-name.photo.is-in.can-have-tail")
-                        print(f"Found {len(messages)} messages.")
-                        for msg in messages:
-                            html = msg.inner_html()
-                            parsed = extract_from_html(html)
-                            if parsed:
-                                self.append_leak_data(parsed)
+    @staticmethod
+    def scroll_to_top(page):
+        try:
+            scrollable_div = page.query_selector(".scrollable-y")
+            page.evaluate("(element) => element.scrollTop = 0", scrollable_div)
+        except Exception as e:
+            print(f"Scroll error: {e}")
+
+    @staticmethod
+    def click_chat(chat):
+        try:
+            chat.click()
+            time.sleep(2)
+        except Exception as e:
+            print(f"Click error: {e}")
+
+    def extract_from_html(self, html: str, channel_name: str = None):
+
+        soup = BeautifulSoup(html, 'html.parser')
+        try:
+            document_container = soup.find('div', class_='document-container')
+            if not document_container or not document_container.get('data-mid'):
+                print("[Warning] Missing document container or message_id. Skipping...")
+                return None
+            message_id = document_container.get('data-mid')
+            peer_id = document_container.get('data-peer-id')
+
+            timestamp_tag = soup.find('div', class_='time-inner')
+            timestamp = timestamp_tag['title'] if timestamp_tag else None
+
+            views = soup.find('span', class_='post-views')
+            file_name_tag = soup.find('middle-ellipsis-element')
+            file_name = file_name_tag.text.strip() if file_name_tag else None
+            file_size_tag = soup.find('div', class_='document-size')
+            file_size = None
+            if file_size_tag:
+                # Clean up file size by extracting the first number + unit (e.g., "412 KB")
+                match = re.search(r'\d+\s*(?:KB|MB|GB)', file_size_tag.get_text())
+                file_size = match.group(0) if match else file_size_tag.get_text(strip=True)
+
+            forwarded_from = soup.find('span', class_='peer-title')
+
+            sender_name = soup.find('div', class_='name')
+            sender_username = soup.find('span', class_='usernames')
+            chat_title = soup.find('div', class_='bubble-title')
+            text_content_tag = soup.find('div', class_='text-content') or soup.find('div',
+                                                                                    class_='translatable-message')
+            text = text_content_tag.text.strip() if text_content_tag else soup.get_text(strip=True)
+
+            message_type = 'audio' if soup.find('audio-element') else 'video' if soup.find('video') else 'text'
+            media_url = None
+            media_caption = soup.find('div', class_='translatable-message')
+            reply_to = soup.find('div', class_='reply')
+            edited = soup.find('i', class_='time-edited')
+            status = soup.get('class')
+
+            file_path = f"downloads/{file_name}" if file_name else None
+
+            model = telegram_chat_model(
+                message_id=message_id,
+                content=text,
+                timestamp=timestamp,
+                views=views.text.strip() if views else None,
+                file_name=file_name,
+                file_size=file_size,
+                forwarded_from=forwarded_from.text.strip() if forwarded_from else None,
+                peer_id=peer_id,
+                sender_name=sender_name.text.strip() if sender_name else None,
+                sender_username=sender_username.text.strip() if sender_username else None,
+                chat_title=chat_title.text.strip() if chat_title else None,
+                channel_name=channel_name,
+                message_type=message_type,
+                media_url=media_url,
+                media_caption=media_caption.text.strip() if media_caption else None,
+                reply_to_message_id=reply_to['data-mid'] if reply_to and 'data-mid' in reply_to.attrs else None,
+                edited_timestamp=edited.text.strip() if edited else None,
+                message_status=' '.join(status) if status else None,
+                file_path=file_path
+            )
+
+            print(json.dumps(model.dict(), ensure_ascii=False, indent=2))
+            return model
+
+        except Exception as e:
+            print(f"Error parsing HTML: {e}")
+            return None
+
+    def parse_leak_data(self, page: Page = None):
+        self.wait_for_main_columns(page)
+        last_active_chat_id = None
+
+        print("Waiting for user to manually click chats...")
+
+        while True:
+            try:
+                chat_elements = page.query_selector_all("ul a.chatlist-chat")
+
+                for chat in chat_elements:
+                    chat_classes = chat.get_attribute("class")
+
+                    if "active" in chat_classes:
+                        chat_id = chat.get_attribute("href") or chat.get_attribute("data-peer-id")
+
+                        if chat_id != last_active_chat_id:
+                            # Print active chat name
+                            channel = chat.query_selector("span.peer-title")
+                            channel_name = channel.inner_text().strip()
+                            print("New active chat detected. Scraping messages...")
+
+                            self.scroll_to_top(page)
+                            time.sleep(3)
+
+                            message_selector = "div.bubble.channel-post.with-beside-button.hide-name.photo.is-in.can-have-tail"
+                            messages = page.query_selector_all(message_selector)
+                            print(f"\n--- Extracting {len(messages)} messages ---")
+
+                            for idx, msg in enumerate(messages, start=1):
+                                try:
+                                    html = msg.inner_html()
+                                    parsed = self.extract_from_html(html, channel_name)
+
+                                    if parsed:
+                                        print(f"\n[Message {idx} JSON]")
+                                        print(json.dumps(parsed.dict(), ensure_ascii=False, indent=2))
+
+                                        self.append_leak_data(parsed, entity_model())
+                                except Exception as e:
+                                    print(f"Error extracting message {idx}: {e}")
+
+                            group_selector = "div.bubbles-group"
+                            groups = page.query_selector_all(group_selector)
+                            print(f"\n--- Extracting {len(groups)} bubble groups ---")
+
+                            for idx, group in enumerate(groups, start=1):
+                                try:
+                                    group_html = group.inner_html()
+                                    soup = BeautifulSoup(group_html, 'html.parser')
+
+                                    # Loop over individual bubbles/messages inside the group
+                                    bubbles = soup.select("div.bubble")
+                                    print(f"[Bubble Group {idx}] Found {len(bubbles)} messages.")
+
+                                    for msg_idx, bubble in enumerate(bubbles, start=1):
+                                        try:
+                                            bubble_html = str(bubble)
+                                            parsed = self.extract_from_html(bubble_html, channel_name)
+                                            if parsed:
+                                                print(f"\n[Group {idx} - Message {msg_idx} JSON]")
+                                                print(json.dumps(parsed.dict(), ensure_ascii=False, indent=2))
+                                                self.append_leak_data(parsed, entity_model())
+                                            else:
+                                                print(f"[Group {idx} - Message {msg_idx}]: Failed to parse.")
+                                        except Exception as e:
+                                            print(f"[Group {idx} - Message {msg_idx}] Error: {e}")
+
+                                except Exception as e:
+                                    print(f"Error processing bubble group {idx}: {e}")
+
+                            last_active_chat_id = chat_id
 
             except Exception as e:
                 print(f"Main loop error: {e}")
-                time.sleep(1)
+
+            time.sleep(2)
