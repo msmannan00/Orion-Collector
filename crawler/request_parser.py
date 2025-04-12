@@ -10,7 +10,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import FetchProxy
 
 class RequestParser:
 
-  def __init__(self, proxy: dict, model:leak_extractor_interface):
+  def __init__(self, proxy: dict, model: leak_extractor_interface):
     self.proxy = proxy
     self.model = model
     self.model.init_callback(self.callback)
@@ -56,7 +56,10 @@ class RequestParser:
       with sync_playwright() as playwright:
         self.browser = self._launch_browser(playwright)
 
-        context = self.browser.new_context()
+        context = self.browser.new_context(
+          device_scale_factor=1,
+          user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
+        )
         context.set_default_timeout(600000)
         context.set_default_navigation_timeout(600000)
 
@@ -66,10 +69,19 @@ class RequestParser:
         try:
           page = context.new_page()
 
+          # Stealth JS
+          page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => undefined
+            });
+          """)
+
           if self.model.rule_config.m_resoource_block:
             page.route("**/*", self._handle_route)
 
-          page.goto(self.model.seed_url, wait_until="load")
+          page.goto(self.model.seed_url, wait_until="domcontentloaded")
+
+          page.wait_for_timeout(5000)
 
           self.model.soup = BeautifulSoup(page.content(), 'html.parser')
           self.model.parse_leak_data(page)
@@ -87,6 +99,9 @@ class RequestParser:
 
   def _launch_browser(self, playwright):
     if self.model.rule_config.m_fetch_proxy is FetchProxy.NONE:
-      return playwright.chromium.launch(headless=False)
+      return playwright.firefox.launch(headless=False)
     else:
-      return playwright.chromium.launch(proxy=self.proxy, headless=False)
+      return playwright.firefox.launch(
+        headless=False,
+        proxy=self.proxy
+      )
