@@ -66,7 +66,9 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         page.wait_for_selector('.main__contant')

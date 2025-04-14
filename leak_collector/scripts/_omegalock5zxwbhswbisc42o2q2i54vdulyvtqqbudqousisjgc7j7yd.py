@@ -61,7 +61,9 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         datatable = self.soup.find("table", class_="datatable")

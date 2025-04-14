@@ -63,7 +63,9 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         visited_pages = set()

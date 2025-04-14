@@ -67,7 +67,9 @@ class _vkvsgl7lhipjirmz6j5ubp3w3bwvxgcdbpi3fsbqngfynetqtw4w5hyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         title_elements = page.query_selector_all('div.card-body.p-3.pt-2 a.h5')

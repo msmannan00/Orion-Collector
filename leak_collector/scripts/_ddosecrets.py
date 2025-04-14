@@ -63,7 +63,9 @@ class _ddosecrets(leak_extractor_interface, ABC):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         page.goto(self.seed_url, wait_until="networkidle")

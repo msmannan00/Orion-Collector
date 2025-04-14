@@ -68,7 +68,9 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         project_sections = page.query_selector_all(".project")

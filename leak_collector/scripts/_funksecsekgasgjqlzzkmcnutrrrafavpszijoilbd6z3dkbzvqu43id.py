@@ -61,7 +61,9 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     @staticmethod
     def safe_find(page, selector, attr=None):
