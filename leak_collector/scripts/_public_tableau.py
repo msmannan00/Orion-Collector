@@ -186,7 +186,7 @@ class _public_tableau(leak_extractor_interface, ABC):
           m_country_name="United States",
           m_industry="Healthcare" if data_dict.get("Organization Type") == "MED" else None,
           m_email_addresses=helper_method.extract_emails(tooltip_content),
-          m_phone_numbers=helper_method.extract_phone_numbers(tooltip_content),
+          m_phone_numbers=[],
           m_company_name=company_name,
           m_states=[data_dict["Breach Location State"]] if "Breach Location State" in data_dict else [],
         )
