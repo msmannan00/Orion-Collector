@@ -195,7 +195,7 @@ class _public_tableau(leak_extractor_interface, ABC):
 
         y_position += 20
         hover_count += 1
-        retry_count = 0  # reset on success
+        retry_count = 0
 
         if hover_count % 15 == 0:
           page.mouse.wheel(0, 280)
@@ -204,6 +204,6 @@ class _public_tableau(leak_extractor_interface, ABC):
       except Exception as ex:
         print(f"Error on hover {hover_count}: {ex}")
         retry_count += 1
-        y_position += 20  # shift cursor anyway to avoid stuck position
+        y_position += 20
 
     self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED, True)
