@@ -10,7 +10,7 @@ from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, C
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
-class _example(leak_extractor_interface, ABC):
+class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self, callback=None):
@@ -29,17 +29,17 @@ class _example(leak_extractor_interface, ABC):
     def __new__(cls, callback=None):
 
         if cls._instance is None:
-            cls._instance = super(_example, cls).__new__(cls)
+            cls._instance = super(_k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
     @property
     def seed_url(self) -> str:
-        return "https://example.com/"
+        return "http://k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd.onion/"
 
     @property
     def base_url(self) -> str:
-        return "https://example.com/"
+        return "http://k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd.onion/"
 
     @property
     def rule_config(self) -> RuleModel:
