@@ -14,7 +14,6 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
     _instance = None
 
     def __init__(self, callback=None):
-
         self.callback = callback
         self._card_data = []
         self._entity_data = []
@@ -23,11 +22,9 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
         self._redis_instance = redis_controller()
 
     def init_callback(self, callback=None):
-
         self.callback = callback
 
     def __new__(cls, callback=None):
-
         if cls._instance is None:
             cls._instance = super(_k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd, cls).__new__(cls)
             cls._instance._initialized = False
@@ -47,48 +44,69 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
 
     @property
     def card_data(self) -> List[leak_model]:
-
         return self._card_data
 
     @property
     def entity_data(self) -> List[entity_model]:
-
         return self._entity_data
 
     def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
-        return "https://www.iana.org/help/example-domains"
+        return f"{self.base_url}/contact.php"
 
     def append_leak_data(self, leak: leak_model, entity: entity_model):
-
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
             self.callback()
 
     def parse_leak_data(self, page: Page):
-        
-        m_content = ""
+        page_number = 1
 
-        card_data = leak_model(
-            m_title=page.title(),
-            m_url=page.url,
-            m_base_url=self.base_url,
-            m_screenshot="",
-            m_content=m_content,
-            m_network=helper_method.get_network_type(self.base_url),
-            m_important_content=m_content,
-            m_weblink=[],
-            m_dumplink=[],
-            m_content_type=["leaks"],
-        )
+        while True:
+            page.goto(f"{self.seed_url}index.php?page={page_number}")
 
-        entity_data = entity_model(
-            m_email_addresses=helper_method.extract_emails(m_content),
-            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-        )
+            links = page.eval_on_selector_all(
+                "th.News[onclick^='viewtopic']",
+                "elements => elements.map(el => el.getAttribute('onclick').match(/'([^']+)'/)[1])"
+            )
+            print(links)
 
-        self.append_leak_data(card_data, entity_data)
+            if not links:
+                break
+
+            full_links = [f"{self.base_url}/topic.php?id={link_id}" for link_id in links]
+
+            for card_url in full_links:
+                new_page = page.context.new_page()
+                new_page.goto(card_url)
+
+                m_content = new_page.inner_html("body")  # Adjust the selector if needed
+
+                card_data = leak_model(
+                    m_title=new_page.title(),
+                    m_url=new_page.url,
+                    m_base_url=self.base_url,
+                    # m_screenshot=new_page.screenshot(path=f"screenshot_{card_url.split('=')[-1]}.png"),
+
+                    m_screenshot="",
+                    m_content=m_content,
+                    m_network=helper_method.get_network_type(self.base_url),
+                    m_important_content=m_content,
+                    m_weblink=[],
+                    m_dumplink=[],
+                    m_content_type=["leaks"],
+                )
+
+                entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(m_content),
+                    m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                )
+
+                self.append_leak_data(card_data, entity_data)
+                new_page.close()
+
+    
+            page_number += 1
