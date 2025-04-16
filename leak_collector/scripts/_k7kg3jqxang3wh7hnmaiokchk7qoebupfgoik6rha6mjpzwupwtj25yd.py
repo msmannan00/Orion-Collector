@@ -90,11 +90,7 @@ class _example(leak_extractor_interface, ABC):
             self.callback()
 
     def parse_leak_data(self, page: Page):
-        """
-        Extract leak-related information from a Playwright Page object.
-        Parses the title and URL, derives network type, and extracts emails and phone numbers from the content.
-        Constructs and stores corresponding leak_model and entity_model instances.
-        """
+        
         m_content = ""
 
         card_data = leak_model(
