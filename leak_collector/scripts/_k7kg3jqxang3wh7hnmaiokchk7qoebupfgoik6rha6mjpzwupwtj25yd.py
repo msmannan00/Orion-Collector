@@ -62,14 +62,12 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
         if self.callback:
             self.callback()
 
-    from bs4 import BeautifulSoup
 
     def parse_leak_data(self, page: Page):
         page_number = 1
 
         while True:
-            # Navigate to the current page
-            page.goto(f"{self.seed_url}/index.php?page={page_number}")
+            page.goto(f"{self.seed_url}/index.php?page={page_number}",timeout=60000)
 
             links = page.eval_on_selector_all(
                 "th.News[onclick^='viewtopic']",
@@ -86,51 +84,31 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                 new_page.goto(card_url)
 
                 try:
-                    new_page.wait_for_selector("body")
 
-                    location_element = new_page.query_selector("i.location")
-                    location_text = new_page.evaluate("(element) => element.nextSibling?.textContent?.trim()",
-                                                      location_element) if location_element else "Unknown"
                     website_element = new_page.query_selector("i.link")
                     website_text = new_page.evaluate("(element) => element.nextSibling?.textContent?.trim()",
                                                      website_element) if website_element else "Unknown"
-                    # Extract all nested divs under the same container
-                    details_divs = new_page.query_selector_all("th.News div")
+                    html = new_page.content()
 
-                    views_text = data_size_text = added_date_text = publication_date_text = "Unknown"
+                    soup = BeautifulSoup(html, 'html.parser')
 
-                    for div in details_divs:
-                        text = div.inner_text().strip()
+                    news_element = soup.find('th', class_='News')
 
-                        if text.startswith("👁️ views:"):
-                            views_text = text.replace("👁️ views:", "").strip()
-
-                        elif text.startswith("amount of data:"):
-                            data_size_text = text.replace("amount of data:", "").strip()
-
-                        elif text.startswith("added:"):
-                            added_date_text = text.replace("added:", "").strip()
-
-                        elif text.startswith("publication date:"):
-                            publication_date_text = text.replace("publication date:", "").strip()
-
-                    print(publication_date_text)
-
-                    information_element = new_page.query_selector("div:has-text('information')")
-                    if information_element:
-                        raw_information = information_element.inner_text().strip()
-                        information_text = raw_information.split("information:", 1)[1].split("comment:", 1)[0].strip()
+                    if news_element:
+                        m_content = news_element.get_text(strip=True)
                     else:
-                        information_text = "Unknown"
+                        m_content = "No content found"
 
-                    comment_element = new_page.query_selector("div:has-text('comment')")
-                    if comment_element:
-                        raw_comment = comment_element.inner_text().strip()
-                        comment_text = raw_comment.split("comment:", 1)[1].strip()
-                    else:
-                        comment_text = "Unknown"
+                    download_links_element = new_page.query_selector("div:has-text('DOWNLOAD LINKS:')")
+                    dum_links = []
+                    if download_links_element:
+                        download_links_text = download_links_element.inner_text().strip()
+                        if "DOWNLOAD LINKS:" in download_links_text:
+                            links_section = download_links_text.split("DOWNLOAD LINKS:")[1].strip()
+                            dum_links = [link.strip() for link in links_section.split("\n") if link.startswith("http")]
 
-                    m_content = f"{information_text}\n\n{comment_text}"
+
+
                     screenshot_path = f"screenshot_{card_url.split('=')[-1]}.png"
                     try:
                         new_page.screenshot(path=screenshot_path)
@@ -147,11 +125,8 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         m_content_type=["leaks"],
                         m_screenshot=screenshot_path,
                         m_weblink=[website_text],
-                        m_dumplink=[],
+                        m_dumplink=dum_links,
 
-                        # m_leak_date=datetime.strptime(added_date_text, "%Y-%m-%d").date() if added_date_text else None,
-                        m_data_size=data_size_text,
-                        m_revenue=None
                     )
 
                     entity_data = entity_model(
@@ -162,6 +137,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                     self.append_leak_data(card_data, entity_data)
                 except Exception as e:
                     print(f"Failed to extract data for {card_url}: {e}")
+
                 new_page.close()
 
             page_number += 1
