@@ -156,7 +156,6 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                     self.append_leak_data(card_data, entity_data)
                 except Exception as e:
                     print(f"Failed to extract data for {card_url}: {e}")
-
                 new_page.close()
 
             page_number += 1
