@@ -94,19 +94,27 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                     website_element = new_page.query_selector("i.link")
                     website_text = new_page.evaluate("(element) => element.nextSibling?.textContent?.trim()",
                                                      website_element) if website_element else "Unknown"
-                    views_element = new_page.query_selector("div:has-text('👁️ views')")
-                    views_text = views_element.inner_text().split(":")[1].strip() if views_element else "Unknown"
-                    data_size_element = new_page.query_selector("div:has-text('amount of data')")
-                    data_size_text = data_size_element.inner_text().split(":")[
-                        1].strip() if data_size_element else "Unknown"
+                    # Extract all nested divs under the same container
+                    details_divs = new_page.query_selector_all("th.News div")
 
-                    added_date_element = new_page.query_selector("div:has-text('added')")
-                    added_date_text = added_date_element.inner_text().split(":")[
-                        1].strip() if added_date_element else None
+                    views_text = data_size_text = added_date_text = publication_date_text = "Unknown"
 
-                    publication_date_element = new_page.query_selector("div:has-text('publication date')")
-                    publication_date_text = publication_date_element.inner_text().split(":")[
-                        1].strip() if publication_date_element else None
+                    for div in details_divs:
+                        text = div.inner_text().strip()
+
+                        if text.startswith("👁️ views:"):
+                            views_text = text.replace("👁️ views:", "").strip()
+
+                        elif text.startswith("amount of data:"):
+                            data_size_text = text.replace("amount of data:", "").strip()
+
+                        elif text.startswith("added:"):
+                            added_date_text = text.replace("added:", "").strip()
+
+                        elif text.startswith("publication date:"):
+                            publication_date_text = text.replace("publication date:", "").strip()
+
+                    print(publication_date_text)
 
                     information_element = new_page.query_selector("div:has-text('information')")
                     if information_element:
@@ -134,15 +142,13 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         m_url=new_page.url,
                         m_base_url=self.base_url,
                         m_content=m_content,
-                        m_important_content="",
+                        m_important_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
-                        m_section=[],
                         m_content_type=["leaks"],
                         m_screenshot=screenshot_path,
                         m_weblink=[website_text],
                         m_dumplink=[],
-                        m_websites=[website_text],
-                        m_logo_or_images=[],
+
                         # m_leak_date=datetime.strptime(added_date_text, "%Y-%m-%d").date() if added_date_text else None,
                         m_data_size=data_size_text,
                         m_revenue=None
