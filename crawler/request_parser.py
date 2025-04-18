@@ -1,3 +1,4 @@
+import os
 from threading import Timer
 from playwright.sync_api import sync_playwright, Route
 from bs4 import BeautifulSoup
@@ -54,12 +55,9 @@ class RequestParser:
 
     try:
       with sync_playwright() as playwright:
-        self.browser = self._launch_browser(playwright)
+        context = self._launch_persistent_context(playwright)
+        self.browser = context.browser
 
-        context = self.browser.new_context(
-          device_scale_factor=1,
-          user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
-        )
         context.set_default_timeout(600000)
         context.set_default_navigation_timeout(600000)
 
@@ -67,20 +65,23 @@ class RequestParser:
         self.timeout_timer.start()
 
         try:
-          page = context.new_page()
+          page = context.pages[0]
+          page.goto("about:blank")
 
-          # Stealth JS
+          page.set_extra_http_headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
+          })
+
           page.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-              get: () => undefined
-            });
-          """)
+                    Object.defineProperty(navigator, 'webdriver', {
+                      get: () => undefined
+                    });
+                """)
 
           if self.model.rule_config.m_resoource_block:
             page.route("**/*", self._handle_route)
 
           page.goto(self.model.seed_url, wait_until="domcontentloaded")
-
           page.wait_for_timeout(5000)
 
           self.model.soup = BeautifulSoup(page.content(), 'html.parser')
@@ -97,11 +98,18 @@ class RequestParser:
     default_data_model.cards_data = self.model.card_data
     return default_data_model, None
 
-  def _launch_browser(self, playwright):
-    if self.model.rule_config.m_fetch_proxy is FetchProxy.NONE:
-      return playwright.firefox.launch(headless=False)
-    else:
-      return playwright.firefox.launch(
-        headless=False,
-        proxy=self.proxy
-      )
+  def _launch_persistent_context(self, playwright):
+    user_data_dir = os.path.join(os.getcwd(), "playwright_user_data")
+
+    launch_args = {
+      "user_data_dir": user_data_dir,
+      "headless": False,
+      "viewport": None,
+      "args": ["--start-maximized"]
+    }
+
+    if self.model.rule_config.m_fetch_proxy is not FetchProxy.NONE:
+      launch_args["proxy"] = self.proxy
+
+    context = playwright.firefox.launch_persistent_context(**launch_args)
+    return context
