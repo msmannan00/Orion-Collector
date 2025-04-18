@@ -54,7 +54,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
-        return f"{self.base_url}/contact.php"
+        return "http://k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd.onion/contact.php"
 
     def append_leak_data(self, leak: leak_model, entity: entity_model):
         self._card_data.append(leak)
@@ -108,13 +108,6 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                             dum_links = [link.strip() for link in links_section.split("\n") if link.startswith("http")]
 
 
-
-                    screenshot_path = f"screenshot_{card_url.split('=')[-1]}.png"
-                    try:
-                        new_page.screenshot(path=screenshot_path)
-                    except Exception:
-                        screenshot_path = "screenshot_missing.png"
-
                     card_data = leak_model(
                         m_title=new_page.title(),
                         m_url=new_page.url,
@@ -123,7 +116,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         m_important_content=m_content,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_content_type=["leaks"],
-                        m_screenshot=screenshot_path,
+                        m_screenshot="",
                         m_weblink=[website_text],
                         m_dumplink=dum_links,
 
