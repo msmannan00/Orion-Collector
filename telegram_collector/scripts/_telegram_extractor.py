@@ -1,3 +1,4 @@
+import os
 import time
 from abc import ABC
 from datetime import datetime, timedelta
@@ -67,31 +68,140 @@ class _telegram_extractor(leak_extractor_interface, ABC):
       self.callback()
 
   @staticmethod
-  def build_model_from_message(html: str, channel_name: str, message_type: str = "message") -> telegram_chat_model | None:
+  def download_document_from_bubble(page, bubble):
     try:
+      document_buttons = bubble.query_selector_all(".document-ico")
+      if not document_buttons:
+        return None
+
+      base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+      os.makedirs(base_dir, exist_ok=True)
+
+      hashed_file_names = []
+
+      for document_button in document_buttons:
+        try:
+          with page.expect_download(timeout=15000) as download_info:
+            document_button.click()
+            try:
+              page.wait_for_selector(".quality-download-options-button-menu", timeout=1000)
+              quality_button = page.query_selector(".quality-download-options-button-menu")
+              if quality_button:
+                quality_button.click()
+                time.sleep(1)
+                viewport = page.viewport_size
+                x = viewport['width'] - 30
+                y = 30
+                page.mouse.click(x, y)
+            except:
+              pass
+
+          download = download_info.value
+          original_name = download.suggested_filename
+
+          hashed_name = helper_method.generate_data_hash(original_name)
+
+          download_path = os.path.join(base_dir, hashed_name)
+          download.save_as(download_path)
+          hashed_file_names.append(hashed_name)
+
+        except Exception:
+          continue
+
+      if hashed_file_names:
+        return hashed_file_names
+      else:
+        return None
+
+    except Exception:
+      return None
+
+  @staticmethod
+  def get_channel_shareable_link(page) -> str | None:
+    try:
+      rows = page.query_selector_all(".sidebar-left-section-content .row.row-clickable")
+      for row in rows:
+        subtitle = row.query_selector(".row-subtitle")
+        title = row.query_selector(".row-title")
+        if subtitle and subtitle.inner_text().strip().lower() == "link":
+          if title:
+            link_text = title.inner_text().strip()
+            if link_text:
+              return link_text  # e.g., 't.me/AntiPlumbers'
+    except Exception as e:
+      print("Error extracting public link:", e)
+
+    return None
+
+  @staticmethod
+  def build_model_from_message(page, html: str, channel_name: str, msg_id, telegram_channel_id) -> telegram_chat_model | None:
+    try:
+      message_type: str = "message"
       soup = BeautifulSoup(html, 'html.parser')
+
       bubble_div = soup.find('div', class_='bubble-content-wrapper')
       avatar_div = soup.find('div', class_='bubble-name-forwarded-avatar')
       peer_id = avatar_div.get('data-peer-id') if avatar_div else None
       if not bubble_div:
         return None
 
-      # Skip service and sponsored messages
-      parent_bubble = soup.find_parent('div', class_='bubble')
+      parent_bubble = soup.find('div', class_='bubble')
       if parent_bubble and ('service' in parent_bubble.get('class') or 'is-sponsored' in parent_bubble.get('class')):
         return None
 
       time_tag = soup.select_one('div.time-inner')
       timestamp = time_tag.get('title').split('\n')[0] if time_tag and time_tag.has_attr('title') else None
 
-      unique_hash = helper_method.generate_data_hash(timestamp + channel_name)
-      message_id = unique_hash
+      unique_hash = helper_method.generate_data_hash(msg_id)
+      message_id = parent_bubble.get('data-mid') if parent_bubble and parent_bubble.has_attr('data-mid') else unique_hash
 
-      # Timestamp
-      time_tag = soup.select_one('div.time-inner')
-      timestamp = time_tag.get('title').split('\n')[0] if time_tag and time_tag.has_attr('title') else None
+      selector = f'div.bubble[data-mid="{msg_id}"]'
+      message_link = None
 
-      # Edited timestamp
+      try:
+        page.wait_for_selector(selector, timeout=3000, state="visible")
+        bubble_handle = page.query_selector(selector)
+        if bubble_handle:
+          bubble_handle.scroll_into_view_if_needed()
+          page.wait_for_timeout(200)
+
+          box = bubble_handle.bounding_box()
+          if box:
+            center_x = box["x"] + box["width"] / 4
+            center_y = box["y"] + box["height"] / 4
+            page.mouse.click(center_x, center_y, button="right")
+            page.wait_for_selector(".btn-menu-items", timeout=2000)
+
+            menu_items = page.query_selector_all(".btn-menu-item")
+            for item in menu_items:
+              text_span = item.query_selector(".btn-menu-item-text")
+              if text_span:
+                text = text_span.inner_text().strip()
+                if text.lower() == "copy message link":
+                  item.click()
+                  page.evaluate("""
+                    if (!document.getElementById('paste-helper')) {
+                      const input = document.createElement('input');
+                      input.id = 'paste-helper';
+                      input.style.position = 'absolute';
+                      input.style.opacity = '0';
+                      input.style.pointerEvents = 'none';
+                      document.body.appendChild(input);
+                    }
+                  """)
+                  page.focus('#paste-helper')
+                  page.keyboard.press('Control+V')
+                  message_link = page.eval_on_selector('#paste-helper', 'el => el.value')
+                  page.evaluate("document.getElementById('paste-helper').value = ''")
+                  print(":::::::::::::::::::::::::::::::::::::::::::::::")
+                  print(message_link)
+                  print(":::::::::::::::::::::::::::::::::::::::::::::::")
+                  break
+
+
+      except Exception:
+        pass
+
       edited_timestamp = None
       if time_tag and time_tag.has_attr('title') and '\n' in time_tag.get('title'):
         parts = time_tag.get('title').split('\n')
@@ -99,70 +209,71 @@ class _telegram_extractor(leak_extractor_interface, ABC):
           if part.startswith('Edited:') or part.startswith('Original:'):
             edited_timestamp = part.split(': ', 1)[1].strip()
 
-      # Views
       views_tag = soup.find('span', class_='post-views')
       views = views_tag.get_text(strip=True) if views_tag else None
 
-      # Content text
-      content_text = None
-      if message_type == "webpage":
-        content_tag = soup.find('div', class_='webpage-text')
-        content_text = content_tag.get_text(strip=True) if content_tag else None
+      content_text = ""
+      webpage_title = soup.find("div", class_="webpage-title")
+      webpage_text = soup.find("div", class_="webpage-text")
+
+      if webpage_title or webpage_text:
+        title = webpage_title.get_text(strip=True) if webpage_title else ""
+        summary = webpage_text.get_text(strip=True) if webpage_text else ""
+        content_text = f"{title}\n{summary}".strip()
+
+      message_div = soup.select_one("div.message.spoilers-container")
+
+      if message_div:
+        for unwanted in message_div.select(".time, .webpage-title, .webpage-text, .post-views, .time-inner, .webpage"):
+            unwanted.extract()
+        message_raw = message_div.stripped_strings
+        if message_raw:
+          content_text = " ".join(message_raw).strip() + content_text
+
       if not content_text:
         document_message = soup.find('div', class_='document-message')
         translatable_message = soup.find('span', class_='translatable-message')
         text_tag = document_message if document_message else translatable_message
         content_text = text_tag.get_text(strip=True) if text_tag else None
 
-      # File info
       file_name_tag = soup.find('middle-ellipsis-element')
       file_name = file_name_tag.get_text(strip=True) if file_name_tag else None
 
       file_size_tag = soup.select_one('div.document-size')
       file_size = None
+
       if file_size_tag:
-        match = re.search(r'\d+(?:\.\d+)?\s*(KB|MB|GB)|[\d,]+\s*(KB|MB|GB)', file_size_tag.get_text())
-        file_size = match.group(0) if match else file_size_tag.get_text(strip=True)
+        raw = file_size_tag.get_text(strip=True)
+        match = re.search(r'([\d.,]+)\s*(KB|MB|GB)', raw)
+        if match:
+          num, unit = match.groups()
+          num = float(num.replace(',', ''))
+          file_size = f"{num:.2f} {unit}"
+        else:
+          file_size = raw
 
-      file_path = f"downloads/{file_name}" if file_name else None
-
-      # Forwarded from
       forwarded_from = None
       forwarded_tag = soup.find('div', class_='name')
-      if forwarded_tag and 'bubble-name-forwarded' in forwarded_tag.get('class', []):
+      if forwarded_tag and 'bubble-name-forwarded' in forwarded_tag.get('class'):
         peer_title = forwarded_tag.find('span', class_='peer-title')
         forwarded_from = peer_title.get_text(strip=True) if peer_title else None
 
-      # Reply info
       reply_tag = soup.find('div', class_='reply')
       reply_to_message_id = reply_tag.get('data-reply-to-mid') if reply_tag and reply_tag.has_attr('data-reply-to-mid') else None
 
-      # Media URL and caption
       media_url = None
       media_caption = None
       if soup.find('img', class_='media-photo'):
-        photo_tag = soup.find('img', class_='media-photo')
-        if photo_tag:
-          media_url = photo_tag.get('src')
-        caption_tag = soup.find('span', class_='translatable-message')
-        if caption_tag:
-          media_caption = caption_tag.get_text(strip=True)
+        media_url = soup.find('img', class_='media-photo').get('src')
       elif soup.find('video'):
-        video_tag = soup.find('video')
-        if video_tag:
-          media_url = video_tag.get('src')
-        caption_tag = soup.find('span', class_='translatable-message')
-        if caption_tag:
-          media_caption = caption_tag.get_text(strip=True)
+        media_url = soup.find('video').get('src')
       elif soup.find('audio'):
-        audio_tag = soup.find('audio')
-        if audio_tag:
-          media_url = audio_tag.get('src')
-        caption_tag = soup.find('span', class_='translatable-message')
-        if caption_tag:
-          media_caption = caption_tag.get_text(strip=True)
+        media_url = soup.find('audio').get('src')
 
-      # Detect message type
+      caption_tag = soup.find('span', class_='translatable-message')
+      if caption_tag:
+        media_caption = caption_tag.get_text(strip=True)
+
       if message_type == "message":
         if soup.find('div', class_='document ext-torrent'):
           message_type = 'document'
@@ -177,11 +288,9 @@ class _telegram_extractor(leak_extractor_interface, ABC):
         else:
           message_type = 'text'
 
-      # Status
       status_classes = parent_bubble.get('class') if parent_bubble else []
       message_status = ' '.join(status_classes)
 
-      # Reactions
       reactions = []
       reactions_element = soup.find('reactions-element')
       if reactions_element:
@@ -192,6 +301,8 @@ class _telegram_extractor(leak_extractor_interface, ABC):
 
       return telegram_chat_model(
         message_id=str(message_id),
+        message_sharable_link=message_link,
+        channel_id=telegram_channel_id,
         content=content_text,
         timestamp=timestamp,
         views=views,
@@ -209,18 +320,18 @@ class _telegram_extractor(leak_extractor_interface, ABC):
         reply_to_message_id=reply_to_message_id,
         edited_timestamp=edited_timestamp,
         message_status=message_status,
-        file_path=file_path,
       )
+
     except Exception as e:
       print(f"Error parsing message: {e}")
       return None
 
   def parse_leak_data(self, page: Page = None):
     try:
-      page.wait_for_selector(".chatlist-chat", timeout=15000)
+      page.wait_for_selector(".chatlist-chat", timeout=150000)
     except:
       return
-
+    parsed_messages = set()
     chat_items = page.query_selector_all(".chatlist-chat")
     if not chat_items:
       return
@@ -278,16 +389,22 @@ class _telegram_extractor(leak_extractor_interface, ABC):
             continue
         return oldest_date_local
 
+      telegram_channel_id = self.get_channel_shareable_link(page)
       while scroll_count < max_scrolls:
         oldest_date = get_oldest_date()
 
         for bubble in page.query_selector_all(".bubble.channel-post"):
           try:
             msg_id = bubble.get_attribute("data-mid")
+            if msg_id in parsed_messages:
+              continue
+            parsed_messages.add(msg_id)
             if msg_id and msg_id not in seen_messages:
               html = bubble.inner_html()
-              self.build_model_from_message(html, channel_name)
+              self.build_model_from_message(page, html, channel_name, msg_id, telegram_channel_id)
               seen_messages.add(msg_id)
+            #self.download_document_from_bubble(page, bubble)
+
           except:
             continue
 
@@ -299,6 +416,12 @@ class _telegram_extractor(leak_extractor_interface, ABC):
         new_scroll = page.evaluate("(el) => el.scrollTop", scrollable)
 
         if new_scroll == prev_scroll:
-          break
+          if scroll_count<=3:
+            time.sleep(1)
+            scroll_count += 1
+            continue
+          else:
+            break
 
-        scroll_count += 1
+        scroll_count = 0
+      break

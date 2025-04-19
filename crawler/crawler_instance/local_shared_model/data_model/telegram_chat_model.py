@@ -5,6 +5,8 @@ from typing import Optional
 class telegram_chat_model(BaseModel):
     message_id: str
     content: str
+    message_sharable_link: str
+    channel_id: str
     timestamp: Optional[str] = None
     views: Optional[str] = None
     file_name: Optional[str] = None

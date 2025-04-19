@@ -1,3 +1,4 @@
+import os
 from threading import Timer
 from playwright.sync_api import sync_playwright, Route
 from bs4 import BeautifulSoup
@@ -10,7 +11,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import FetchProxy
 
 class RequestParser:
 
-  def __init__(self, proxy: dict, model:leak_extractor_interface):
+  def __init__(self, proxy: dict, model: leak_extractor_interface):
     self.proxy = proxy
     self.model = model
     self.model.init_callback(self.callback)
@@ -54,9 +55,9 @@ class RequestParser:
 
     try:
       with sync_playwright() as playwright:
-        self.browser = self._launch_browser(playwright)
+        context = self._launch_persistent_context(playwright)
+        self.browser = context.browser
 
-        context = self.browser.new_context()
         context.set_default_timeout(600000)
         context.set_default_navigation_timeout(600000)
 
@@ -64,12 +65,24 @@ class RequestParser:
         self.timeout_timer.start()
 
         try:
-          page = context.new_page()
+          page = context.pages[0]
+          page.goto("about:blank")
+
+          page.set_extra_http_headers({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
+          })
+
+          page.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', {
+                      get: () => undefined
+                    });
+                """)
 
           if self.model.rule_config.m_resoource_block:
             page.route("**/*", self._handle_route)
 
-          page.goto(self.model.seed_url, wait_until="load")
+          page.goto(self.model.seed_url, wait_until="domcontentloaded")
+          page.wait_for_timeout(5000)
 
           self.model.soup = BeautifulSoup(page.content(), 'html.parser')
           self.model.parse_leak_data(page)
@@ -85,8 +98,17 @@ class RequestParser:
     default_data_model.cards_data = self.model.card_data
     return default_data_model, None
 
-  def _launch_browser(self, playwright):
-    if self.model.rule_config.m_fetch_proxy is FetchProxy.NONE:
-      return playwright.chromium.launch(headless=False)
-    else:
-      return playwright.chromium.launch(proxy=self.proxy, headless=False)
+  def _launch_persistent_context(self, playwright):
+    user_data_dir = os.path.join(os.getcwd(), "playwright_user_data")
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    os.makedirs(base_dir, exist_ok=True)
+
+    launch_args = {"user_data_dir": user_data_dir, "headless": False, "viewport": None, "accept_downloads": True, "args": ["--start-maximized"], "firefox_user_prefs": {"browser.download.folderList": 2, "browser.download.useDownloadDir": True, "browser.download.dir": base_dir,
+      "browser.helperApps.neverAsk.saveToDisk": ",".join(["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/zip", "application/octet-stream"]), "browser.download.manager.showWhenStarting": False, "browser.helperApps.alwaysAsk.force": False,
+      "pdfjs.disabled": True, "browser.download.panel.shown": False, "browser.download.manager.closeWhenDone": True, "browser.download.animateNotifications": False, "browser.download.improvements_to_download_panel": False}}
+
+    if self.model.rule_config.m_fetch_proxy is not FetchProxy.NONE:
+      launch_args["proxy"] = self.proxy
+
+    context = playwright.firefox.launch_persistent_context(**launch_args)
+    return context
