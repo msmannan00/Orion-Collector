@@ -67,7 +67,6 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
         if self.callback:
             self.callback()
 
-
     def parse_leak_data(self, page: Page):
         page.wait_for_selector("a.break-words")
         card_links = [
