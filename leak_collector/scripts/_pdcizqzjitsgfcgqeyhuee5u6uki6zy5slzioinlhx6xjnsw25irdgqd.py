@@ -77,9 +77,9 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
                 description = description_el.text_content().strip() if description_el else "No Description"
                 size = size_el.text_content().strip() if size_el else "No Size"
 
-                leak_date = None
-                if date_str:
-                    leak_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                # leak_date = None
+                # if date_str:
+                #     leak_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
                 card_data = leak_model(
                     m_title=title,
@@ -90,7 +90,7 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=description,
                     m_content_type=["leaks"],
-                    m_leak_date=leak_date,
+                    m_leak_date=date_str,
                     m_data_size=size,
                 )
 
