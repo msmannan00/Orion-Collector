@@ -106,7 +106,7 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
                     m_title=page.title(),
                     m_url=page.url,
                     m_base_url=self.base_url,
-                    m_screenshot="",
+                    m_screenshot=helper_method.get_screenshot_base64(page,page.title()),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=m_content,
