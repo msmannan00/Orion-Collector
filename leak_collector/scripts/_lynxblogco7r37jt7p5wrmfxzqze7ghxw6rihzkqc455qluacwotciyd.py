@@ -117,7 +117,7 @@ class _lynxblogco7r37jt7p5wrmfxzqze7ghxw6rihzkqc455qluacwotciyd(leak_extractor_i
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
-                    m_screenshot="",
+                    m_screenshot=helper_method.get_screenshot_base64(page, title),
                     m_content=description,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=description,
