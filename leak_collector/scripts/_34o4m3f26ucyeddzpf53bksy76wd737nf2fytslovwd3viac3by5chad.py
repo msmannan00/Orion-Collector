@@ -67,59 +67,74 @@ class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_i
             self.callback()
 
     def parse_leak_data(self, page: Page):
-        html_content = page.content()
-        self.soup = BeautifulSoup(html_content, 'html.parser')
+        max_pages = 3  # Set the maximum number of pages to fetch
 
-        leak_cards = self.soup.find_all('div', class_='py-6')
+        for i in range(1, max_pages + 1):
+            try:
+                # Construct the URL for each page
+                url = f"{self.seed_url}/{i}"
+                print(f"Fetching page: {url}")
 
-        for card in leak_cards:
-            date_tag = card.find('time')
-            leak_date = date_tag.text.strip() if date_tag else ""
+                page.goto(url, timeout=60000)  # Navigate to the page with a longer timeout
 
-            # Extract title
-            title_tag = card.find('h2')
-            title = title_tag.text.strip() if title_tag else ""
+                # Wait for content to load before proceeding
+                page.wait_for_selector(".py-6")  # Wait for the section to load
 
-            # Extract paragraphs
-            parsed_post_text = card.find('div', class_='parsed-post-text')
-            paragraphs = []
-            if parsed_post_text:
-                paragraphs = [p.text.strip() for p in parsed_post_text.find_all('p')]
+                # Parse the page content with BeautifulSoup
+                self.soup = BeautifulSoup(page.content(), "html.parser")
 
-            full_content = "\n".join(paragraphs)
+                # Find all the sections (each section is wrapped in a <div> with the specific class)
+                sections = self.soup.find_all("div",
+                                              class_="py-6 relative after:absolute after:bottom-0 after:w-full after:border-b after:border-slate-50/[0.06]")
 
-            downloads = []
-            ul_tag = card.find('ul', class_='parsed-post-text')
-            if ul_tag:
-                li_tags = ul_tag.find_all('li')
-                for li in li_tags:
-                    a_tag = li.find('a')
-                    size_span = li.find('span', class_='inline-block')
-                    if a_tag and size_span:
-                        downloads.append({
-                            "link": a_tag['href'],
-                            "file_name": a_tag.get('download'),
-                            "size": size_span.text.strip()
-                        })
+                for section in sections:
+                    # Extract the date and time
+                    date_time = section.find("time").text.strip() if section.find("time") else ""
 
-            # Create card_data (leak_model)
-            card_data = leak_model(
-                m_title=title,
-                m_url=page.url,
-                m_base_url=self.base_url,
-                m_screenshot="",  # optional: you could grab page.screenshot() if needed
-                m_content=full_content,
-                m_network=helper_method.get_network_type(self.base_url),
-                m_important_content=full_content,
-                m_weblink=[],
-                m_dumplink=[d["link"] for d in downloads],
-                m_content_type=["leaks"]
-            )
+                    # Extract the title
+                    title = section.find("h2").text.strip() if section.find("h2") else ""
+                    print(title)
+                    # Extract the description (all <p> tags inside the parsed-post-text div)
+                    description = ""
+                    description_div = section.find("div", class_="parsed-post-text")
+                    if description_div:
+                        description = "\n".join(p.text.strip() for p in description_div.find_all("p"))
+                    print(description)
+                    # Extract the file link and size (inside <ul> with class parsed-post-text)
+                    file_link = ""
+                    file_size = ""
+                    link_tag = section.find("a")
+                    size_tag = section.find("span", class_="inline-block ml-1.5 text-slate-600 font-bold")
+                    if link_tag:
+                        file_link = self.base_url + link_tag.get("href", "")
+                    if size_tag:
+                        file_size = size_tag.text.strip()
 
-            entity_data = entity_model(
-                m_email_addresses=helper_method.extract_emails(full_content),
-                m_phone_numbers=helper_method.extract_phone_numbers(full_content),
-            )
+                    # Populate a new leak_model for this title
+                    leak_data = leak_model(
+                        m_title=title,
+                        m_url=page.url,
+                        m_base_url=self.base_url,
+                        m_screenshot="",  # Add screenshot logic if needed
+                        m_content=f"{description}\nDate: {date_time}",
+                        m_network=helper_method.get_network_type(self.base_url),
+                        m_important_content=description,
+                        m_weblink=[],
+                        m_dumplink=[file_link],
+                        m_content_type=["leaks"],
+                    )
 
-            # Append to lists and invoke callback
-            self.append_leak_data(card_data, entity_data)
+                    # Populate a new entity_model for this title
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(description),
+                        m_phone_numbers=helper_method.extract_phone_numbers(description),
+                    )
+
+                    # Append the data for this title
+                    self.append_leak_data(leak_data, entity_data)
+
+            except Exception as e:
+                print(f"Error fetching or parsing page {url}: {e}")
+
+
+
