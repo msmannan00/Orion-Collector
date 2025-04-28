@@ -68,58 +68,64 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
             self.callback()
 
     def parse_leak_data(self, page: Page):
-        soup = BeautifulSoup(page.content(), 'html.parser')
-        card_divs = soup.find_all('div', class_='flex w-full mt-3 bg-stone-100 rounded-lg p-4 shadow-md')
+        page_content = page.content()
+        self.soup = BeautifulSoup(page_content, "html.parser")
 
-        for card in card_divs:
+        card_links = [
+            self.base_url + a['href']
+            for a in self.soup.find_all("a", string="Learn more")
+            if a.has_attr("href")
+        ]
+
+        print(f"Found {len(card_links)} cards.")
+
+        for card_url in card_links:
+            print(f"Visiting: {card_url}")
+            page.goto(card_url)
+            detail_content = page.content()
+            detail_soup = BeautifulSoup(detail_content, "html.parser")
+
             try:
-                # Title
-                title_tag = card.find('div', class_='text-2xl font-bold')
-                title = title_tag.get_text(strip=True) if title_tag else "N/A"
+                weblink = detail_soup.find("div", class_="flex flex-row").find_next("span").text.strip()
 
-                # Weblink
-                weblink_tag = card.find_all('div', class_='flex flex-row')[0].find('span')
-                weblink = weblink_tag.get_text(strip=True) if weblink_tag else "N/A"
-                print(weblink)
-                # Revenue
-                revenue_tag = card.find_all('div', class_='flex flex-row')[1].find('span')
-                revenue = revenue_tag.get_text(strip=True) if revenue_tag else "N/A"
-                print(revenue)
-                # Country
-                country_tag = card.find_all('div', class_='flex flex-row')[2].find('span')
-                country = country_tag.get_text(strip=True) if country_tag else "N/A"
-                print(country)
-                # Description
-                desc_tag = card.find('div', class_='text-gray-900 whitespace-pre-line')
-                description = desc_tag.get_text(strip=True) if desc_tag else "N/A"
+                revenue_tag = detail_soup.find_all("div", class_="flex flex-row")[1]
+                revenue = revenue_tag.find("span").text.strip()
 
-                # Explore Data link
-                explore_link_tag = card.find('a', string=lambda s: s and 'Explore data' in s)
-                explore_href = explore_link_tag['href'] if explore_link_tag else "#"
-                full_explore_url = self.base_url + explore_href if not explore_href.startswith("http") else explore_href
+                country_tag = detail_soup.find_all("div", class_="flex flex-row")[2]
+                country = country_tag.find("span").text.strip()
 
-                # --- Creating model objects ---
-                m_content = f"{title}\n{weblink}\n{revenue}\n{country}\n{description}"
+                description_tag = detail_soup.find("div", class_="text-gray-900 whitespace-pre-line")
+                description = description_tag.text.strip() if description_tag else ""
 
+                explore_data_link_tag = detail_soup.find("a", string=lambda s: s and "Explore data" in s)
+                explore_data_link = (
+                    self.base_url + explore_data_link_tag["href"]
+                    if explore_data_link_tag and explore_data_link_tag.has_attr("href")
+                    else ""
+                )
+                m_content=description
                 card_data = leak_model(
-                    m_title=title,
-                    m_url=full_explore_url,
+                    m_title=page.title(),
+                    m_url=page.url,
                     m_base_url=self.base_url,
                     m_screenshot="",
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=description,
+                    m_important_content=m_content,
                     m_weblink=[weblink],
-                    m_dumplink=[],
+                    m_dumplink=[explore_data_link],
                     m_content_type=["leaks"],
-                )
+                    m_revenue=revenue
 
+                )
                 entity_data = entity_model(
                     m_email_addresses=helper_method.extract_emails(m_content),
                     m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                    m_country_name=country
+
                 )
 
                 self.append_leak_data(card_data, entity_data)
 
             except Exception as e:
-                print(f"[ERROR] Failed to parse card: {e}")
+                        print(f"Failed to extract from {card_url}: {e}")
