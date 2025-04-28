@@ -4,6 +4,7 @@ import json
 import re
 import datetime
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 import base64
 import unicodedata
@@ -38,7 +39,7 @@ class helper_method:
   def get_screenshot_base64(page, search_string):
     try:
       page.set_viewport_size({"width": 1100, "height": 800})
-      page.wait_for_load_state("load", timeout=10_000)
+      page.wait_for_load_state("load", timeout=10000)
 
       page.add_style_tag(content=(
         "*,*::before,*::after{"
@@ -51,7 +52,7 @@ class helper_method:
       ))
 
       element = page.locator(f":text('{search_string}')").first
-      element.wait_for(timeout=10_000)
+      element.wait_for(timeout=10000)
       element.evaluate("element => element.scrollIntoView({ block: 'start' })")
 
       screenshot_bytes = page.screenshot(full_page=False, type="jpeg", quality=30)
@@ -76,14 +77,20 @@ class helper_method:
       return "invalid"
 
   @staticmethod
-  def extract_and_convert_date(text: str) -> datetime.date:
-    for pattern, fmt in [(r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"), (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"), (r'(\d{2}-\d{2}-\d{4})', "%d-%m-%Y"), (r'(\d{2}/\d{2}/\d{4})', "%m/%d/%Y"), (r'(\d{1,2} \w+ \d{4})', "%d %B %Y")]:
+  def extract_and_convert_date(text: str) -> Optional[datetime.date]:
+    for pattern, fmt in [
+      (r'(\d{4}-\d{2}-\d{2})', "%Y-%m-%d"),
+      (r'(\d{4}/\d{2}/\d{2})', "%Y/%m/%d"),
+      (r'(\d{2}-\d{2}-\d{4})', "%d-%m-%Y"),
+      (r'(\d{2}/\d{2}/\d{4})', "%m/%d/%Y"),
+      (r'(\d{1,2} \w+ \d{4})', "%d %B %Y")
+    ]:
       if match := re.search(pattern, text):
         try:
           return datetime.datetime.strptime(match.group(0), fmt).date()
         except ValueError:
           continue
-    return datetime.date.today()
+    return None
 
   @staticmethod
   def extract_emails(text: str) -> list:

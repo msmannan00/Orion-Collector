@@ -54,7 +54,7 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -64,7 +64,9 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     @staticmethod
     def safe_find(page, selector, attr=None):
@@ -114,12 +116,12 @@ class _ebhmkoohccl45qesdbvrjqtyro2hmhkmh6vkyfyjjzfllm3ix72aqaid(leak_extractor_i
                     m_weblink=[web_url] if web_url else [],
                     m_url=full_url,
                     m_base_url=self.base_url,
-                    m_content=content,
+                    m_content=content + " " + self.base_url + " " + full_url,
                     m_websites=[],
                     m_important_content=content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_content_type=["leaks"],
-                    m_leak_date=helper_method.extract_and_convert_date(today_date)
+                    m_leak_date=datetime.strptime(today_date, '%Y-%m-%d').date()
                 )
 
                 entity_data = entity_model(

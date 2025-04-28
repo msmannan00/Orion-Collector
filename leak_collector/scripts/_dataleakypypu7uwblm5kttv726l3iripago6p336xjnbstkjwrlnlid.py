@@ -57,7 +57,7 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
 
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
@@ -68,7 +68,9 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         project_sections = page.query_selector_all(".project")
@@ -99,7 +101,7 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
                 m_title=title,
                 m_url=page.url,
                 m_base_url=self.base_url,
-                m_content=content,
+                m_content=content + " " + self.base_url + " " + page.url,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=content,
                 m_dumplink=[full_data_link],

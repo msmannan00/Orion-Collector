@@ -53,7 +53,7 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -63,7 +63,9 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         self._card_data = []
@@ -143,9 +145,9 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
                         m_screenshot=helper_method.get_screenshot_base64(page, company_name),
                         m_title=company_name,
                         m_url=page.url,
+                        m_content=content_text + " " + self.base_url + " " + page.url,
                         m_websites=websites,
                         m_base_url=self.base_url,
-                        m_content=content_text,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=content_text[:500],
                         m_content_type=["leaks"],

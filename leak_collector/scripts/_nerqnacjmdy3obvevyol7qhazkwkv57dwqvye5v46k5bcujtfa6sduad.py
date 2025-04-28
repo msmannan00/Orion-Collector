@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from typing import List
 
@@ -53,7 +54,7 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -63,7 +64,9 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         visited_pages = set()
@@ -132,11 +135,11 @@ class _nerqnacjmdy3obvevyol7qhazkwkv57dwqvye5v46k5bcujtfa6sduad(leak_extractor_i
                 card_data = leak_model(
                     m_screenshot=helper_method.get_screenshot_base64(page, title),
                     m_title=title,
-                    m_content=content,
+                    m_content=content + " " + self.base_url + " " + page.url,
                     m_weblink=[website],
                     m_logo_or_images=image_urls,
                     m_revenue = revenue,
-                    m_leak_date=helper_method.extract_and_convert_date(date_time),
+                    m_leak_date=datetime.datetime.strptime(date_time.split()[0], '%m/%d/%Y').date(),
                     m_url=page.url,
                     m_base_url=self.base_url,
                     m_network=helper_method.get_network_type(self.base_url),

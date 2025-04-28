@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 
 from typing import List
 
@@ -52,7 +53,7 @@ class _b1nd(leak_extractor_interface, ABC):
   def entity_data(self) -> List[entity_model]:
     return self._entity_data
 
-  def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+  def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
     return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
   def contact_page(self) -> str:
@@ -62,7 +63,9 @@ class _b1nd(leak_extractor_interface, ABC):
     self._card_data.append(leak)
     self._entity_data.append(entity)
     if self.callback:
-      self.callback()
+      if self.callback():
+        self._card_data.clear()
+        self._entity_data.clear()
 
   @staticmethod
   def safe_find(page, selector, attr=None):
@@ -105,6 +108,7 @@ class _b1nd(leak_extractor_interface, ABC):
               page.goto(inner_link)
               page.wait_for_load_state("load")
 
+              m_description = self.safe_find(page, ".p-description")
               m_leak_date = self.safe_find(page, "time.u-dt")
               m_content = self.safe_find(page, "div.bbWrapper")
               title = self.safe_find(page, "h1.p-title-value")
@@ -117,7 +121,7 @@ class _b1nd(leak_extractor_interface, ABC):
                   m_important_content = m_content
               else:
                 m_important_content = ""
-              m_leak_date = helper_method.extract_and_convert_date(m_leak_date)
+              m_leak_date = datetime.strptime(m_description.split("\n")[3], '%b %d, %Y').date()
 
               card_data = leak_model(
                 m_screenshot=helper_method.get_screenshot_base64(page, title),
@@ -125,12 +129,13 @@ class _b1nd(leak_extractor_interface, ABC):
                 m_weblink=[inner_link],
                 m_url=inner_link,
                 m_base_url=self.base_url,
-                m_content=m_content if m_content else "",
+                m_content=m_content if m_content else "" + " " + self.base_url + " " + inner_link,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=m_important_content,
                 m_content_type=["leaks"],
                 m_leak_date=m_leak_date
               )
+
               entity_data = entity_model()
               self.append_leak_data(card_data, entity_data)
 

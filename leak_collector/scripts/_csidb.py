@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 
 from typing import List
 
@@ -52,7 +53,7 @@ class _csidb(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -62,7 +63,9 @@ class _csidb(leak_extractor_interface, ABC):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     @staticmethod
     def safe_find(page, selector, attr=None):
@@ -92,8 +95,7 @@ class _csidb(leak_extractor_interface, ABC):
 
                 date_cell = row.select_one("td:nth-child(1) a")
                 incident_date = date_cell.get_text(strip=True) if date_cell else None
-                incident_date = helper_method.extract_and_convert_date(incident_date)
-
+                m_leak_date = datetime.strptime(incident_date.replace('.', ''), '%b %d, %Y').date()
 
                 victim_cell = row.select_one("td:nth-child(2) a")
                 victim_name = victim_cell.get_text(strip=True) if victim_cell else None
@@ -121,10 +123,10 @@ class _csidb(leak_extractor_interface, ABC):
                     m_url=self.seed_url,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_base_url=self.base_url,
-                    m_content=summary,
+                    m_content=summary + " " + self.base_url + " " + self.seed_url,
                     m_important_content=important_content,
                     m_content_type=["hacking"],
-                    m_leak_date=incident_date,
+                    m_leak_date=m_leak_date,
                 )
 
                 entity_data = entity_model(

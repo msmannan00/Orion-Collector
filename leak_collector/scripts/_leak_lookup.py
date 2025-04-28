@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import List
 
 from playwright.sync_api import Page
@@ -52,7 +53,7 @@ class _leak_lookup(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -62,7 +63,9 @@ class _leak_lookup(leak_extractor_interface, ABC):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         rows = page.query_selector_all("table tr")
@@ -112,11 +115,11 @@ class _leak_lookup(leak_extractor_interface, ABC):
                         m_title=site_name,
                         m_url=site_url,
                         m_base_url=self.base_url,
-                        m_content=modal_content_cleaned,
+                        m_content=modal_content_cleaned + " " + self.base_url + " " + site_url,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=modal_content_cleaned,
                         m_data_size=breach_size,
-                        m_leak_date=helper_method.extract_and_convert_date(date_indexed),
+                        m_leak_date=datetime.strptime(date_indexed, '%Y-%m-%d').date(),
                         m_content_type=["leaks"],
                     )
                     entity_data = entity_model()

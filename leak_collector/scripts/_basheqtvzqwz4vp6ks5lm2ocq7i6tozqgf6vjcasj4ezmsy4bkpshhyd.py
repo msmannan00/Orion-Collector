@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import List
 import time
 from playwright.sync_api import Page
@@ -55,7 +56,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
 
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
@@ -66,7 +67,9 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         page.wait_for_selector('.main__contant')
@@ -86,7 +89,8 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
 
             deadline_element = page.query_selector('.deadline:first-of-type')
             deadline = deadline_element.inner_text().replace("Deadline: ", "").strip() if deadline_element else "N/A"
-            deadline = helper_method.extract_and_convert_date(deadline)
+            deadline = datetime.strptime(deadline.split()[0], '%Y/%m/%d').date()
+
             country_element = page.query_selector('.count__text')
             country = country_element.inner_text().strip() if country_element else "N/A"
 
@@ -125,7 +129,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                 m_title=title,
                 m_url=page.url,
                 m_base_url=self.base_url,
-                m_content=description,
+                m_content=description + " " + self.base_url + " " + page.url,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
                 m_dumplink=dumps,

@@ -61,7 +61,9 @@ class _weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page:Page ):
 
@@ -88,7 +90,7 @@ class _weg7sdx54bevnvulapqu6bpzwztryeflq3s23tegbmnhkbpqz637f2yd(leak_extractor_i
                     m_title=title_text,
                     m_url=page_url,
                     m_base_url=self.base_url,
-                    m_content=content,
+                    m_content=content + " " + self.base_url + " " + page_url,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=content,
                     m_weblink=weblinks,

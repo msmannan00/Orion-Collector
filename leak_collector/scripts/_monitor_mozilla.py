@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from typing import List
 from bs4 import BeautifulSoup
@@ -51,7 +52,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
   def entity_data(self) -> List[entity_model]:
     return self._entity_data
 
-  def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+  def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
     return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
   def contact_page(self) -> str:
@@ -61,7 +62,9 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
     self._card_data.append(leak)
     self._entity_data.append(entity)
     if self.callback:
-      self.callback()
+      if self.callback():
+        self._card_data.clear()
+        self._entity_data.clear()
 
   def parse_leak_data(self, page: Page):
     page.wait_for_load_state("domcontentloaded")
@@ -73,13 +76,25 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
     error_count = 0
     max_errors = 20
 
-    card_urls = []
+    card_info_list = []
+
     for i in range(card_count):
       try:
         card = breach_cards.nth(i)
         card_href = card.get_attribute('href')
         dumplink = "https://monitor.mozilla.org/" + card_href
-        card_urls.append(dumplink)
+
+        card_html = card.inner_html()
+        soup = BeautifulSoup(card_html, "html.parser")
+        date_text = ""
+        for div in soup.find_all("div"):
+          dt = div.find("dt")
+          dd = div.find("dd")
+          if dt and "Breach added:" in dt.text and dd:
+            date_text = dd.text.strip()
+            break
+
+        card_info_list.append((dumplink, date_text))
       except Exception as ex:
         error_count += 1
         print(f"Error collecting URL for card {i}: {ex}")
@@ -87,7 +102,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
           break
         continue
 
-    for dumplink in card_urls:
+    for dumplink, date_text in card_info_list:
       if error_count >= max_errors:
         break
 
@@ -96,7 +111,7 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
         soup = BeautifulSoup(page.content(), "html.parser")
         card_content = helper_method.clean_text(soup.get_text(separator=" ", strip=True))
         card_title = helper_method.clean_text(page.locator('h1').nth(1).inner_text()[1:])
-        extracted_text = card_content  # Reuse cleaned text to avoid redundant parsing
+        extracted_text = card_content
         current_url = page.url
 
         card_data = leak_model(
@@ -104,12 +119,13 @@ class _monitor_mozilla(leak_extractor_interface, ABC):
           m_title=card_title,
           m_url=current_url,
           m_base_url=self.base_url,
-          m_content=extracted_text,
+          m_content=extracted_text + " " + self.base_url + " " + current_url,
           m_network=helper_method.get_network_type(self.base_url),
           m_important_content=card_content,
           m_weblink=[current_url],
           m_dumplink=[dumplink],
           m_content_type=["leaks"],
+          m_leak_date=datetime.datetime.strptime(date_text, '%B %d, %Y').date()
         )
 
         entity_data = entity_model(

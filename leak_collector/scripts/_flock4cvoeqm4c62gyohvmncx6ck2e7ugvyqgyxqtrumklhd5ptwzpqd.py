@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import List
 
 from playwright.sync_api import Page
@@ -52,7 +53,7 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -62,7 +63,9 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         self._card_data = []
@@ -122,12 +125,12 @@ class _flock4cvoeqm4c62gyohvmncx6ck2e7ugvyqgyxqtrumklhd5ptwzpqd(leak_extractor_i
                                 m_title=title_text,
                                 m_url=page.url,
                                 m_base_url=self.base_url,
-                                m_content=content_text.strip(),
+                                m_content=content_text.strip() + " " + self.base_url + " " + page.url,
                                 m_network=helper_method.get_network_type(self.base_url),
                                 m_important_content=content_text.strip(),
                                 m_dumplink=links,
                                 m_content_type=["leaks"],
-                                m_leak_date=helper_method.extract_and_convert_date(date_text),
+                                m_leak_date=datetime.strptime(date_text, '%B %d, %Y').date(),
                             )
 
                             entity_data = entity_model(

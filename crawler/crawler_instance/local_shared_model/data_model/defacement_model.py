@@ -3,9 +3,6 @@ from datetime import date, datetime
 from typing import Optional, List
 
 class defacement_model(BaseModel):
-    m_location: List[str]
-    m_attacker: List[str]
-    m_team: str
     m_web_server: List[str]
     m_base_url: str
     m_url: str
