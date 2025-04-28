@@ -3,10 +3,10 @@ from typing import Optional
 
 
 class telegram_chat_model(BaseModel):
-    message_id: str
-    content: str
-    message_sharable_link: str
-    channel_id: str
+    content: Optional[str] = None
+    message_id: Optional[str] = None
+    message_sharable_link: Optional[str] = None
+    channel_id: Optional[str] = None
     timestamp: Optional[str] = None
     views: Optional[str] = None
     file_name: Optional[str] = None

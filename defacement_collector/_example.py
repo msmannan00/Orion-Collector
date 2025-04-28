@@ -70,7 +70,7 @@ class _example(leak_extractor_interface, ABC):
         """Return the list of parsed leak models (entity data)."""
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         """
         Interact with Redis using the given command and key.
         Returns the result of invoking a Redis trigger with the current class name as context.

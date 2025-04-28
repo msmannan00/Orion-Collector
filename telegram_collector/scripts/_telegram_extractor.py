@@ -55,7 +55,7 @@ class _telegram_extractor(leak_extractor_interface, ABC):
   def card_data(self) -> List[telegram_chat_model]:
     return self._card_data
 
-  def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
+  def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
     return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
   def contact_page(self) -> str:
@@ -135,6 +135,7 @@ class _telegram_extractor(leak_extractor_interface, ABC):
 
   @staticmethod
   def build_model_from_message(page, html: str, channel_name: str, msg_id, telegram_channel_id) -> telegram_chat_model | None:
+    message_link = None
     try:
       message_type: str = "message"
       soup = BeautifulSoup(html, 'html.parser')
@@ -156,7 +157,6 @@ class _telegram_extractor(leak_extractor_interface, ABC):
       message_id = parent_bubble.get('data-mid') if parent_bubble and parent_bubble.has_attr('data-mid') else unique_hash
 
       selector = f'div.bubble[data-mid="{msg_id}"]'
-      message_link = None
 
       try:
         page.wait_for_selector(selector, timeout=3000, state="visible")
@@ -167,10 +167,14 @@ class _telegram_extractor(leak_extractor_interface, ABC):
 
           box = bubble_handle.bounding_box()
           if box:
+            viewport = page.viewport_size
+            if viewport:
+              page.mouse.click(0, 0)
+
             center_x = box["x"] + box["width"] / 4
             center_y = box["y"] + box["height"] / 4
             page.mouse.click(center_x, center_y, button="right")
-            page.wait_for_selector(".btn-menu-items", timeout=2000)
+            page.wait_for_selector(".btn-menu-items", timeout=21000)
 
             menu_items = page.query_selector_all(".btn-menu-item")
             for item in menu_items:
@@ -191,14 +195,9 @@ class _telegram_extractor(leak_extractor_interface, ABC):
                   """)
                   page.focus('#paste-helper')
                   page.keyboard.press('Control+V')
-                  message_link = page.eval_on_selector('#paste-helper', 'el => el.value')
+                  message_link = str(page.eval_on_selector('#paste-helper', 'el => el.value'))
                   page.evaluate("document.getElementById('paste-helper').value = ''")
-                  print(":::::::::::::::::::::::::::::::::::::::::::::::")
-                  print(message_link)
-                  print(":::::::::::::::::::::::::::::::::::::::::::::::")
                   break
-
-
       except Exception:
         pass
 
@@ -299,6 +298,10 @@ class _telegram_extractor(leak_extractor_interface, ABC):
           count = reaction.find('span', class_='reaction-counter').get_text(strip=True)
           reactions.append({'sticker_id': sticker_id, 'count': count})
 
+      print(":::::::::::::::::::::::::::::::::::")
+      print(message_link)
+      print(":::::::::::::::::::::::::::::::::::")
+
       return telegram_chat_model(
         message_id=str(message_id),
         message_sharable_link=message_link,
@@ -331,7 +334,7 @@ class _telegram_extractor(leak_extractor_interface, ABC):
       page.wait_for_selector(".chatlist-chat", timeout=150000)
     except:
       return
-    parsed_messages = set()
+
     chat_items = page.query_selector_all(".chatlist-chat")
     if not chat_items:
       return
@@ -364,10 +367,14 @@ class _telegram_extractor(leak_extractor_interface, ABC):
       if not scrollable:
         continue
 
+      page.evaluate("(el) => el.scrollTop = el.scrollHeight", scrollable)
+      time.sleep(1)
+
       seen_messages = set()
       threshold_date = datetime.now() - timedelta(days=305)
       scroll_count = 0
       max_scrolls = 200
+      telegram_channel_id = self.get_channel_shareable_link(page)
 
       def get_oldest_date():
         oldest_date_local = None
@@ -389,39 +396,24 @@ class _telegram_extractor(leak_extractor_interface, ABC):
             continue
         return oldest_date_local
 
-      telegram_channel_id = self.get_channel_shareable_link(page)
       while scroll_count < max_scrolls:
         oldest_date = get_oldest_date()
 
-        for bubble in page.query_selector_all(".bubble.channel-post"):
+        bubbles = page.query_selector_all(".bubble.channel-post")
+        for bubble in reversed(bubbles):  # reverse for bottom-up processing
           try:
             msg_id = bubble.get_attribute("data-mid")
-            if msg_id in parsed_messages:
+            if not msg_id or msg_id in seen_messages:
               continue
-            parsed_messages.add(msg_id)
-            if msg_id and msg_id not in seen_messages:
-              html = bubble.inner_html()
-              self.build_model_from_message(page, html, channel_name, msg_id, telegram_channel_id)
-              seen_messages.add(msg_id)
-            #self.download_document_from_bubble(page, bubble)
-
+            html = bubble.inner_html()
+            self.build_model_from_message(page, html, channel_name, msg_id, telegram_channel_id)
+            seen_messages.add(msg_id)
           except:
             continue
 
         if oldest_date and oldest_date <= threshold_date:
           break
 
-        prev_scroll = page.evaluate("(el) => el.scrollTop", scrollable)
         page.evaluate("(el) => el.scrollTop -= el.offsetHeight", scrollable)
-        new_scroll = page.evaluate("(el) => el.scrollTop", scrollable)
 
-        if new_scroll == prev_scroll:
-          if scroll_count<=3:
-            time.sleep(1)
-            scroll_count += 1
-            continue
-          else:
-            break
-
-        scroll_count = 0
       break
