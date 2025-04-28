@@ -77,10 +77,8 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
             if a.has_attr("href")
         ]
 
-        print(f"Found {len(card_links)} cards.")
 
         for card_url in card_links:
-            print(f"Visiting: {card_url}")
             page.goto(card_url)
             detail_content = page.content()
             detail_soup = BeautifulSoup(detail_content, "html.parser")
