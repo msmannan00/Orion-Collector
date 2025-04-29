@@ -8,7 +8,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
-
+from bs4 import BeautifulSoup
 
 class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_interface, ABC):
     _instance = None
@@ -67,26 +67,67 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
         if self.callback:
             self.callback()
 
+
     def parse_leak_data(self, page: Page):
-        
-        m_content = ""
+        html_content = page.content()
+        soup = BeautifulSoup(html_content, "html.parser")
 
-        card_data = leak_model(
-            m_title=page.title(),
-            m_url=page.url,
-            m_base_url=self.base_url,
-            m_screenshot="",
-            m_content=m_content,
-            m_network=helper_method.get_network_type(self.base_url),
-            m_important_content=m_content,
-            m_weblink=[],
-            m_dumplink=[],
-            m_content_type=["leaks"],
-        )
+        card_links = []
+        for a_tag in soup.find_all("a", class_="a_title", href=True):
+            link = self.base_url + "/" + a_tag["href"]
+            card_links.append(link)
 
-        entity_data = entity_model(
-            m_email_addresses=helper_method.extract_emails(m_content),
-            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-        )
 
-        self.append_leak_data(card_data, entity_data)
+        for link in card_links:
+            page.goto(link)
+            inner_html = page.content()
+            inner_soup = BeautifulSoup(inner_html, "html.parser")
+
+            desc_div = inner_soup.find("div", style="line-height:20px; padding-top:5px; margin-bottom:30px;")
+            description = desc_div.get_text().strip() if desc_div else "No description found."
+
+            title_tag = inner_soup.find("a", class_="a_title", href=True)
+            title = title_tag.get_text(strip=True) if title_tag else "No title found."
+
+            secret_links = []
+            secret_passes = []
+            inputs = inner_soup.find_all("input", class_="inp_text")
+            for i, input_tag in enumerate(inputs):
+                value = input_tag.get("value")
+                if i % 2 == 0:
+                    secret_links.append(value)
+                else:
+                    secret_passes.append(value)
+
+            image_urls = []
+            for img_tag in inner_soup.find_all("img"):
+                image_src = img_tag.get("src")
+                if image_src:
+                    full_img_url = self.base_url + "/" + image_src
+                    image_urls.append(full_img_url)
+
+
+            card_data = leak_model(
+                m_title=title,
+                m_url=page.url,
+                m_base_url=self.base_url,
+                m_screenshot="",
+                m_content=description,
+                m_network=helper_method.get_network_type(self.base_url),
+                m_important_content=description,
+                m_weblink=[],
+                m_dumplink=[],
+                m_content_type=["leaks"],
+                m_logo_or_images=image_urls
+            )
+
+            entity_data = entity_model(
+                m_email_addresses=helper_method.extract_emails(description),
+                m_phone_numbers=helper_method.extract_phone_numbers(description),
+            )
+
+            self.append_leak_data(card_data, entity_data)
+
+
+
+
