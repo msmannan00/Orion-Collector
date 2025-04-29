@@ -86,8 +86,15 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
             desc_div = inner_soup.find("div", style="line-height:20px; padding-top:5px; margin-bottom:30px;")
             description = desc_div.get_text().strip() if desc_div else "No description found."
 
-            title_tag = inner_soup.find("a", class_="a_title", href=True)
-            title = title_tag.get_text(strip=True) if title_tag else "No title found."
+            title_tag = inner_soup.find("a", class_="a_title")
+            if title_tag:
+                title = title_tag.get_text(strip=True)
+            else:
+                print(f"No title found in link: {link}")  # Debugging output
+                title = "No title found."
+
+            weblink_tag = inner_soup.find("a", class_="a_title", href=True)
+            weblink = weblink_tag["href"] if title_tag else "No title found."
 
             secret_links = []
             secret_passes = []
@@ -115,8 +122,7 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
                 m_content=description,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
-                m_weblink=[],
-                m_dumplink=[],
+                m_weblink=[weblink],
                 m_content_type=["leaks"],
                 m_logo_or_images=image_urls
             )
