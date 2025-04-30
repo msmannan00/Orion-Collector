@@ -68,21 +68,22 @@ class _rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad(leak_extractor_i
             self.callback()
 
     def parse_leak_data(self, page: Page):
-
         page.wait_for_selector("button#archive_button")
 
         page.click("button#archive_button")
-        page.wait_for_timeout(2000)
+
+        page.wait_for_selector("button.btn.btn-secondary[data-company]")
 
         more_buttons = page.locator("button.btn.btn-secondary[data-company]")
         button_count = more_buttons.count()
 
-
         for i in range(button_count):
             more_buttons = page.locator("button.btn.btn-secondary[data-company]")
+
             button = more_buttons.nth(i)
             button.click()
-            page.wait_for_timeout(1500)
+
+            page.wait_for_selector("div.col-8 p.h4")
 
             title = page.locator("div.col-8 p.h4").first.text_content() or ""
 
@@ -134,6 +135,11 @@ class _rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad(leak_extractor_i
             self.append_leak_data(card_data, entity_data)
 
             page.keyboard.press("Escape")
-            page.wait_for_timeout(1000)
+
+            page.wait_for_selector("div.modal-body", state="detached")  # Ensure modal is detached
+
+            page.wait_for_selector("button.btn.btn-secondary[data-company]")
+
+
 
 
