@@ -87,25 +87,17 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
             description = desc_div.get_text().strip() if desc_div else "No description found."
 
             title_tag = inner_soup.find("a", class_="a_title")
-            if title_tag:
-                title = title_tag.get_text(strip=True)
-            else:
-                print(f"No title found in link: {link}")  # Debugging output
-                title = "No title found."
+            title = title_tag.text.strip() if title_tag else "No title found."
 
-            weblink_tag = inner_soup.find("a", class_="a_title", href=True)
-            weblink = weblink_tag["href"] if title_tag else "No title found."
 
             secret_links = []
-            secret_passes = []
             inputs = inner_soup.find_all("input", class_="inp_text")
-            for i, input_tag in enumerate(inputs):
+            for input_tag in inputs:
                 value = input_tag.get("value")
-                if i % 2 == 0:
+                if value:
                     secret_links.append(value)
-                else:
-                    secret_passes.append(value)
 
+            print(secret_links)
             image_urls = []
             for img_tag in inner_soup.find_all("img"):
                 image_src = img_tag.get("src")
@@ -122,7 +114,6 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
                 m_content=description,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
-                m_weblink=[weblink],
                 m_content_type=["leaks"],
                 m_logo_or_images=image_urls
             )
