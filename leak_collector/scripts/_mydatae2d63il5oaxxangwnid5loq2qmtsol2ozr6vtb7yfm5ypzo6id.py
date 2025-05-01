@@ -86,18 +86,22 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
             desc_div = inner_soup.find("div", style="line-height:20px; padding-top:5px; margin-bottom:30px;")
             description = desc_div.get_text().strip() if desc_div else "No description found."
 
-            title_tag = inner_soup.find("a", class_="a_title")
-            title = title_tag.text.strip() if title_tag else "No title found."
+            title_div = inner_soup.find("div", attrs={"style": "float:left;"})
+            title = title_div.text.strip() if title_div else "No title found."
 
+            weblink=title_div.text.strip() if title_div else "No weblink found."
 
             secret_links = []
-            inputs = inner_soup.find_all("input", class_="inp_text")
-            for input_tag in inputs:
-                value = input_tag.get("value")
-                if value:
-                    secret_links.append(value)
+            rows = inner_soup.find_all("div", class_="tr")
 
-            print(secret_links)
+            for row in rows:
+                input_tags = row.find_all("input", class_="inp_text")
+                if input_tags and len(input_tags) > 0:
+                    link_value = input_tags[0].get("value")
+                    if link_value:
+                        secret_links.append(link_value)
+
+
             image_urls = []
             for img_tag in inner_soup.find_all("img"):
                 image_src = img_tag.get("src")
@@ -110,12 +114,14 @@ class _mydatae2d63il5oaxxangwnid5loq2qmtsol2ozr6vtb7yfm5ypzo6id(leak_extractor_i
                 m_title=title,
                 m_url=page.url,
                 m_base_url=self.base_url,
-                m_screenshot="",
+                m_screenshot=helper_method.get_screenshot_base64(page,title),
                 m_content=description,
+                m_weblink=[weblink],
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=description,
                 m_content_type=["leaks"],
-                m_logo_or_images=image_urls
+                m_logo_or_images=image_urls,
+                m_dumplink=secret_links,
             )
 
             entity_data = entity_model(
