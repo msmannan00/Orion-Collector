@@ -8,12 +8,13 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
-from bs4 import BeautifulSoup
+import time
+from datetime import datetime
+
 class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_interface, ABC):
     _instance = None
 
     def __init__(self, callback=None):
-
         self.callback = callback
         self._card_data = []
         self._entity_data = []
@@ -22,11 +23,9 @@ class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_i
         self._redis_instance = redis_controller()
 
     def init_callback(self, callback=None):
-
         self.callback = callback
 
     def __new__(cls, callback=None):
-
         if cls._instance is None:
             cls._instance = super(_34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad, cls).__new__(cls)
             cls._instance._initialized = False
@@ -52,89 +51,107 @@ class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad.onion/contact"
 
     def append_leak_data(self, leak: leak_model, entity: entity_model):
-
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
             self.callback()
 
     def parse_leak_data(self, page: Page):
-        max_pages = 3  # Set the maximum number of pages to fetch
+        try:
+            current_page = 1
+            max_pages = 3
 
-        for i in range(1, max_pages + 1):
-            try:
-                # Construct the URL for each page
-                url = f"{self.seed_url}/{i}"
-                print(f"Fetching page: {url}")
+            while current_page <= max_pages:
+                next_url = f"{self.seed_url}/{current_page}"
+                page.goto(next_url)
+                page.wait_for_load_state('networkidle')
+                time.sleep(2)
+                posts = page.query_selector_all('div.py-6.relative')
+                if not posts:
+                    break
 
-                page.goto(url, timeout=60000)  # Navigate to the page with a longer timeout
+                for post in posts:
+                    try:
+                        date_element = post.query_selector('time')
+                        publication_date = None
 
-                # Wait for content to load before proceeding
-                page.wait_for_selector(".py-6")  # Wait for the section to load
-
-                # Parse the page content with BeautifulSoup
-                self.soup = BeautifulSoup(page.content(), "html.parser")
-
-                # Find all the sections (each section is wrapped in a <div> with the specific class)
-                sections = self.soup.find_all("div",
-                                              class_="py-6 relative after:absolute after:bottom-0 after:w-full after:border-b after:border-slate-50/[0.06]")
-
-                for section in sections:
-                    # Extract the date and time
-                    date_time = section.find("time").text.strip() if section.find("time") else ""
-
-                    # Extract the title
-                    title = section.find("h2").text.strip() if section.find("h2") else ""
-                    print(title)
-                    # Extract the description (all <p> tags inside the parsed-post-text div)
-                    description = ""
-                    description_div = section.find("div", class_="parsed-post-text")
-                    if description_div:
-                        description = "\n".join(p.text.strip() for p in description_div.find_all("p"))
-                    print(description)
-                    # Extract the file link and size (inside <ul> with class parsed-post-text)
-                    file_link = ""
-                    file_size = ""
-                    link_tag = section.find("a")
-                    size_tag = section.find("span", class_="inline-block ml-1.5 text-slate-600 font-bold")
-                    if link_tag:
-                        file_link = self.base_url + link_tag.get("href", "")
-                    if size_tag:
-                        file_size = size_tag.text.strip()
-
-                    # Populate a new leak_model for this title
-                    leak_data = leak_model(
-                        m_title=title,
-                        m_url=page.url,
-                        m_base_url=self.base_url,
-                        m_screenshot="",  # Add screenshot logic if needed
-                        m_content=f"{description}\nDate: {date_time}",
-                        m_network=helper_method.get_network_type(self.base_url),
-                        m_important_content=description,
-                        m_weblink=[],
-                        m_dumplink=[file_link],
-                        m_content_type=["leaks"],
-                    )
-
-                    # Populate a new entity_model for this title
-                    entity_data = entity_model(
-                        m_email_addresses=helper_method.extract_emails(description),
-                        m_phone_numbers=helper_method.extract_phone_numbers(description),
-                    )
-
-                    # Append the data for this title
-                    self.append_leak_data(leak_data, entity_data)
-
-            except Exception as e:
-                print(f"Error fetching or parsing page {url}: {e}")
+                        if date_element:
+                            raw_date = date_element.text_content().strip()
+                            try:
+                                parsed_date = datetime.strptime(raw_date, '%b %d, %Y, %H:%M')
+                                publication_date = parsed_date.strftime('%Y-%m-%d')
+                            except ValueError:
+                                publication_date = None
 
 
+                        title_element = post.query_selector('h2')
+                        title = title_element.inner_text().strip() if title_element else "No Title"
+                        title_parts = title.split('|')
+                        company_name = title_parts[0].strip() if len(title_parts) > 0 else "No Company"
+                        location = title_parts[1].strip() if len(title_parts) > 1 else "No Location"
 
+
+                        description_element = post.query_selector('.parsed-post-text')
+                        description = description_element.inner_text().strip() if description_element else "No Description"
+
+                        if not title_element and not description_element:
+                            continue
+
+                        industry = "No Industry"
+                        if description_element:
+                            industry_element = description_element.query_selector('p')  # Select the first <p> tag
+                            if industry_element:
+                                industry = industry_element.inner_text().strip()
+
+                        file_links = []
+                        file_elements = post.query_selector_all('ul.parsed-post-text li a')
+                        for file_element in file_elements:
+                            file_link = file_element.get_attribute('href')
+                            if file_link:
+                                file_links.append(file_link)
+
+
+                        size_element = post.query_selector(
+                            'span.inline-block.ml-1\\.5.text-slate-600.font-bold'
+                        )
+                        data_size = size_element.inner_text().strip() if size_element else "No Size"
+
+
+                        card_data = leak_model(
+                            m_title=title,
+                            m_url=page.url,
+                            m_base_url=self.base_url,
+                            m_screenshot=helper_method.get_screenshot_base64(page,title),
+                            m_content=description,
+                            m_network=helper_method.get_network_type(self.base_url),
+                            m_important_content=description,
+                            m_dumplink=file_links,
+                            m_content_type=["leaks"],
+                            m_data_size=data_size,
+                            m_leak_date=publication_date,
+                        )
+
+                        entity_data = entity_model(
+                            m_email_addresses=helper_method.extract_emails(description),
+                            m_phone_numbers=helper_method.extract_phone_numbers(description),
+                            m_location_info=[location],
+                            m_company_name=company_name,
+                            m_industry=industry,
+                        )
+
+                        self.append_leak_data(card_data, entity_data)
+
+                    except Exception as post_error:
+                        print(f"Error parsing post: {post_error}")
+
+                current_page += 1
+
+        except Exception as e:
+            print(f"An error occurred while parsing leak data: {e}")
