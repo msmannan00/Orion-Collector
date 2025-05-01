@@ -1,5 +1,5 @@
-from crawler.request_manager import check_services_status
 from telegram_collector.local_client.request_parser import RequestParser
+from telegram_collector.local_client.telegram_helper import check_services_status
 from telegram_collector.scripts._telegram_extractor import _telegram_extractor
 
 check_services_status()

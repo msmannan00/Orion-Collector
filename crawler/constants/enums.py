@@ -41,3 +41,34 @@ VALID_CONTENT_TYPES = [
     "ddos",
     "apt"
 ]
+
+PRESIDIO_TO_ENTITY_MODEL_MAP = {
+    "EMAIL_ADDRESS": "m_email_addresses",
+    "PHONE_NUMBER": "m_phone_numbers",
+    "LOCATION": "m_location_info",
+    "IP_ADDRESS": "m_ip",
+    "AU_ABN": "m_au_abn",
+    "AU_ACN": "m_au_acn",
+    "AU_MEDICARE": "m_au_medicare",
+    "AU_TFN": "m_au_tfn",
+    "CREDIT_CARD": "m_credit_cards",
+    "CRYPTO": "m_crypto_addresses",
+    "IBAN_CODE": "m_iban_codes",
+    "IN_AADHAAR": "m_in_aadhaar_numbers",
+    "IN_PAN": "m_in_pan_numbers",
+    "IN_PASSPORT": "m_in_passport_numbers",
+    "IN_VEHICLE_REGISTRATION": "m_in_vehicle_registrations",
+    "IN_VOTER": "m_in_voter_ids",
+    "MEDICAL_LICENSE": "m_medical_licenses",
+    "NRP": "m_nrp_numbers",
+    "PERSON": "m_persons",
+    "SG_NRIC_FIN": "m_sg_nric_fin_numbers",
+    "UK_NHS": "m_uk_nhs_numbers",
+    "UK_NINO": "m_uk_nino_numbers",
+    "URL": "m_urls",
+    "US_BANK_NUMBER": "m_us_bank_numbers",
+    "US_DRIVER_LICENSE": "m_us_driver_licenses",
+    "US_ITIN": "m_us_itin_numbers",
+    "US_PASSPORT": "m_us_passport_numbers",
+    "US_SSN": "m_us_ssn_numbers"
+}

@@ -71,7 +71,7 @@ class RequestParser:
 
           page.goto(self.model.seed_url, wait_until="load")
 
-          self.model.soup = BeautifulSoup(page.content(), 'html.parser')
+          self.model.soup = BeautifulSoup(page.m_content(), 'html.parser')
           self.model.parse_leak_data(page)
 
         except Exception:
