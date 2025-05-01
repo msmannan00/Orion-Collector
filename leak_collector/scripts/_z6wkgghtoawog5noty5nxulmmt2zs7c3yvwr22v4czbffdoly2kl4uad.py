@@ -123,7 +123,7 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                         m_title=extracted_title,
                         m_url=page.url,
                         m_base_url=self.base_url,
-                        m_screenshot=helper_method.get_screenshot_base64(page, title),
+                        m_screenshot=helper_method.get_screenshot_base64(page, extracted_title),
                         m_content=description,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=description,
