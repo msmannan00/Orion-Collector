@@ -1,6 +1,7 @@
 from abc import ABC
 from typing import List
 from playwright.sync_api import Page
+import re
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
@@ -73,14 +74,12 @@ class _krakenccj3wr23452a4ibkbkuph4d6soyx2xgjoogtuamc3m7u7wemad(leak_extractor_i
         if self.callback:
             self.callback()
 
+ 
+
     def parse_leak_data(self, page: Page):
         try:
-
             base_url = self.base_url
-
-
             all_hrefs = []
-
 
             detail_elements = page.query_selector_all('a[href*="/news/"]')
             for element in detail_elements:
@@ -89,41 +88,61 @@ class _krakenccj3wr23452a4ibkbkuph4d6soyx2xgjoogtuamc3m7u7wemad(leak_extractor_i
                     absolute_href = f"{base_url}{href}" if href.startswith('/') else href
                     all_hrefs.append(absolute_href)
 
-
             for href in all_hrefs:
                 try:
-
                     page.goto(href)
-
 
                     page.wait_for_selector('.col h4')
                     page.wait_for_selector('div[style*="white-space: pre-wrap"]')
 
-
                     title_element = page.query_selector('.col h4')
                     title = title_element.inner_text().strip() if title_element else ""
 
-
                     description_element = page.query_selector('div[style*="white-space: pre-wrap"]')
                     description = description_element.inner_text().strip() if description_element else ""
-
-
+                    description = description.replace("\n", " ")
                     print(f"Title: {title}")
                     print(f"Description: {description}")
 
+
+                    if (title.lower().startswith("www") and
+                            (title.lower().endswith(".com") or
+                             title.lower().endswith(".law") or
+                             title.lower().endswith(".net"))):
+                        weblink = [title]
+                    else:
+                        weblink = []
+
+
+
+                    url_pattern = r'(?:https?:/?/?|http:/?/?)[^\s]*?(?:\.com|\.onion)'
+                    matches = re.findall(url_pattern, description)
+
+
+                    cleaned_urls = []
+                    for match in matches:
+
+                        if not match.startswith('http'):
+                            continue
+
+
+                        if match.endswith('.com') or match.endswith('.onion'):
+                            cleaned_urls.append(match)
+
+                    m_websites = cleaned_urls
 
                     card_data = leak_model(
                         m_title=title,
                         m_url=href,
                         m_base_url=base_url,
+                        m_weblink=weblink,
+                        m_websites=m_websites,
                         m_content=description,
                         m_important_content=description[:500],
                         m_content_type=["leaks"],
                         m_network=helper_method.get_network_type(self.base_url),
-                        m_screenshot=helper_method.get_screenshot_base64(page,title),
-
+                        m_screenshot=helper_method.get_screenshot_base64(page,title)
                     )
-
 
                     entity_data = entity_model()
                     self.append_leak_data(card_data, entity_data)
