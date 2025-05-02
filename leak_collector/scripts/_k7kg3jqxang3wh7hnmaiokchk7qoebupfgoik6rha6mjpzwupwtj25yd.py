@@ -137,7 +137,6 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         links_start = download_section.find("DOWNLOAD LINKS:") + len("DOWNLOAD LINKS:")
                         links_end = download_section.find(
                             "Rar password:")
-
                         if links_end != -1:
                             links_text = download_section[
                                          links_start:links_end].strip()
@@ -152,7 +151,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                                 0].strip()
                             rar_passwords.append(rar_password)
 
-
+                    rar_passwords=f"{rar_passwords}"
                     card_data = leak_model(
                         m_title=m_title,
                         m_url=new_page.url,
@@ -166,6 +165,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         m_dumplink=dump_links,
                         m_data_size=data_size,
                         m_leak_date=publication_date,
+                        m_password=rar_passwords
 
                     )
 
