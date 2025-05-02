@@ -84,7 +84,7 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
             download_link = page.query_selector("div.flex a.truncate").get_attribute("href") if page.query_selector("div.flex a.truncate") else ""
             leak_size = page.query_selector("div:has-text('Leaked size') span.font-bold.whitespace-pre-line").inner_text() if page.query_selector("div:has-text('Leaked size') span.font-bold.whitespace-pre-line") else ""
 
-            m_content = description
+            m_content = page.inner_text("html")
 
             card_data = leak_model(
                 m_title=company_name,
@@ -93,7 +93,7 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
                 m_screenshot=helper_method.get_screenshot_base64(page,company_name),
                 m_content=m_content,
                 m_network=helper_method.get_network_type(self.base_url),
-                m_important_content=m_content,
+                m_important_content=description,
                 m_weblink=[weblink],
                 m_dumplink=[download_link],
                 m_content_type=["leaks"],
@@ -103,6 +103,7 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
             entity_data = entity_model(
                 m_email_addresses=helper_method.extract_emails(m_content),
                 m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                m_company_name=company_name,
             )
 
             self.append_leak_data(card_data, entity_data)
