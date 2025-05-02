@@ -72,11 +72,14 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
                 date_el = card.query_selector(".date")
                 description_el = card.query_selector(".subtitle")
                 size_el = card.query_selector(".size")
+                read_more_el = card.query_selector("a.read-more")
 
                 title = title_el.text_content().strip() if title_el else "No Title"
                 date_str = date_el.text_content().strip() if date_el else None
                 description = description_el.text_content().strip() if description_el else "No Description"
                 size = size_el.text_content().strip() if size_el else "No Size"
+                read_more_link = read_more_el.get_attribute(
+                    "href") if read_more_el else None
 
                 card_data = leak_model(
                     m_title=title,
@@ -85,10 +88,11 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
                     m_screenshot=helper_method.get_screenshot_base64(page, title),
                     m_content=description,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=description,
+                    m_important_content=description[:500],
                     m_content_type=["leaks"],
                     m_leak_date=date_str,
                     m_data_size=size,
+                    m_weblink=[read_more_link]
                 )
 
                 entity_data = entity_model(
@@ -100,5 +104,3 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
 
         except Exception as e:
             print(f"An error occurred while parsing leak data: {e}")
-
-
