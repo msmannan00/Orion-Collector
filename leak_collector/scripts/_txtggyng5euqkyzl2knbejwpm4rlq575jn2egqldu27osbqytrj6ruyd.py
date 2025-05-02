@@ -41,7 +41,7 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
     @property
     def base_url(self) -> str:
 
-        return "http://txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd.onion/articles"
+        return "http://txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd.onion"
 
     @property
     def rule_config(self) -> RuleModel:
@@ -132,10 +132,12 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
                         m_title=title,
                         m_url=show_leaks_link,
                         m_base_url=self.base_url,
+                        m_weblink=[company_name],
                         m_content=f"Description: {description}, Revenue: {revenue}, Company Name: {company_name}",
                         m_network=helper_method.get_network_type(self.base_url),
-                        m_important_content=f"Description: {description}, Revenue: {revenue}, Company Name: {company_name}",
+                        m_important_content=description[:500],
                         m_content_type=["leaks"],
+                        m_revenue=revenue,
 
                     )
 
