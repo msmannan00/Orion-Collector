@@ -65,12 +65,13 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad_script(leak_extr
 
     def parse_leak_data(self, page: Page):
         try:
-            weblink = []
-            dumplink = []
-            description = revenue = ""
             cards = page.query_selector_all('.card')
 
             for card in cards:
+                weblink = set()
+                dumplink = set()
+                description = revenue = ""
+
                 title = card.query_selector('.card-body .card-title').inner_text().strip() if card.query_selector(
                     '.card-body .card-title') else "No Title"
 
@@ -91,11 +92,17 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad_script(leak_extr
 
                     description = f"{description}\nTeam Size: {team_size}"
 
-                    dumplink += [link.get_attribute('href') for section_id in ['#Negotiat', '#listing-files', '#files']
+                    all_links = [link.get_attribute('href') for section_id in ['#Negotiat', '#listing-files', '#files']
                                  for link in more_info_page.query_selector_all(f'{section_id} + .section ul a')]
 
-                    weblink += [link.get_attribute('href') for link in more_info_page.query_selector_all('a[href]') if
-                                link.get_attribute('href')]
+                    all_links += [link.get_attribute('href') for link in more_info_page.query_selector_all('a[href]') if
+                                  link.get_attribute('href')]
+
+                    for link in all_links:
+                        if "www." in link and not ".onion" in link:
+                            weblink.add(link)
+                        else:
+                            dumplink.add(link)
 
                     more_info_page.close()
 
@@ -103,12 +110,12 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad_script(leak_extr
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
-                    m_screenshot=helper_method.get_screenshot_base64(page, title),
+                    m_screenshot=helper_method.get_screenshot_base64(page,title),
                     m_content=description,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=description,
-                    m_weblink=weblink,
-                    m_dumplink=dumplink,
+                    m_important_content=description[:500],
+                    m_weblink=list(weblink),
+                    m_dumplink=list(dumplink),
                     m_content_type=["leaks"],
                     m_revenue=revenue,
                 )
@@ -116,6 +123,7 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad_script(leak_extr
                 entity_data = entity_model(
                     m_email_addresses=helper_method.extract_emails(description),
                     m_phone_numbers=helper_method.extract_phone_numbers(description),
+                    m_company_name=title,
                 )
 
                 self.append_leak_data(card_data, entity_data)
