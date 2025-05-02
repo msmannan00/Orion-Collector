@@ -109,7 +109,7 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
                     m_screenshot=helper_method.get_screenshot_base64(page,page.title()),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=m_content,
+                    m_important_content=m_content[:500],
                     m_weblink=[weblink],
                     m_dumplink=[explore_data_link],
                     m_content_type=["leaks"],
