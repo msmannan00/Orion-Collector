@@ -9,7 +9,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
@@ -43,7 +43,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.NONE, m_fetch_config=FetchConfig.PLAYRIGHT)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT)
 
     @property
     def card_data(self) -> List[leak_model]:
@@ -53,7 +53,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -63,7 +63,9 @@ class _ddosecrets(leak_extractor_interface, ABC):
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         page.goto(self.seed_url, wait_until="networkidle")
@@ -71,9 +73,9 @@ class _ddosecrets(leak_extractor_interface, ABC):
 
         article_divs = self.soup.find_all("div", class_="article")
         article_links = [
-            urljoin(self.base_url, div.find("h2").find("a")["href"])
+            urljoin(self.base_url, div.find("h4").find("a")["href"])
             for div in article_divs
-            if div.find("h2") and div.find("h2").find("a")
+            if div.find("h4") and div.find("h4").find("a")
         ]
 
         for article_url in article_links:
@@ -135,7 +137,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_title=title,
                     m_url=article_url,
                     m_base_url=self.base_url,
-                    m_content=content_text,
+                    m_content=content_text + " " + self.base_url + " " + article_url,
                     m_content_type=["leaks"],
                     m_important_content=content_text,
                     m_weblink=weblinks,

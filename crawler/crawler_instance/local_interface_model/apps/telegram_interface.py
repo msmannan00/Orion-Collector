@@ -52,7 +52,7 @@ class telegram_interface(ABC):
         pass
 
     @abstractmethod
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, value):
         """Interact with Redis using the given command, key, and value."""
         pass
 

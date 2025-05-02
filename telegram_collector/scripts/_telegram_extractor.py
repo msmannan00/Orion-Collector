@@ -1,20 +1,22 @@
-from abc import ABC
-from typing import List
-from bs4 import BeautifulSoup
 import time
-
+from abc import ABC
+from datetime import datetime, timedelta, timezone
+from typing import List
 from playwright.sync_api import Page
-
-from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
+from crawler.crawler_instance.local_interface_model.leak.telegram_extractor_interface import telegram_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import telegram_chat_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.shared.env_handler import env_handler
+from telegram_collector.local_client.telegram_enums import AllowedChannelEnum
+from telegram_collector.local_client.telegram_message_helper import telegram_message_helper
 
 
-class _telegram_extractor(leak_extractor_interface, ABC):
+class _telegram_extractor(telegram_extractor_interface, ABC):
   _instance = None
+  _channel_url = None
 
   def __init__(self, callback=None):
     self.callback = callback
@@ -34,15 +36,15 @@ class _telegram_extractor(leak_extractor_interface, ABC):
 
   @property
   def seed_url(self) -> str:
-    return "https://web.telegram.org/k/"
+    return self._channel_url
 
   @property
   def base_url(self) -> str:
-    return "https://web.telegram.org/"
+    return "https://web.telegram.org/k/"
 
   @property
   def entity_data(self) -> List[entity_model]:
-      return self._entity_data
+    return self._entity_data
 
   @property
   def rule_config(self) -> RuleModel:
@@ -52,88 +54,120 @@ class _telegram_extractor(leak_extractor_interface, ABC):
   def card_data(self) -> List[telegram_chat_model]:
     return self._card_data
 
-  def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value) -> None:
-    return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+  def invoke_db(self, command: int, key: str, default_value):
+    return self._redis_instance.invoke_trigger(command, [key, default_value, None])
 
   def contact_page(self) -> str:
     return "https://web.telegram.org/"
 
-  def append_leak_data(self, leak: telegram_chat_model, entity: entity_model):
+  def append_leak_data(self, leak: telegram_chat_model):
     self._card_data.append(leak)
-    self._entity_data.append(entity)
     if self.callback:
-      self.callback()
+      if self.callback():
+        self._card_data.clear()
+        self._entity_data.clear()
 
-  @staticmethod
-  def wait_for_main_columns(page):
-    while True:
-      try:
-        main_columns_locator = page.locator("#main-columns")
-        main_columns_locator.wait_for(state="visible")
-        print("Main columns are loaded.")
+  def parse_leak_data(self, page: Page = None):
+    try:
+      page.wait_for_selector(".chatlist-chat", timeout=150000)
+    except:
+      return
+
+    chat_items = page.query_selector_all(".chatlist-chat")
+    if not chat_items:
+      return
+
+    for index in range(len(chat_items)):
+      channel_date = None
+
+      chat_items = page.query_selector_all(".chatlist-chat")
+      if index >= len(chat_items):
         break
-      except Exception as e:
-        print(f"Waiting for main columns: {e}")
-      time.sleep(2)
 
-  @staticmethod
-  def scroll_to_top(page):
-    try:
-      scrollable_div = page.query_selector(".scrollable-y")
-      page.evaluate("arguments[0].scrollTop = 0;", scrollable_div)
-    except Exception as e:
-      print(f"Scroll error: {e}")
-
-  @staticmethod
-  def click_chat(chat):
-    try:
-      chat.click()
-      time.sleep(2)
-    except Exception as e:
-      print(f"Click error: {e}")
-
-  @staticmethod
-  def extract_from_html(html: str):
-    soup = BeautifulSoup(html, 'html.parser')
-    try:
-      return telegram_chat_model(
-        message_id=soup.find('div', class_='document-container')['data-mid'],
-        content_html=str(soup),
-        timestamp=soup.find('div', class_='time-inner')['title'],
-        views=soup.find('span', class_='post-views').text.strip() if soup.find('span',
-                                                                                 class_='post-views') else None,
-        file_name=soup.find('middle-ellipsis-element').text if soup.find(
-          'middle-ellipsis-element') else None,
-        file_size=soup.find('div', class_='document-size').text.strip() if soup.find('div',
-                                                                                       class_='document-size') else None,
-        forwarded_from=soup.find('span', class_='peer-title').text.strip() if soup.find('span',
-                                                                                          class_='peer-title') else None,
-        peer_id=soup.find('div', class_='document-container')['data-peer-id']
-      )
-    except Exception as e:
-      print(f"Error parsing HTML: {e}")
-      return None
-
-  def parse_leak_data(self, page:Page=None):
-    self. wait_for_main_columns(page)
-    last_active = None
-    while True:
+      chat = chat_items[index]
       try:
-        chat_elements = page.query_selector_all("ul a.chatlist-chat")
-        for chat in chat_elements:
-          if "active" in chat.get_attribute("class") and chat != last_active:
-            self.click_chat(chat)
-            last_active = chat
-            time.sleep(3)
+        title = chat.inner_text().split('\n')[0]
+      except:
+        title = f"Chat #{index + 1}"
 
-            messages = page.query_selector_all("div.bubble.channel-post.with-beside-button.hide-name.photo.is-in.can-have-tail")
-            print(f"Found {len(messages)} messages.")
-            for msg in messages:
-              html = msg.inner_html()
-              parsed = self.extract_from_html(html)
-              if parsed:
-                self.append_leak_data(parsed, entity_model())
+      try:
+        chat.click()
+        time.sleep(2)
+        page.wait_for_selector(".chat-info", state="visible", timeout=10000)
+      except:
+        continue
 
-      except Exception as e:
-        print(f"Main loop error: {e}")
-        time.sleep(1)
+      try:
+        title_element = page.query_selector(".chat-info .peer-title")
+        channel_name = title_element.inner_text().strip() if title_element else title
+      except:
+        channel_name = title
+
+      if channel_name not in {e.value for e in AllowedChannelEnum}:
+        continue
+
+      stored_date = self.invoke_db(REDIS_COMMANDS.S_GET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value+channel_name, None)
+      if stored_date:
+        stored_date = datetime.strptime(stored_date, "%Y-%m-%d").date()
+
+      scrollable = page.query_selector(".chats-container .scrollable.scrollable-y")
+      if not scrollable:
+        continue
+
+      page.evaluate("(el) => el.scrollTop = el.scrollHeight", scrollable)
+      time.sleep(1)
+
+      telegram_channel_id = telegram_message_helper.get_channel_shareable_link(page)
+      seen_messages = set()
+      threshold_date = datetime.now().date() - timedelta(days=305)
+      scroll_count = 0
+      max_scrolls = 200
+      channel_url = telegram_message_helper.open_sidebar(page)
+      self._channel_url = channel_url
+
+      while scroll_count < max_scrolls and scroll_count < 5:
+        scroll_count += 1
+        sections = page.query_selector_all("section.bubbles-date-group")
+        stop_scroll = False
+
+        for section in reversed(sections):
+          message_date = telegram_message_helper.extract_message_date(section)
+          if not channel_date:
+            channel_date = message_date
+            if channel_date is None:
+              time.sleep(5)
+              break
+            self.invoke_db(REDIS_COMMANDS.S_SET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value+channel_name, channel_date.isoformat())
+          if message_date and stored_date and message_date<=stored_date and env_handler.get_instance().env("PRODUCTION") == "1":
+            scroll_count = max_scrolls
+            break
+
+          if message_date and message_date <= threshold_date:
+            stop_scroll = True
+            break
+          bubbles = section.query_selector_all(".bubble.channel-post")
+          for bubble in reversed(bubbles):
+            try:
+              msg_id = bubble.get_attribute("data-mid")
+              if not msg_id or msg_id in seen_messages:
+                continue
+              html = telegram_message_helper.get_bubble_html(bubble)
+              model = telegram_message_helper.extract_messages(page, html, channel_name, msg_id, telegram_channel_id, channel_url)
+              scroll_count = 0
+              if model:
+                model.m_message_date = message_date
+                self.append_leak_data(model)
+                seen_messages.add(msg_id)
+            except Exception as ex:
+              continue
+
+        if stop_scroll:
+          break
+
+        telegram_message_helper.scroll_up(page, scrollable)
+        scroll_count+=1
+      if channel_date:
+        self.invoke_db(REDIS_COMMANDS.S_SET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value, channel_date.isoformat())
+      self.callback()
+      self._card_data.clear()
+      self._entity_data.clear()

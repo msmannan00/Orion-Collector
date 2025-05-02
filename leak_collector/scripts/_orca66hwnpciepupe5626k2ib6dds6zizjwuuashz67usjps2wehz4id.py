@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from typing import List
 from bs4 import BeautifulSoup
@@ -7,7 +8,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from urllib.parse import urljoin
 
 from crawler.crawler_services.shared.helper_method import helper_method
@@ -53,7 +54,7 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -63,7 +64,9 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     @staticmethod
     def safe_find(page, selector, attr=None):
@@ -114,19 +117,21 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                 number_of_files = None
                 date_of_publication = None
 
-
                 info_items = card_inner.select("div.card__info-item")
                 for item in info_items:
-                    title = item.select_one("h2.card__info-item-title.--small-title")
-                    if title:
-                        title_text = title.get_text(strip=True)
-                        value = item.select_one("div.card__info-text")
-                        if value:
-                            value_text = value.get_text(strip=True)
-                            if title_text == "Number of files":
-                                number_of_files = value_text
-                            elif title_text == "Date of publication":
-                                date_of_publication = value_text
+                    title_elem = item.select_one("h2.card__info-item-title")
+                    if not title_elem:
+                        continue
+
+                    title_text = title_elem.get_text(strip=True).lower()
+                    if "date of publication" in title_text:
+                        date_elem = item.select_one("p.card__info-text")
+                        if date_elem:
+                            date_of_publication = date_elem.get_text(strip=True)
+                    elif "number of files" in title_text:
+                        number_elem = item.select_one("p.card__info-text")
+                        if number_elem:
+                            number_of_files = number_elem.get_text(strip=True)
 
                 if date_of_publication is None:
                     date_of_publication = ""
@@ -139,11 +144,11 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                     m_dumplink=[download_url],
                     m_network=helper_method.get_network_type(self.base_url),
                     m_base_url=self.base_url,
-                    m_content=description,
+                    m_content=description + " " + self.base_url + " " + page.url,
                     m_important_content = description,
                     m_content_type=["leaks"],
                     m_data_size=number_of_files,
-                    m_leak_date=helper_method.extract_and_convert_date(date_of_publication),
+                    m_leak_date=datetime.datetime.strptime(date_of_publication, '%d/%m/%Y').date(),
                 )
 
                 entity_data = entity_model(

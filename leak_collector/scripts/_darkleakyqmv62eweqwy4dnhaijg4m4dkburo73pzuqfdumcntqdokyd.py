@@ -7,7 +7,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from urllib.parse import urljoin
 from playwright.sync_api import Page
 
@@ -54,7 +54,7 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
@@ -64,7 +64,9 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         try:
@@ -114,7 +116,7 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
                         m_weblink=[url],
                         m_network=helper_method.get_network_type(url),
                         m_base_url=self.base_url,
-                        m_content=content,
+                        m_content=content + " " + self.base_url + " " + url,
                         m_important_content=imp_content,
                         m_content_type=["leaks"],
                     )

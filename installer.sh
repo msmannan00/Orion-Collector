@@ -58,5 +58,6 @@ pip install -r requirements.txt
 
 echo "🎭 Installing Playwright browser (Chromium)..."
 playwright install chromium
+playwright install firefox
 
 echo "✅ Setup complete! Redis, Python venv, and Playwright are ready to go."

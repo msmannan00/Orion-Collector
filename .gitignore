@@ -2,7 +2,9 @@
 data
 *.pyc
 tor_proxy
+telegram_collector/playwright_user_data/*
 logs/*
+leak_collector/playwright_user_data/*
 global_raw
 env/*
 .env

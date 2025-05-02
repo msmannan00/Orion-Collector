@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import List
+from urllib.parse import urlparse
 
 from playwright.sync_api import Page
 
@@ -8,7 +9,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
@@ -57,7 +58,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
 
         return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
 
@@ -68,7 +69,9 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         links = page.query_selector_all('a[post]')
@@ -79,7 +82,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 full_url = f"{self.base_url}/posts.php{href}"
                 link_urls.append(full_url)
 
-        for url in link_urls:
+        for url in link_urls[:2]:
             page.goto(url)
 
             title = page.query_selector('st').inner_text() if page.query_selector('st') else ""
@@ -98,10 +101,13 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
             else:
                 important_content = content
 
-
             gallery_images = page.query_selector_all('gallery img')
-            images = [img.get_attribute('src').strip() for img in gallery_images if
-                      img.get_attribute('src') and img.get_attribute('src').endswith('.png')]
+            images = []
+            for img in gallery_images:
+                img_src = img.get_attribute('src')
+                if img_src and img_src.endswith('.png'):
+                    parsed_url = urlparse(img_src)
+                    images.append(parsed_url.path.strip())
 
             download_url = ""
             download_btn = page.query_selector('a.btn[onclick*="showdir"]')
@@ -120,7 +126,7 @@ class _ks5424y3wpr5zlug5c7i6svvxweinhbdcqcfnptkfcutrncfazzgz5id(leak_extractor_i
                 m_title=title,
                 m_url=url,
                 m_base_url=self.base_url,
-                m_content=content,
+                m_content=content + " " + self.base_url + " " + url,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=important_content,
                 m_dumplink=[download_url],
