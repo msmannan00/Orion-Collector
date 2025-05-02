@@ -72,7 +72,7 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
 
         while True:
             try:
-                page.wait_for_selector(".list tbody tr", timeout=10000)
+                page.wait_for_selector(".list tbody tr", timeout=400)
                 rows = page.query_selector_all(".list tbody tr")
 
                 for row in rows:
@@ -106,15 +106,17 @@ class _leaksndi6i6m2ji6ozulqe4imlrqn6wrgjlhxe25vremvr3aymm4aaid(leak_extractor_i
                             m_base_url=self.base_url,
                             m_content=description if description else f"{year} | {database} | {site} | {records} | {price}" + " " + self.base_url + " " + page.url,
                             m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=description if description else f"{year} | {database} | {site} | {records} | {price}",
+                            m_important_content=description[:500],
                             m_weblink=[site],
                             m_content_type=["leaks"],
+                            m_records_size=records,
                             m_leak_date=datetime.strptime(year, '%Y').date(),
                         )
 
                         entity_data = entity_model(
                             m_email_addresses=helper_method.extract_emails(description),
                             m_phone_numbers=helper_method.extract_phone_numbers(description),
+                            m_company_name=database,
                         )
 
                         self.append_leak_data(card_data, entity_data)
