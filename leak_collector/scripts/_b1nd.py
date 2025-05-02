@@ -109,7 +109,6 @@ class _b1nd(leak_extractor_interface, ABC):
               page.wait_for_load_state("load")
 
               m_description = self.safe_find(page, ".p-description")
-              m_leak_date = self.safe_find(page, "time.u-dt")
               m_content = self.safe_find(page, "div.bbWrapper")
               title = self.safe_find(page, "h1.p-title-value")
 

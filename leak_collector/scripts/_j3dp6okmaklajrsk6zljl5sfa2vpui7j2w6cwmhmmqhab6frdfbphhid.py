@@ -71,7 +71,9 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         try:
@@ -155,7 +157,7 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
                     entity_data = entity_model()
                     self.append_leak_data(card_data, entity_data)
 
-                except Exception as e:
+                except Exception as _:
                     continue
 
         except Exception as e:

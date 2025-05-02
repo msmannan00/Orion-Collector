@@ -71,7 +71,9 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         try:
@@ -179,7 +181,6 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
                         button_elements = button_container.query_selector_all('a.w3-button')
                         for button in button_elements:
                             button_href = button.get_attribute("href")
-                            button_text = button.inner_text().strip()
 
 
                             if button_href and not button_href.startswith("http"):

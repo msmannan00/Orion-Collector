@@ -71,7 +71,9 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
         self._card_data.append(leak)
         self._entity_data.append(entity)
         if self.callback:
-            self.callback()
+            if self.callback():
+                self._card_data.clear()
+                self._entity_data.clear()
 
     def parse_leak_data(self, page: Page):
         try:
@@ -95,11 +97,6 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
                     if description_element:
 
                         description = description_element.inner_text().replace("Description:", "").strip()
-
-                    publication_time_element = card.query_selector('span[data-countdown-publication-time]')
-                    publication_time = publication_time_element.get_attribute(
-                        'data-countdown-publication-time') if publication_time_element else ""
-
 
                     revenue_element = card.query_selector('p.card-text:has(strong:has-text("Revenue:"))')
                     revenue = ""

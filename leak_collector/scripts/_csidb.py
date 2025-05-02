@@ -1,16 +1,16 @@
 from abc import ABC
-from datetime import datetime
 
 from typing import List
 
 from bs4 import BeautifulSoup
+from dateutil import parser
 from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
@@ -95,7 +95,8 @@ class _csidb(leak_extractor_interface, ABC):
 
                 date_cell = row.select_one("td:nth-child(1) a")
                 incident_date = date_cell.get_text(strip=True) if date_cell else None
-                m_leak_date = datetime.strptime(incident_date.replace('.', ''), '%b %d, %Y').date()
+                incident_date = incident_date.replace('.', '')
+                m_leak_date = parser.parse(incident_date).date()
 
                 victim_cell = row.select_one("td:nth-child(2) a")
                 victim_name = victim_cell.get_text(strip=True) if victim_cell else None
@@ -141,4 +142,7 @@ class _csidb(leak_extractor_interface, ABC):
 
         except Exception as ex:
             print(f"An error occurred: {ex}")
+        finally:
+            xx = self.card_data.__len__()
+            pass
 
