@@ -59,9 +59,9 @@ class _krakenccj3wr23452a4ibkbkuph4d6soyx2xgjoogtuamc3m7u7wemad(leak_extractor_i
 
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
 
@@ -131,7 +131,15 @@ class _krakenccj3wr23452a4ibkbkuph4d6soyx2xgjoogtuamc3m7u7wemad(leak_extractor_i
 
                     m_websites = cleaned_urls
 
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(title)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
+
                     card_data = leak_model(
+                        ref_html=ref_html,
                         m_title=title,
                         m_url=href,
                         m_base_url=base_url,
