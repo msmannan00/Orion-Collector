@@ -112,11 +112,30 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
 
                 description_divs = soup.find_all("div", class_="css-1j63rwj")
                 descriptions = []
+                weblinks = []
+                revenues = []
+
                 for description_div in description_divs:
                     if description_div:
                         p_tags = description_div.find_all("p")
-                        description = "\n".join(p.get_text() for p in p_tags)
-                        descriptions.append(description)
+                        desc_text = []
+                        for p in p_tags:
+                            text = p.get_text(strip=True)
+                            lower_text = text.lower()
+
+                            if lower_text.startswith("website"):
+                                link_part = text[len("Website"):].lstrip(" :")
+                                links = [link.strip() for link in
+                                         link_part.replace(" / ", ",").replace(" /", ",").split(",") if link]
+                                weblinks.extend(links)
+
+                            elif lower_text.startswith("revenue"):
+                                revenue_part = text[len("Revenue"):].lstrip(" :")
+                                revenues.append(revenue_part)
+
+                            else:
+                                desc_text.append(text)
+                        descriptions.append("\n".join(desc_text))
 
                 dump_links = set()
                 dump_divs = soup.find_all("div", class_="MuiBox-root css-0")
@@ -128,8 +147,9 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
                 dump_links = list(dump_links)
 
 
-                m_content = f"{descriptions}"
-
+                important_content = f"{descriptions}"
+                m_content=f"{descriptions} {revenues} {weblinks}"
+                print(descriptions)
                 card_data = leak_model(
                     m_title=title,
                     m_url=page.url,
@@ -137,11 +157,13 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
                     m_screenshot=helper_method.get_screenshot_base64(page,title),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=m_content,
+                    m_important_content=important_content,
                     m_dumplink=dump_links,
                     m_content_type=["leaks"],
                     m_logo_or_images=image_urls,
                     m_leak_date=publication_date,
+                    m_weblink=weblinks,
+                    m_revenue=f"{revenues}",
                 )
 
                 entity_data = entity_model(
