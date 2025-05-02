@@ -4,6 +4,7 @@ from typing import List, Optional
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
 
 class leak_model(BaseModel):
+    ref_html: Optional[str] = None
     m_title: str
     m_url: str
     m_base_url: str

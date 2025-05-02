@@ -124,7 +124,7 @@ class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_i
                             'span.inline-block.ml-1\\.5.text-slate-600.font-bold'
                         )
                         data_size = size_element.inner_text().strip() if size_element else "No Size"
-
+                        description = ' '.join(description.split())
 
                         card_data = leak_model(
                             m_title=title,
@@ -141,9 +141,7 @@ class _34o4m3f26ucyeddzpf53bksy76wd737nf2fytslovwd3viac3by5chad(leak_extractor_i
                         )
 
                         entity_data = entity_model(
-                            m_email_addresses=helper_method.extract_emails(description),
-                            m_phone_numbers=helper_method.extract_phone_numbers(description),
-                            m_location_info=[location],
+                            m_location_info=location.replace(" ","").split(","),
                             m_company_name=company_name,
                             m_industry=industry,
                         )

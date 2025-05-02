@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 
 from typing import List
 
@@ -142,7 +143,4 @@ class _csidb(leak_extractor_interface, ABC):
 
         except Exception as ex:
             print(f"An error occurred: {ex}")
-        finally:
-            xx = self.card_data.__len__()
-            pass
 

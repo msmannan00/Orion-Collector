@@ -1,4 +1,6 @@
+import re
 from abc import ABC
+from datetime import timedelta, datetime, timezone
 from typing import List
 from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
@@ -50,8 +52,8 @@ class _5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid.onion"
@@ -73,13 +75,36 @@ class _5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid(leak_extractor_i
                 description_el = card.query_selector('.text')
                 weblink_el = description_el.query_selector('a[href^="http"]') if description_el else None
                 dumplink_el = card.query_selector('a.btn.btn-primary:not([disabled])')
+                published_el = card.query_selector('.image-block .img + p')  # e.g., "Published 6 months ago"
 
                 title = title_el.text_content().strip() if title_el else "No Title"
                 description = description_el.text_content().strip() if description_el else "No Description"
                 weblink = weblink_el.get_attribute("href") if weblink_el else ""
                 dumplink = dumplink_el.get_attribute("href") if dumplink_el else ""
 
+                leak_date = None
+                if published_el:
+                    match = re.search(r'Published\s+(\d+)\s+(day|week|month|year)s?\s+ago', published_el.text_content(), re.IGNORECASE)
+                    if match:
+                        value, unit = int(match.group(1)), match.group(2).lower()
+                        delta_map = {
+                            'day': timedelta(days=value),
+                            'week': timedelta(weeks=value),
+                            'month': timedelta(days=30 * value),  # Approximate
+                            'year': timedelta(days=365 * value)  # Approximate
+                        }
+                        dt = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+                        leak_date = (dt - delta_map[unit]).date()
+
+                is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, False)
+                ref_html = None
+                if not is_crawled:
+                    ref_html = helper_method.extract_refhtml(weblink)
+                    if ref_html:
+                        self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, True)
+
                 card_data = leak_model(
+                    ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -90,11 +115,12 @@ class _5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid(leak_extractor_i
                     m_content_type=["leaks"],
                     m_weblink=[weblink],
                     m_dumplink=[dumplink],
+                    m_leak_date=leak_date
                 )
 
                 entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(description),
-                    m_phone_numbers=helper_method.extract_phone_numbers(description),
+                    m_ip=[weblink],
+                    m_company_name=title
                 )
 
                 self.append_leak_data(card_data, entity_data)

@@ -1,5 +1,7 @@
 from abc import ABC
 from typing import List
+
+from bs4 import BeautifulSoup
 from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
@@ -50,8 +52,8 @@ class _47glxkuxyayqrvugfumgsblrdagvrah7gttfscgzn56eyss5wg3uvmqd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://47glxkuxyayqrvugfumgsblrdagvrah7gttfscgzn56eyss5wg3uvmqd.onion"
@@ -66,65 +68,95 @@ class _47glxkuxyayqrvugfumgsblrdagvrah7gttfscgzn56eyss5wg3uvmqd(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         try:
-            cards = page.query_selector_all('.col-lg-6')
+            cards = page.query_selector_all(".col-lg-6")
+            base_url = self.base_url
 
             for card in cards:
                 try:
-                    title = card.query_selector("span:has-text('Name:') + p")
-                    revenue = card.query_selector("span:has-text('Revenue:') + p")
-                    country = card.query_selector("span:has-text('Сountry:') + p")
+                    # Extract the link to open
+                    link_el = card.query_selector("a.stretched-link")
+                    if not link_el:
+                        continue
 
-                    title = title.text_content() if title else "No Title"
-                    revenue = revenue.text_content() if revenue else "No Revenue"
-                    country = country.text_content() if country else "No Country"
+                    href = link_el.get_attribute("href")
+                    if not href:
+                        continue
 
-                    date_el = page.query_selector("span:has-text('Date:') + p")
-                    size_el = page.query_selector("span:has-text('Size:') + p")
-                    date = date_el.text_content() if date_el else "No Date"
-                    size = size_el.text_content() if size_el else "No Size"
+                    detail_url = href if href.startswith("http") else base_url.rstrip("/") + "/" + href.lstrip("/")
 
-                    show_files_el = page.query_selector('a:has-text("Show/Download files")')
-                    download_listing_el = page.query_selector('a:has-text("Download file listing")')
-                    show_files_link = show_files_el.get_attribute('href') if show_files_el else ""
-                    download_listing_link = download_listing_el.get_attribute('href') if download_listing_el else ""
+                    # Open the new tab and parse
+                    detail_page = page.context.new_page()
+                    detail_page.goto(detail_url, wait_until="domcontentloaded", timeout=30000)
 
-                    description = (
-                        f"Title: {title}\nRevenue: {revenue}\nCountry: {country}\n"
-                        f"Date: {date}\nSize: {size}\nShow Files Link: {show_files_link}\nDownload Link: {download_listing_link}"
+                    # Now parse the detail page
+                    soup = BeautifulSoup(detail_page.content(), "html.parser")
+
+                    title = soup.find("h1").get_text(strip=True)
+
+                    def get_text_after_span(label):
+                        span = soup.find("span", string=lambda s: s and label in s)
+                        return span.find_next("p").get_text(strip=True) if span else ""
+
+                    revenue = get_text_after_span("Revenue")
+                    country = get_text_after_span("Country")
+                    leak_date_raw = get_text_after_span("Date")
+                    size = get_text_after_span("Size")
+
+                    try:
+                        leak_date = datetime.strptime(leak_date_raw, "%m/%d/%Y %H:%M").replace(
+                            hour=0, minute=0, second=0, microsecond=0
+                        ).date()
+                    except Exception:
+                        leak_date = None
+
+                    dump_links = []
+                    for link in soup.select(".buttons__column a.but_main[href]"):
+                        href = link.get("href").strip()
+                        full_url = base_url + href if href.startswith("/") else href
+                        dump_links.append(full_url)
+
+                    desc_div = soup.select_one("div.row.mt-3 div.filling")
+                    description = desc_div.get_text(" ", strip=True) if desc_div else ""
+
+                    full_text = f"Title: {title} | Revenue: {revenue} | Country: {country} | Date: {leak_date_raw} | Size: {size} | {description}"
+
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(title)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
+
+                    card_data = leak_model(
+                        ref_html=ref_html,
+                        m_title=title,
+                        m_url=detail_url,
+                        m_base_url=base_url,
+                        m_screenshot=helper_method.get_screenshot_base64(detail_page, title),
+                        m_content=full_text,
+                        m_network=helper_method.get_network_type(base_url),
+                        m_important_content=description[:500],
+                        m_weblink=[],
+                        m_dumplink=dump_links,
+                        m_content_type=["leaks"],
+                        m_revenue=revenue,
+                        m_leak_date=leak_date,
+                        m_data_size=size,
                     )
 
-                    if date != "No Date":
-                        try:
-                            date = datetime.strptime(date, "%m/%d/%Y %H:%M").strftime("%Y-%m-%d")
-                        except ValueError:
-                            date = "Invalid Date Format"
+                    entity_data = entity_model(
+                        m_company_name=title,
+                        m_ip=[title],
+                        m_country_name=country,
+                        m_location_info=[country],
+                    )
+
+                    self.append_leak_data(card_data, entity_data)
+
+                    detail_page.close()
 
                 except Exception as e:
-                    print(f"Error occurred while extracting data from a card: {e}")
-
-                card_data = leak_model(
-                    m_title=title,
-                    m_url=page.url,
-                    m_base_url=self.base_url,
-                    m_screenshot="",
-                    m_content=description,
-                    m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=description,
-                    m_weblink=[],
-                    m_dumplink=[show_files_link, download_listing_link],
-                    m_content_type=["leaks"],
-                    m_revenue=revenue,
-                    m_leak_date=date,
-                    m_data_size=size
-                )
-
-                entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(description),
-                    m_phone_numbers=helper_method.extract_phone_numbers(description),
-                    m_country_name=country,
-                )
-
-                self.append_leak_data(card_data, entity_data)
+                    print(f"Error processing card: {e}")
 
         except Exception as e:
             print(f"An error occurred while parsing leak data: {e}")
