@@ -75,13 +75,10 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         try:
-
             page.goto(self.seed_url)
-
 
             href_elements = page.query_selector_all('.slider-slides nav ul li a')
             href_links = []
-
 
             for element in href_elements:
                 href = element.get_attribute("href")
@@ -90,45 +87,48 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
                     if target_id not in href_links:
                         href_links.append(target_id)
 
-
             for target_id in href_links:
                 try:
-
                     if page.url != self.seed_url:
                         page.goto(self.seed_url)
-
 
                     article = page.query_selector(f'#{target_id}')
                     if not article:
                         print(f"Article with ID '{target_id}' not found on page")
                         continue
 
-
                     title_element = article.query_selector('h2')
                     title = title_element.inner_text().strip() if title_element else ""
 
-
                     description = ""
                     h3_elements = article.query_selector_all('h3')
-                    for h3 in h3_elements:
+                    revenue = ""
+                    size = ""
 
-                        if not h3.query_selector('a'):
-                            h3_text = h3.inner_text().strip()
-                            if h3_text:
-                                description += h3_text + " "
+                    for h3 in h3_elements:
+                        h3_text = h3.inner_text().strip()
+
+
+                        if "Revenue" in h3_text:
+                            revenue = h3_text.split("Revenue", 1)[1].strip()
+
+
+                        if "ZIP - " in h3_text:
+                            size = h3_text.split("ZIP - ", 1)[1].strip()
+
+
+                        if not h3.query_selector('a') and h3_text:
+                            description += h3_text + " "
 
                     description = description.strip()
-
 
                     download_links = []
                     link_elements = article.query_selector_all('h3 a')
                     for link in link_elements:
                         href = link.get_attribute("href")
                         if href:
-
                             if href.startswith('download/') or (
                                     not href.startswith('http') and not href.startswith('#')):
-
                                 if not href.startswith('/'):
                                     full_href = f"{self.base_url}/{href}"
                                 else:
@@ -137,7 +137,6 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
                                 full_href = href
 
                             download_links.append(full_href)
-
 
                     card_data = leak_model(
                         m_screenshot=helper_method.get_screenshot_base64(page, title),
@@ -148,9 +147,11 @@ class _j3dp6okmaklajrsk6zljl5sfa2vpui7j2w6cwmhmmqhab6frdfbphhid(leak_extractor_i
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=description,
                         m_content_type=["leaks"],
-                        m_dumplink=download_links
+                        m_dumplink=download_links,
+                        m_weblink=[title],
+                        m_revenue=revenue,
+                        m_data_size=size
                     )
-
 
                     entity_data = entity_model()
                     self.append_leak_data(card_data, entity_data)
