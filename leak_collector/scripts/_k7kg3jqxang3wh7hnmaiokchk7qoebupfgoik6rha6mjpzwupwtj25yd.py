@@ -50,8 +50,8 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd.onion/contact.php"
@@ -151,8 +151,16 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                                 0].strip()
                             rar_passwords.append(rar_password)
 
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(weblink)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, True)
+
                     rar_passwords=f"{rar_passwords}"
                     card_data = leak_model(
+                        ref_html= ref_html,
                         m_title=m_title,
                         m_url=new_page.url,
                         m_base_url=self.base_url,
@@ -165,14 +173,14 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                         m_dumplink=dump_links,
                         m_data_size=data_size,
                         m_leak_date=publication_date,
-                        m_password=rar_passwords
 
                     )
 
                     entity_data = entity_model(
-                        m_email_addresses=helper_method.extract_emails(m_content),
-                        m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-                        m_country_name=country_name
+                        m_country_name=country_name,
+                        m_ip=[weblink],
+                        m_location_info=[country_name],
+                        m_password = rar_passwords
                     )
 
                     self.append_leak_data(card_data, entity_data)
