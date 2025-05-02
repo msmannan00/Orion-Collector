@@ -64,12 +64,11 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                 self._card_data.clear()
                 self._entity_data.clear()
 
-
     def parse_leak_data(self, page: Page):
         page_number = 1
 
         while True:
-            page.goto(f"{self.seed_url}/index.php?page={page_number}",timeout=60000)
+            page.goto(f"{self.seed_url}/index.php?page={page_number}", timeout=60000)
 
             links = page.eval_on_selector_all(
                 "th.News[onclick^='viewtopic']",
@@ -86,56 +85,98 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                 new_page.goto(card_url)
 
                 try:
-
-                    website_element = new_page.query_selector("i.link")
-                    website_text = new_page.evaluate("(element) => element.nextSibling?.textContent?.trim()",
-                                                     website_element) if website_element else "Unknown"
                     html = new_page.content()
-
                     soup = BeautifulSoup(html, 'html.parser')
 
                     news_element = soup.find('th', class_='News')
+                    if not news_element:
+                        continue
 
-                    if news_element:
-                        m_content = news_element.get_text(strip=True)
-                    else:
-                        m_content = "No content found"
-                    words = m_content.split()
-                    if len(words) > 500:
-                        m_important_content = " ".join(words[:500])
-                    else:
-                        m_important_content = m_content
+                    m_title = new_page.title()
+                    m_content = news_element.get_text(strip=True)
+
+                    country_name = (
+                        news_element.find('i', class_='location').next_sibling.strip()
+                        if news_element.find('i', class_='location') else "Unknown"
+                    )
+                    weblink = (
+                        news_element.find('i', class_='link').next_sibling.strip()
+                        if news_element.find('i', class_='link') else "Unknown"
+                    )
+                    data_size = None
+                    if "amount of data:" in m_content:
+                        data_size = m_content.split("amount of data:")[1].split("added:")[0].strip()
+
+                    publication_date = None
+                    if "publication date:" in m_content:
+                        publication_date_section = m_content.split("publication date:")[1].strip()
+
+                        if len(publication_date_section) >= 10 and publication_date_section[:10].count("-") == 2:
+                            publication_date = publication_date_section[
+                                               :10]
 
 
-                    download_links_element = new_page.query_selector("div:has-text('DOWNLOAD LINKS:')")
-                    dum_links = []
-                    if download_links_element:
-                        download_links_text = download_links_element.inner_text().strip()
-                        if "DOWNLOAD LINKS:" in download_links_text:
-                            links_section = download_links_text.split("DOWNLOAD LINKS:")[1].strip()
-                            dum_links = [link.strip() for link in links_section.split("\n") if link.startswith("http")]
+                    information = None
+                    if "information:" in m_content:
+                        information = m_content.split("information:")[1].split("comment:")[0].strip()
 
+                    comment = None
+                    if "comment:" in m_content:
+                        comment = m_content.split("comment:")[1].strip()
 
+                    description = f"{information}. {comment}" if information and comment else (
+                                information or comment or "")
+
+                    dump_links = []
+                    rar_passwords = []
+
+                    download_section_start = m_content.find("DOWNLOAD LINKS:")
+                    if download_section_start != -1:
+                        download_section = m_content[download_section_start:]
+
+                        links_start = download_section.find("DOWNLOAD LINKS:") + len("DOWNLOAD LINKS:")
+                        links_end = download_section.find(
+                            "Rar password:")
+                        if links_end != -1:
+                            links_text = download_section[
+                                         links_start:links_end].strip()
+                            for link in links_text.split("<br>"):
+                                formatted_link = link.strip()
+                                if formatted_link.startswith("http"):
+                                    dump_links.append(formatted_link + " ")
+
+                        password_start = download_section.find("Rar password:")
+                        if password_start != -1:
+                            rar_password = download_section[password_start:].split("Rar password:")[1].split("<")[
+                                0].strip()
+                            rar_passwords.append(rar_password)
+
+                    rar_passwords=f"{rar_passwords}"
                     card_data = leak_model(
-                        m_title=new_page.title(),
+                        m_title=m_title,
                         m_url=new_page.url,
                         m_base_url=self.base_url,
                         m_content=m_content,
-                        m_important_content=m_important_content,
+                        m_important_content=description,
                         m_network=helper_method.get_network_type(self.base_url),
                         m_content_type=["leaks"],
-                        m_screenshot=helper_method.get_screenshot_base64(new_page,new_page.title()),
-                        m_weblink=[website_text],
-                        m_dumplink=dum_links,
+                        m_screenshot=helper_method.get_screenshot_base64(new_page, m_title),
+                        m_weblink=[weblink],
+                        m_dumplink=dump_links,
+                        m_data_size=data_size,
+                        m_leak_date=publication_date,
+                        m_password=rar_passwords
 
                     )
 
                     entity_data = entity_model(
                         m_email_addresses=helper_method.extract_emails(m_content),
                         m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                        m_country_name=country_name
                     )
 
                     self.append_leak_data(card_data, entity_data)
+
                 except Exception as e:
                     print(f"Failed to extract data for {card_url}: {e}")
 
