@@ -9,7 +9,9 @@ from crawler.crawler_services.redis_manager.redis_controller import redis_contro
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 from bs4 import BeautifulSoup
-import time
+from datetime import datetime
+
+
 class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_interface, ABC):
     _instance = None
 
@@ -68,15 +70,13 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
             self.callback()
 
     def parse_leak_data(self, page: Page):
-
-
         for i in range(1, 26):
             url = f"{self.base_url}/news.php?id={i}"
-            print(f"Scraping: {url}")
-
             try:
                 page.goto(url)
-                time.sleep(3)
+
+                page.wait_for_load_state("networkidle")
+
                 soup = BeautifulSoup(page.content(), "html.parser")
 
                 title_tag = soup.find("h5",
@@ -85,31 +85,63 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
 
                 date_tag = soup.find("p",
                                      class_="MuiTypography-root MuiTypography-body1 MuiTypography-alignCenter css-1oy63y8")
-                publication_date = date_tag.text.strip() if date_tag else "No Date"
+                publication_date_raw = date_tag.text.strip() if date_tag else None
 
-                description_div = soup.find("div", class_="css-1j63rwj")
-                description = ""
-                if description_div:
-                    p_tags = description_div.find_all("p")
-                    description = "\n".join(p.get_text(strip=True) for p in p_tags)
+                if publication_date_raw:
+                    cleaned_date = publication_date_raw.split(":")[-1].strip()
 
-                dumps_div = soup.find("div", class_="MuiBox-root css-0")
-                link_tag = dumps_div.find("a") if dumps_div else None
-                dumps = [link_tag.get("href")] if link_tag else []
+                    date_formats = ["%d.%m.%Y", "%d-%m-%Y"]
+                    publication_date = None
+                    for date_format in date_formats:
+                        try:
+                            publication_date = datetime.strptime(cleaned_date, date_format).date()
+                            break
+                        except ValueError:
+                            continue
+                else:
+                    publication_date = None
 
-                m_content = f"Title: {title}\nDate: {publication_date}\n\nDescription:\n{description}"
+
+
+                image_divs = soup.find_all("div", class_="MuiBox-root css-85t6ji")
+                image_urls = []
+                for div in image_divs:
+                    img_tag = div.find("img")
+                    if img_tag and img_tag.get("src"):
+                        image_urls.append(img_tag["src"])
+
+                description_divs = soup.find_all("div", class_="css-1j63rwj")
+                descriptions = []
+                for description_div in description_divs:
+                    if description_div:
+                        p_tags = description_div.find_all("p")
+                        description = "\n".join(p.get_text() for p in p_tags)
+                        descriptions.append(description)
+
+                dump_links = set()
+                dump_divs = soup.find_all("div", class_="MuiBox-root css-0")
+                for dump_div in dump_divs:
+                    link_tag = dump_div.find("a")
+                    if link_tag and link_tag.get("href"):
+                        dump_links.add(link_tag.get("href"))
+
+                dump_links = list(dump_links)
+
+
+                m_content = f"{descriptions}"
 
                 card_data = leak_model(
                     m_title=title,
-                    m_url=url,
+                    m_url=page.url,
                     m_base_url=self.base_url,
-                    m_screenshot="",
+                    m_screenshot=helper_method.get_screenshot_base64(page,title),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=m_content,
-                    m_weblink=[],
-                    m_dumplink=dumps,
+                    m_dumplink=dump_links,
                     m_content_type=["leaks"],
+                    m_logo_or_images=image_urls,
+                    m_leak_date=publication_date,
                 )
 
                 entity_data = entity_model(
