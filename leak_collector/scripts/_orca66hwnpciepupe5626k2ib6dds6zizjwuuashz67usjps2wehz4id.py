@@ -79,10 +79,8 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
     def parse_leak_data(self, page: Page):
         try:
-
             page.goto(self.seed_url)
             page.wait_for_load_state('load')
-
 
             card_links = page.query_selector_all("a.blog__card-btn.--button")
             if not card_links:
@@ -91,31 +89,34 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
 
             card_urls = [urljoin(self.base_url, link.get_attribute("href")) for link in card_links]
 
-
             for card_url in card_urls:
-
                 page.goto(card_url)
                 page.wait_for_load_state('load')
 
-
                 page_html = page.content()
                 self.soup = BeautifulSoup(page_html, 'html.parser')
-
 
                 card_inner = self.soup.select_one("div.card__inner")
                 if not card_inner:
                     print(f"No card inner found on the page: {card_url}")
                     continue
 
-
                 description = self.safe_find(page, "div.card__description-content", attr=None)
+                
                 company_url = self.safe_find(page, "a.card__info-text.--card__info-text-link", attr="href")
                 download_url = self.safe_find(page, "a.card__download.--button", attr="href")
                 card_title = self.safe_find(page, "h1.card__title", attr=None)
 
 
+                image_logos = []
+                card_photos_images = self.soup.select("img.card__photos-img")
+                for img in card_photos_images:
+                    if img.has_attr("src"):
+                        image_logos.append(img["src"])
+
                 number_of_files = None
                 date_of_publication = None
+                data_size = None
 
                 info_items = card_inner.select("div.card__info-item")
                 for item in info_items:
@@ -132,6 +133,10 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                         number_elem = item.select_one("p.card__info-text")
                         if number_elem:
                             number_of_files = number_elem.get_text(strip=True)
+                    elif "files size" in title_text:
+                        size_elem = item.select_one("p.card__info-text")
+                        if size_elem:
+                            data_size = size_elem.get_text(strip=True)
 
                 if date_of_publication is None:
                     date_of_publication = ""
@@ -145,10 +150,12 @@ class _orca66hwnpciepupe5626k2ib6dds6zizjwuuashz67usjps2wehz4id(leak_extractor_i
                     m_network=helper_method.get_network_type(self.base_url),
                     m_base_url=self.base_url,
                     m_content=description + " " + self.base_url + " " + page.url,
-                    m_important_content = description,
+                    m_important_content=description[:500],
                     m_content_type=["leaks"],
-                    m_data_size=number_of_files,
-                    m_leak_date=datetime.datetime.strptime(date_of_publication, '%d/%m/%Y').date(),
+                    m_data_size=data_size,
+                    m_logo_or_images=image_logos,
+                    m_leak_date=datetime.datetime.strptime(date_of_publication,'%d/%m/%Y').date() if date_of_publication else None,
+                    m_records_size=number_of_files
                 )
 
                 entity_data = entity_model(
