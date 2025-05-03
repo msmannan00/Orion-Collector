@@ -133,7 +133,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_title=title,
                     m_url=article_url,
                     m_base_url=self.base_url,
-                    m_content=content_text + " " + self.base_url + " " + article_url,
+                    m_content=content_text + " " + self.base_url + " " + article_url + " " + sources,
                     m_content_type=["leaks"],
                     m_important_content=content_text,
                     m_weblink=weblinks,
@@ -146,6 +146,7 @@ class _ddosecrets(leak_extractor_interface, ABC):
                 if len(countries)>0:
                     country = " - ".join(countries)
                 entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(content_text),
                     m_attacker=[sources],
                     m_location_info=countries,
                     m_country_name=country

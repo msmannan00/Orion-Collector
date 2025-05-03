@@ -7,7 +7,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS, REDIS_COMMANDS
 from crawler.crawler_services.shared.helper_method import helper_method
 import re
 import time
@@ -52,8 +52,8 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "https://t.me/fresh_leaks_today"
@@ -172,7 +172,17 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
                         page.go_back()
                     page.wait_for_selector("div.elem_ibody", timeout=10000)
 
+                    ref_html = None
+                    if len(weblinks)>0:
+                        url = weblinks[0]
+                        is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + url, False)
+                        if not is_crawled:
+                            ref_html = helper_method.extract_refhtml(url)
+                            if ref_html:
+                                self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + url, True)
+
                     card_data = leak_model(
+                        m_ref_html=ref_html,
                         m_screenshot=helper_method.get_screenshot_base64(page,company_name),
                         m_title=company_name,
                         m_url=page.url,
@@ -186,15 +196,13 @@ class _nsalewdnfclsowcal6kn5csm4ryqmfpijznxwictukhrgvz2vbmjjjyd(leak_extractor_i
                         m_logo_or_images=slick_images,
                         m_dumplink=dumplinks,
                         m_data_size=total_data_size,
-                        m_password=passwords,
-                        m_status=status,
-                        m_views=views,
                     )
 
                     entity_data = entity_model(
                         m_email_addresses=helper_method.extract_emails(content_text),
-                        m_phone_numbers=helper_method.extract_phone_numbers(content_text),
                         m_company_name=company_name,
+                        m_ip=weblinks,
+                        m_password=passwords,
                     )
 
                     self.append_leak_data(card_data, entity_data)

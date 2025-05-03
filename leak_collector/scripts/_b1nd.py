@@ -1,4 +1,3 @@
-import traceback
 from abc import ABC
 from datetime import datetime
 
@@ -239,13 +238,13 @@ class _b1nd(leak_extractor_interface, ABC):
             m_content_type=["leaks"],
             m_leak_date=m_leak_date,
             m_logo_or_images=image_logos,
-            m_password=password
           )
 
           entity_data = entity_model(
             m_email_addresses=helper_method.extract_emails(content) if content else [],
             m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
-            m_company_name=title
+            m_company_name=title,
+            m_password=password
           )
 
           self.append_leak_data(card_data, entity_data)

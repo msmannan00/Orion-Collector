@@ -58,9 +58,9 @@ class _ijzn3sicrcy7guixkzjkib4ukbiilwc3xhnmby4mcbccnsd7j2rekvqd(leak_extractor_i
 
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
 
@@ -99,7 +99,10 @@ class _ijzn3sicrcy7guixkzjkib4ukbiilwc3xhnmby4mcbccnsd7j2rekvqd(leak_extractor_i
 
             for href in all_hrefs:
                 try:
-                    page.goto(href)
+                    try:
+                        page.goto(href, timeout=15000)
+                    except Exception as _:
+                        pass
                     page.wait_for_selector('.item_box')
 
                     item_boxes = page.query_selector_all('.item_box')
@@ -130,9 +133,16 @@ class _ijzn3sicrcy7guixkzjkib4ukbiilwc3xhnmby4mcbccnsd7j2rekvqd(leak_extractor_i
 
                         important_content = " ".join(description.split()[:500])
 
+                        is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + company_url, False)
+                        ref_html = None
+                        if not is_crawled:
+                            ref_html = helper_method.extract_refhtml(company_url)
+                            if ref_html:
+                                self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + company_url, True)
+
                         card_data = leak_model(
+                            m_ref_html=ref_html,
                             m_screenshot=helper_method.get_screenshot_base64(page, title),
-                            # m_screenshot="",
                             m_title=title,
                             m_url=href,
                             m_base_url=base_url,
@@ -141,12 +151,15 @@ class _ijzn3sicrcy7guixkzjkib4ukbiilwc3xhnmby4mcbccnsd7j2rekvqd(leak_extractor_i
                             m_important_content=important_content,
                             m_content_type=["leaks"],
                             m_weblink=[company_url] if company_url else [],
-                            m_logo_or_images=images,
                             m_leak_date=helper_method.extract_and_convert_date(date),
                         )
-
-                        entity_data = entity_model()
+                        entity_data = entity_model(
+                            m_email_addresses=helper_method.extract_emails(description),
+                            m_company_name=title,
+                            m_ip=[company_url]
+                        )
                         self.append_leak_data(card_data, entity_data)
+                        break
 
                 except Exception as e:
                     print(f"Error processing href {href}: {str(e)}")

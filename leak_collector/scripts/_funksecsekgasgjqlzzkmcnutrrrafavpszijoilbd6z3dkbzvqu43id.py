@@ -141,9 +141,9 @@ class _funksecsekgasgjqlzzkmcnutrrrafavpszijoilbd6z3dkbzvqu43id(leak_extractor_i
                 )
 
                 entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(content) if content else [],
+                    m_email_addresses=helper_method.extract_emails(content),
                     m_company_name=title,
-                    m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
+                    m_ip=product_url
                 )
 
                 self.append_leak_data(card_data, entity_data)

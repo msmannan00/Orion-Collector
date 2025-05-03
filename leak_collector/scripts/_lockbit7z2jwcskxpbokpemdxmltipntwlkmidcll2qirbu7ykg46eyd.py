@@ -7,7 +7,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS, REDIS_COMMANDS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
@@ -51,8 +51,8 @@ class _lockbit7z2jwcskxpbokpemdxmltipntwlkmidcll2qirbu7ykg46eyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://lockbit3753ekiocyo5epmpy6klmejchjtzddoekjlnt6mu3qh4de2id.onion/conditions"
@@ -89,8 +89,15 @@ class _lockbit7z2jwcskxpbokpemdxmltipntwlkmidcll2qirbu7ykg46eyd(leak_extractor_i
                             print(f"Date parsing error for: {date_text}")
 
                 description = f"Title: {title} \nDate: {date}"
+                is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                ref_html = None
+                if not is_crawled:
+                    ref_html = helper_method.extract_refhtml(title)
+                    if ref_html:
+                        self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
 
                 card_data = leak_model(
+                    m_ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -104,8 +111,8 @@ class _lockbit7z2jwcskxpbokpemdxmltipntwlkmidcll2qirbu7ykg46eyd(leak_extractor_i
                 )
 
                 entity_data = entity_model(
-                    m_email_addresses=[],
-                    m_phone_numbers=[],
+                    m_email_addresses=helper_method.extract_emails(description),
+                    m_ip=[title]
                 )
 
                 self.append_leak_data(card_data, entity_data)

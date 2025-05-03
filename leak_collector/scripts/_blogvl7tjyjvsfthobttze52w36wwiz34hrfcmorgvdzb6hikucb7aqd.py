@@ -159,7 +159,7 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
                 m_content=f"{descriptions} {revenues} {weblinks}"
                 important_content = ast.literal_eval(important_content)[0]
                 card_data = leak_model(
-                    ref_html=ref_html,
+                    m_ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -175,6 +175,7 @@ class _blogvl7tjyjvsfthobttze52w36wwiz34hrfcmorgvdzb6hikucb7aqd(leak_extractor_i
                 )
 
                 entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(m_content),
                     m_company_name=title,
                     m_ip=weblinks
                 )

@@ -137,7 +137,7 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
                         )
 
                 card_data = leak_model(
-                    ref_html=ref_html,
+                    m_ref_html=ref_html,
                     m_title=page.title(),
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -153,6 +153,7 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
                 )
 
                 entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(m_content),
                     m_country_name=country,
                     m_ip=[weblink],
                     m_company_name=page.title()

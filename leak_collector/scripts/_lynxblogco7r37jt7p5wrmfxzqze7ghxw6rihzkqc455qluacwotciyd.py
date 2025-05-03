@@ -52,8 +52,8 @@ class _lynxblogco7r37jt7p5wrmfxzqze7ghxw6rihzkqc455qluacwotciyd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://lynxblogco7r37jt7p5wrmfxzqze7ghxw6rihzkqc455qluacwotciyd.onion/leaks"
@@ -144,8 +144,17 @@ class _lynxblogco7r37jt7p5wrmfxzqze7ghxw6rihzkqc455qluacwotciyd(leak_extractor_i
                         ]
 
                         detail_page.close()
+                    ip=""
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                    m_ref_html = None
+                    if not is_crawled:
+                        m_ref_html = helper_method.extract_refhtml(title)
+                        if m_ref_html:
+                            ip = title
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
 
                     card_data = leak_model(
+                        m_ref_html= m_ref_html,
                         m_title=title,
                         m_url=page.url,
                         m_base_url=self.base_url,
@@ -162,9 +171,9 @@ class _lynxblogco7r37jt7p5wrmfxzqze7ghxw6rihzkqc455qluacwotciyd(leak_extractor_i
 
                     entity_data = entity_model(
                         m_email_addresses=helper_method.extract_emails(description),
-                        m_phone_numbers=helper_method.extract_phone_numbers(description),
                         m_industry=industry,
                         m_company_name=title,
+                        m_ip=[ip]
                     )
 
                     self.append_leak_data(card_data, entity_data)

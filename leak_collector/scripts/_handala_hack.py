@@ -139,7 +139,6 @@ class _handala_hack(leak_extractor_interface, ABC):
 
                     entity_data = entity_model(
                         m_email_addresses=helper_method.extract_emails(content),
-                        m_phone_numbers=helper_method.extract_phone_numbers(content),
                     )
 
                     self.append_leak_data(card_data, entity_data)

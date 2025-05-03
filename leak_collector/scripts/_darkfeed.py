@@ -90,7 +90,9 @@ class _darkfeed(leak_extractor_interface, ABC):
               m_content_type=["leaks"],
             )
 
-            entity_data = entity_model()
+            entity_data = entity_model(
+              m_email_addresses=helper_method.extract_emails(content_message),
+            )
             self.append_leak_data(card_data, entity_data)
 
       except Exception as ex:

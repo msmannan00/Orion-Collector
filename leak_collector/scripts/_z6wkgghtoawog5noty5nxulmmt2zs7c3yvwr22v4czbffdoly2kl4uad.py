@@ -6,7 +6,7 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS, REDIS_COMMANDS
 from crawler.crawler_services.shared.helper_method import helper_method
 import re
 
@@ -50,8 +50,8 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad.onion"
@@ -104,9 +104,6 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
 
                     entry_content = page.locator('.entry-content')
                     if entry_content:
-                        image_elements = entry_content.locator('img')
-                        image_urls = [image_elements.nth(i).get_attribute('src') for i in range(image_elements.count())]
-
                         paragraphs = entry_content.locator('p')
                         description = "\n".join(
                             paragraphs.nth(i).inner_text().strip() for i in range(paragraphs.count())
@@ -146,7 +143,16 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                     if not extracted_title or not description:
                         continue
 
+                    ref_html = None
+                    if web_urls and len(web_urls) > 0:
+                        is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + web_urls[0], False)
+                        if not is_crawled:
+                            ref_html = helper_method.extract_refhtml(web_urls[0])
+                            if ref_html:
+                                self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + web_urls[0], True)
+
                     card_data = leak_model(
+                        m_ref_html=ref_html,
                         m_title=extracted_title,
                         m_url=page.url,
                         m_base_url=self.base_url,
@@ -157,13 +163,12 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                         m_weblink=web_urls,
                         m_dumplink=dump_urls,
                         m_content_type=["leaks"],
-                        m_logo_or_images=image_urls,
                         m_data_size=extracted_data_size,
                     )
 
                     entity_data = entity_model(
+                        m_ip=web_urls,
                         m_email_addresses=helper_method.extract_emails(description),
-                        m_phone_numbers=helper_method.extract_phone_numbers(description),
                         m_company_name=extracted_title,
                     )
 

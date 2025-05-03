@@ -119,7 +119,7 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad(leak_extractor_i
 
                 cleaned_dumplink = [link for link in dumplink if link.startswith("http")]
                 card_data = leak_model(
-                    ref_html=ref_html,
+                    m_ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -134,6 +134,7 @@ class _rnsmwareartse3m4hjsumjf222pnka6gad26cqxqmbjvevhbnym5p6ad(leak_extractor_i
                 )
 
                 entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(description),
                     m_company_name=title,
                     m_ip=list(weblink) if weblink else None
                 )

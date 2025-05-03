@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import List
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
@@ -80,6 +81,7 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
 
         for page_url in page_urls:
             try:
+
                 page.goto(page_url, wait_until="networkidle")
                 self.soup = BeautifulSoup(page.content(), "html.parser")
 
@@ -90,6 +92,19 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
                 content = helper_method.clean_text(tstat_element.get_text(strip=True)) if tstat_element else ""
                 important_content = content
 
+                matching_row = next(
+                    (
+                        row for row in rows
+                        if (a := row.find("a", href=True)) and page_url.endswith(a["href"])
+                    ),
+                    None
+                )
+                total_size = last_updated = ""
+                if matching_row:
+                    cells = matching_row.find_all("td")
+                    total_size = cells[3].get_text(strip=True) if len(cells) > 3 else ""
+                    last_updated = cells[4].get_text(strip=True) if len(cells) > 4 else ""
+                last_updated_date = datetime.strptime(last_updated, "%Y-%m-%d").date()
                 tdownload_table = self.soup.find("table", class_="tdownload")
                 dump_links = []
                 if tdownload_table:
@@ -109,11 +124,13 @@ class _omegalock5zxwbhswbisc42o2q2i54vdulyvtqqbudqousisjgc7j7yd(leak_extractor_i
                     m_weblink=[page_url],
                     m_dumplink=dump_links,
                     m_content_type=["leaks"],
+                    m_leak_date=last_updated_date,
+                    m_data_size=total_size
                 )
 
                 entity_data = entity_model(
                     m_email_addresses=helper_method.extract_emails(content),
-                    m_phone_numbers=helper_method.extract_phone_numbers(content),
+                    m_company_name=title_text,
                 )
 
                 self.append_leak_data(card_data, entity_data)

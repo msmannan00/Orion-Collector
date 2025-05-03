@@ -49,8 +49,8 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+    def invoke_db(self, command: int, key: str, default_value):
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd.onion/Contact-Us.html"
@@ -73,15 +73,22 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
                 description_el = card.query_selector(".subtitle")
                 size_el = card.query_selector(".size")
                 read_more_el = card.query_selector("a.read-more")
-
                 title = title_el.text_content().strip() if title_el else "No Title"
+                weblink = next((t.strip('",;()[]<>') for t in title.split() if '.' in t), "")
+                is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                ref_html = None
+                if not is_crawled:
+                    ref_html = helper_method.extract_refhtml(title)
+                    if ref_html:
+                        self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
+
                 date_str = date_el.text_content().strip() if date_el else None
                 description = description_el.text_content().strip() if description_el else "No Description"
                 size = size_el.text_content().strip() if size_el else "No Size"
                 read_more_link = read_more_el.get_attribute(
                     "href") if read_more_el else None
-
                 card_data = leak_model(
+                    m_ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -97,7 +104,8 @@ class _pdcizqzjitsgfcgqeyhuee5u6uki6zy5slzioinlhx6xjnsw25irdgqd(leak_extractor_i
 
                 entity_data = entity_model(
                     m_email_addresses=helper_method.extract_emails(description),
-                    m_phone_numbers=helper_method.extract_phone_numbers(description),
+                    m_ip=[weblink],
+                    m_company_name=title,
                 )
 
                 self.append_leak_data(card_data, entity_data)

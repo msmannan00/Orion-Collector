@@ -58,9 +58,9 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
 
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
 
@@ -123,20 +123,32 @@ class _txtggyng5euqkyzl2knbejwpm4rlq575jn2egqldu27osbqytrj6ruyd(leak_extractor_i
                         else:
                             show_leaks_link = f"{self.base_url}/{show_leaks_link}"
 
-
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(title)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
+                    company_link = next((t.strip('",;()[]<>') for t in company_name.split() if '.' in t), "")
                     card_data = leak_model(
+                        m_ref_html = ref_html,
                         m_screenshot=helper_method.get_screenshot_base64(page, title),
                         m_title=title,
                         m_url=show_leaks_link,
+                        m_revenue=revenue,
                         m_base_url=self.base_url,
+                        m_dumplink=[show_leaks_link],
                         m_content=f"Description: {description}, Revenue: {revenue}, Company Name: {company_name}",
                         m_network=helper_method.get_network_type(self.base_url),
                         m_important_content=f"Description: {description}, Revenue: {revenue}, Company Name: {company_name}",
                         m_content_type=["leaks"],
-
                     )
 
-                    entity_data = entity_model()
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(description),
+                        m_company_name=company_name,
+                        m_ip=[company_link]
+                    )
                     self.append_leak_data(card_data, entity_data)
 
                 except Exception as e:

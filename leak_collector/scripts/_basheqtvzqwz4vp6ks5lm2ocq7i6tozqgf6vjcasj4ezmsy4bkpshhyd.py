@@ -132,7 +132,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
                     self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + title, True)
 
             card_data = leak_model(
-                ref_html=ref_html,
+                m_ref_html=ref_html,
                 m_screenshot=helper_method.get_screenshot_base64(page, title),
                 m_title=title,
                 m_url=page.url,
@@ -148,6 +148,7 @@ class _basheqtvzqwz4vp6ks5lm2ocq7i6tozqgf6vjcasj4ezmsy4bkpshhyd(leak_extractor_i
             )
 
             entity_data = entity_model(
+                m_email_addresses=helper_method.extract_emails(description),
                 m_country_name=country,
                 m_location_info=[country],
                 m_ip=[title],

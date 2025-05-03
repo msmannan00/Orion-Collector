@@ -58,9 +58,9 @@ class _j5o5y2feotmhvr7cbcp2j2ewayv5mn5zenl3joqwx67gtfchhezjznad(leak_extractor_i
 
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
 
@@ -92,51 +92,58 @@ class _j5o5y2feotmhvr7cbcp2j2ewayv5mn5zenl3joqwx67gtfchhezjznad(leak_extractor_i
                     'tr.ant-table-row.ant-table-row-level-0.odd-row, tr.ant-table-row.ant-table-row-level-0:not(.odd-row)')
 
                 for row in rows:
-
-                    location_element = row.query_selector('td.ant-table-cell.ant-table-column-sort')
-                    location = location_element.inner_text().strip() if location_element else ""
-
-
                     cells = row.query_selector_all('td.ant-table-cell')
 
+                    if len(cells) < 6:
+                        continue
 
-                    title = cells[1].inner_text().strip() if len(cells) > 1 else ""
-                    web_url = cells[2].inner_text().strip() if len(cells) > 2 else ""
-                    m_data_size = cells[3].inner_text().strip() if len(cells) > 3 else ""
+                    country = cells[0].inner_text().strip()
+                    company_name = cells[1].inner_text().strip()
+                    domain = cells[2].inner_text().strip()
+                    data_size = cells[3].inner_text().strip()
 
+                    download_link_element = cells[4].query_selector('a')
+                    dump_link = download_link_element.get_attribute('href') if download_link_element else ""
 
-                    dump_link = ""
-                    link_element = row.query_selector('td.ant-table-cell a')
-                    if link_element:
-                        dump_link = link_element.get_attribute("href")
+                    comment = cells[5].get_attribute('title') or cells[5].inner_text().strip()
 
+                    entry_id = f"{country}_{company_name}_{domain}"
+                    if entry_id in processed_entries:
+                        continue
 
-                    m_description = ""
-                    description_element = row.query_selector('td.ant-table-cell[title]')
-                    if description_element:
-                        m_description = description_element.get_attribute("title")
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + domain, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(domain)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + domain, True)
+                    comment = cells[5].get_attribute('title') or cells[5].inner_text().strip()
 
+                    card_data = leak_model(
+                        m_ref_html= ref_html,
+                        m_screenshot=helper_method.get_screenshot_base64(page, company_name),
+                        m_title=company_name,
+                        m_url=domain,
+                        m_base_url=self.base_url,
+                        m_content=comment,
+                        m_network=helper_method.get_network_type(self.base_url),
+                        m_important_content=comment,
+                        m_content_type=["leaks"],
+                        m_data_size=data_size,
+                        m_dumplink=[dump_link] if dump_link else [],
+                    )
 
-                    entry_id = f"{location}_{title}_{web_url}"
-                    if entry_id not in processed_entries:
-                        card_data = leak_model(
-                            m_screenshot=helper_method.get_screenshot_base64(page, title),
-                            m_title=title,
-                            m_url=web_url,
-                            m_base_url=self.base_url,
-                            m_content=m_description,
-                            m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=m_description,
-                            m_content_type=["leaks"],
-                            m_data_size=m_data_size,
-                            # m_location=location,
-                            m_dumplink=[dump_link]
-                        )
-                        entity_data = entity_model()
-                        self.append_leak_data(card_data, entity_data)
-                        processed_entries.add(entry_id)
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(comment),
+                        m_company_name=company_name,
+                        m_ip=[domain],
+                        m_location_info=[country],
+                        m_country_name=country,
+                    )
 
-                # Check for next page and navigate if available
+                    self.append_leak_data(card_data, entity_data)
+                    processed_entries.add(entry_id)
+
                 try:
                     current_page += 1
                     next_page_selector = f'.ant-pagination-item.ant-pagination-item-{current_page}'
@@ -144,7 +151,6 @@ class _j5o5y2feotmhvr7cbcp2j2ewayv5mn5zenl3joqwx67gtfchhezjznad(leak_extractor_i
 
                     if next_page_element:
                         next_page_element.click()
-                        # Wait for the page to load after clicking
                         page.wait_for_load_state('networkidle')
                     else:
                         has_more_pages = False

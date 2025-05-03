@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 from typing import List
 from playwright.sync_api import Page
@@ -6,128 +7,125 @@ from crawler.crawler_instance.local_shared_model.data_model.entity_model import 
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS, REDIS_COMMANDS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
 class _rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad(leak_extractor_interface, ABC):
-    _instance = None
+  _instance = None
 
-    def __init__(self, callback=None):
+  def __init__(self, callback=None):
 
-        self.callback = callback
-        self._card_data = []
-        self._entity_data = []
-        self.soup = None
-        self._initialized = None
-        self._redis_instance = redis_controller()
+    self.callback = callback
+    self._card_data = []
+    self._entity_data = []
+    self.soup = None
+    self._initialized = None
+    self._redis_instance = redis_controller()
 
-    def init_callback(self, callback=None):
+  def init_callback(self, callback=None):
 
-        self.callback = callback
+    self.callback = callback
 
-    def __new__(cls, callback=None):
+  def __new__(cls, callback=None):
 
-        if cls._instance is None:
-            cls._instance = super(_rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
+    if cls._instance is None:
+      cls._instance = super(_rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad, cls).__new__(cls)
+      cls._instance._initialized = False
+    return cls._instance
 
-    @property
-    def seed_url(self) -> str:
-        return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
+  @property
+  def seed_url(self) -> str:
+    return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
 
-    @property
-    def base_url(self) -> str:
-        return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
+  @property
+  def base_url(self) -> str:
+    return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
 
-    @property
-    def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT, m_resoource_block=False)
+  @property
+  def rule_config(self) -> RuleModel:
+    return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT, m_resoource_block=False)
 
-    @property
-    def card_data(self) -> List[leak_model]:
-        return self._card_data
+  @property
+  def card_data(self) -> List[leak_model]:
+    return self._card_data
 
-    @property
-    def entity_data(self) -> List[entity_model]:
-        return self._entity_data
+  @property
+  def entity_data(self) -> List[entity_model]:
+    return self._entity_data
 
-    def invoke_db(self, command: int, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+  def invoke_db(self, command: int, key: str, default_value):
+    return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+  def contact_page(self) -> str:
+    return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
 
-    def contact_page(self) -> str:
-        return "http://rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad.onion/"
+  def append_leak_data(self, leak: leak_model, entity: entity_model):
 
-    def append_leak_data(self, leak: leak_model, entity: entity_model):
+    self._card_data.append(leak)
+    self._entity_data.append(entity)
+    if self.callback:
+      if self.callback():
+        self._card_data.clear()
+        self._entity_data.clear()
 
-        self._card_data.append(leak)
-        self._entity_data.append(entity)
-        if self.callback:
-            if self.callback():
-                self._card_data.clear()
-                self._entity_data.clear()
+  def parse_leak_data(self, page: Page):
+    try:
+      page.wait_for_selector("#companies_online", timeout=5000)
+      company_text = page.locator("#companies_online").text_content()
+      company_count = int(re.search(r'\d+', company_text).group()) if company_text else 0
 
-    def parse_leak_data(self, page: Page):
-        page.wait_for_selector("button#archive_button")
-        page.click("button#archive_button")
+      for company_id in range(company_count, 0, -1):
+        try:
+          url = f"{self.base_url}/archive.php?company={company_id}"
+          page.goto(url, wait_until="domcontentloaded")
 
-        page.wait_for_selector("button.btn.btn-secondary[data-company]", timeout=5000)
-        more_buttons = page.locator("button.btn.btn-secondary[data-company]").all()
+          title_el = page.query_selector(f"#company_modal_label_{company_id}")
+          title = title_el.text_content().strip() if title_el else f"Company {company_id}"
 
-        for button in more_buttons:
-            try:
-                button.click()
-                page.wait_for_timeout(5000)
-                page.wait_for_selector("div.col-8 p.h4", timeout=5000)
+          description_els = page.query_selector_all(f"#company_modal_{company_id} p")
+          description = "\n".join(p.text_content().strip() for p in description_els if p.text_content())
 
-                title = page.locator("div.col-8 p.h4").first.text_content() or ""
-                print(title)
+          href_el = page.query_selector(f"#company_modal_{company_id} a[href^='http']")
+          external_link = href_el.get_attribute("href") if href_el else ""
 
-                p_tags = page.locator("div.col-8 p").all()
-                descriptions = [
-                    p.text_content() for p in p_tags if p.text_content() and "Documents" not in p.text_content()
-                ]
-                description = "\n".join(descriptions)
-                print(descriptions)
+          image_els = page.query_selector_all(f"#company_modal_{company_id} img")
+          images = [img.get_attribute("src") for img in image_els if img.get_attribute("src")]
 
-                doc_links = [
-                    a.get_attribute("href") for a in page.locator("div.col-8 a").all()
-                    if a.get_attribute("href") and ".onion" in a.get_attribute("href")
-                ]
-                print(doc_links)
+          content = f"{title}\n{description}\n{external_link}"
+          is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + external_link, False)
+          ref_html = None
+          if not is_crawled:
+            ref_html = helper_method.extract_refhtml(external_link)
+            if ref_html:
+              self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + external_link, True)
 
-                img_urls = [
-                    img.get_attribute("src") for img in page.locator("div.row.m-2 div.col img").all()
-                    if img.get_attribute("src")
-                ]
-                print(img_urls)
+          card_data = leak_model(
+            m_ref_html=ref_html,
+            m_title=title,
+            m_url=url,
+            m_base_url=self.base_url,
+            m_screenshot="",
+            m_content=content,
+            m_network=helper_method.get_network_type(self.base_url),
+            m_important_content=content[:500],
+            m_weblink=[external_link] if external_link else [],
+            m_dumplink=[],
+            m_content_type=["leaks"],
+            m_logo_or_images=images,
+          )
 
-                extra_description = page.locator("div.m-2").nth(-1).text_content() or ""
-                m_content = f"{description} {extra_description}"
+          entity_data = entity_model(
+            m_company_name=title,
+            m_ip=[external_link],
+            m_email_addresses=helper_method.extract_emails(content),
+            m_phone_numbers=helper_method.extract_phone_numbers(content),
+          )
 
-                card_data = leak_model(
-                    m_title=title,
-                    m_url=page.url,
-                    m_base_url=self.base_url,
-                    m_screenshot="",
-                    m_content=m_content,
-                    m_network=helper_method.get_network_type(self.base_url),
-                    m_important_content=m_content,
-                    m_weblink=doc_links,
-                    m_dumplink=[],
-                    m_content_type=["leaks"],
-                )
+          self.append_leak_data(card_data, entity_data)
 
-                entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(m_content),
-                    m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-                )
+        except Exception as e:
+          print(f"Error parsing company {company_id}: {e}")
 
-                self.append_leak_data(card_data, entity_data)
-
-                page.locator(".modal.show button.btn-close[data-bs-dismiss='modal']").click()
-
-            except Exception as e:
-                print(f"Error processing card: {e}")
+    except Exception as e:
+      print(f"Failed to parse company list: {e}")

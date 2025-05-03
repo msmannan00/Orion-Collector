@@ -58,9 +58,9 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
 
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
 
@@ -106,7 +106,10 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
             for link in href_links:
                 try:
 
-                    page.goto(link)
+                    try:
+                        page.goto(link, timeout=10)
+                    except Exception as ex:
+                        pass
 
 
                     page.wait_for_selector('.w3-container')
@@ -230,8 +233,15 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
 
                                 m_dumplink.append(href)
 
+                    is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + m_weblinks, False)
+                    ref_html = None
+                    if not is_crawled:
+                        ref_html = helper_method.extract_refhtml(m_weblinks)
+                        if ref_html:
+                            self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + m_weblinks, True)
 
                     card_data = leak_model(
+                        m_ref_html=ref_html,
                         m_screenshot=helper_method.get_screenshot_base64(page, title),
                         m_title=title,
                         m_url=page.url,
@@ -245,8 +255,11 @@ class _nitrogenczslprh3xyw6lh5xyjvmsz7ciljoqxxknd7uymkfetfhgvqd(leak_extractor_i
                         m_dumplink=m_dumplink
                     )
 
-
-                    entity_data = entity_model()
+                    entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(m_description),
+                        m_company_name=title,
+                        m_ip=[m_weblinks],
+                    )
                     self.append_leak_data(card_data, entity_data)
 
                 except Exception as e:

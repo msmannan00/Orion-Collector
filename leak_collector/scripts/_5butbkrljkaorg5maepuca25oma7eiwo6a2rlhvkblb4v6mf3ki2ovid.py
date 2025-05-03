@@ -104,7 +104,7 @@ class _5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid(leak_extractor_i
                         self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, True)
 
                 card_data = leak_model(
-                    ref_html=ref_html,
+                    m_ref_html=ref_html,
                     m_title=title,
                     m_url=page.url,
                     m_base_url=self.base_url,
@@ -119,6 +119,7 @@ class _5butbkrljkaorg5maepuca25oma7eiwo6a2rlhvkblb4v6mf3ki2ovid(leak_extractor_i
                 )
 
                 entity_data = entity_model(
+                    m_email_addresses=helper_method.extract_emails(description),
                     m_ip=[weblink],
                     m_company_name=title
                 )

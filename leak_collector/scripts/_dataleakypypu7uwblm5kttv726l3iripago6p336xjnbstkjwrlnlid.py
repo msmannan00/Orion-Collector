@@ -110,7 +110,6 @@ class _dataleakypypu7uwblm5kttv726l3iripago6p336xjnbstkjwrlnlid(leak_extractor_i
 
             entity_data = entity_model(
                 m_email_addresses=helper_method.extract_emails(content),
-                m_phone_numbers=helper_method.extract_phone_numbers(content),
             )
 
             self.append_leak_data(card_data, entity_data)

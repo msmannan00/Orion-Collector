@@ -53,9 +53,9 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd.onion"
@@ -87,8 +87,15 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
             leak_size = page.query_selector("div:has-text('Leaked size') span.font-bold.whitespace-pre-line").inner_text() if page.query_selector("div:has-text('Leaked size') span.font-bold.whitespace-pre-line") else ""
 
             m_content = page.inner_text("html")
+            is_crawled = self.invoke_db(REDIS_COMMANDS.S_GET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, False)
+            ref_html = None
+            if not is_crawled:
+                ref_html = helper_method.extract_refhtml(weblink)
+                if ref_html:
+                    self.invoke_db(REDIS_COMMANDS.S_SET_BOOL, CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink, True)
 
             card_data = leak_model(
+                m_ref_html=ref_html,
                 m_title=company_name,
                 m_url=page.url,
                 m_base_url=self.base_url,
@@ -103,9 +110,9 @@ class _hptqq2o2qjva7lcaaq67w36jihzivkaitkexorauw7b2yul2z6zozpqd(leak_extractor_i
             )
 
             entity_data = entity_model(
-                m_email_addresses=helper_method.extract_emails(m_content),
-                m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                m_email_addresses=helper_method.extract_emails(description),
                 m_company_name=company_name,
+                m_ip=[weblink]
             )
 
             self.append_leak_data(card_data, entity_data)

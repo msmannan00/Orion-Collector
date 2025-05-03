@@ -123,6 +123,7 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
                     )
 
                     entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(content),
                         m_company_name=title,
                     )
 

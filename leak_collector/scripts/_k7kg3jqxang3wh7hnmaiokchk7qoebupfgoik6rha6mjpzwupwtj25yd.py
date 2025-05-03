@@ -160,7 +160,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
 
                     rar_passwords=f"{rar_passwords}"
                     card_data = leak_model(
-                        ref_html= ref_html,
+                        m_ref_html= ref_html,
                         m_title=m_title,
                         m_url=new_page.url,
                         m_base_url=self.base_url,
@@ -177,6 +177,7 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                     )
 
                     entity_data = entity_model(
+                        m_email_addresses=helper_method.extract_emails(description),
                         m_country_name=country_name,
                         m_ip=[weblink],
                         m_location_info=[country_name],

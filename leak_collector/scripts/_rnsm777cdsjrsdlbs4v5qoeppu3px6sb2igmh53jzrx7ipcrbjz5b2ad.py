@@ -165,9 +165,8 @@ class _rnsm777cdsjrsdlbs4v5qoeppu3px6sb2igmh53jzrx7ipcrbjz5b2ad(leak_extractor_i
                         )
 
                         entity_data = entity_model(
-                            m_email_addresses=helper_method.extract_emails(description) if description else [],
-                            m_phone_numbers=helper_method.extract_phone_numbers(description) if description else [],
-                            m_company_name=title,
+                            m_email_addresses=helper_method.extract_emails(description),
+                            m_company_name=title
                         )
                         self.append_leak_data(card_data, entity_data)
 
