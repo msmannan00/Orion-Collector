@@ -8,7 +8,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
-
+import re
 
 class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_interface, ABC):
     _instance = None
@@ -67,6 +67,8 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
     def parse_leak_data(self, page: Page):
         try:
             max_pages = 5
+            fetched_links = set()
+
             for page_num in range(1, max_pages + 1):
                 current_url = f"{self.base_url}?paged={page_num}" if page_num > 1 else self.base_url
 
@@ -93,7 +95,9 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                         continue
 
                     description = ""
+                    description_without_links = ""
                     image_urls, web_urls, dump_urls = [], [], []
+                    extracted_data_size = None
 
                     post_title = page.locator('h1.entry-title')
                     extracted_title = post_title.inner_text().strip() if post_title else None
@@ -113,10 +117,31 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                         for i in range(link_elements.count()):
                             href = link_elements.nth(i).get_attribute('href')
                             if href:
-                                if '.onion' in href:
+                                if href in fetched_links:
+                                    continue
+                                fetched_links.add(href)
+
+                                if 'DOWNLOAD' in entry_content.nth(i).inner_text().upper():
                                     dump_urls.append(href)
-                                elif href.startswith('http'):
+                                elif href.startswith('https'):
                                     web_urls.append(href)
+
+                        plain_text_urls = re.findall(r'\bhttps://[^\s,]+', description)
+                        for url in plain_text_urls:
+                            if url in fetched_links:
+                                continue
+                            fetched_links.add(url)
+
+                            if 'DOWNLOAD' in url.upper():
+                                dump_urls.append(url)
+                            else:
+                                web_urls.append(url)
+
+                        description_without_links = re.sub(r'https?://\S+', '', description).strip()
+
+                        data_size_match = re.search(r'(\d+\.?\d*)\s?(TB|GB)', description, re.IGNORECASE)
+                        if data_size_match:
+                            extracted_data_size = f"{data_size_match.group(1)} {data_size_match.group(2)}"
 
                     if not extracted_title or not description:
                         continue
@@ -128,16 +153,18 @@ class _z6wkgghtoawog5noty5nxulmmt2zs7c3yvwr22v4czbffdoly2kl4uad(leak_extractor_i
                         m_screenshot=helper_method.get_screenshot_base64(page, extracted_title),
                         m_content=description,
                         m_network=helper_method.get_network_type(self.base_url),
-                        m_important_content=description,
+                        m_important_content=description_without_links[:500],
                         m_weblink=web_urls,
                         m_dumplink=dump_urls,
                         m_content_type=["leaks"],
                         m_logo_or_images=image_urls,
+                        m_data_size=extracted_data_size,
                     )
 
                     entity_data = entity_model(
                         m_email_addresses=helper_method.extract_emails(description),
                         m_phone_numbers=helper_method.extract_phone_numbers(description),
+                        m_company_name=extracted_title,
                     )
 
                     self.append_leak_data(card_data, entity_data)
