@@ -1,9 +1,7 @@
 from abc import ABC
 from datetime import datetime
 from typing import List
-
 from playwright.sync_api import Page
-
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
@@ -11,7 +9,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
-
+import re
 
 class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_interface, ABC):
     _instance = None
@@ -102,6 +100,11 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                             content_text = content.inner_text().strip() if content else "No content"
                             datetime_text = datetimex.inner_text().strip() if datetimex else "Unknown Date/Time"
 
+                            try:
+                                leak_date = datetime.strptime(datetime_text.split()[0], '%Y-%m-%d').date()
+                            except ValueError:
+                                leak_date = "Unknown"
+
                             card_url = card.get_attribute("href") or page.url
                             if card_url in processed_urls:
                                 continue
@@ -111,9 +114,31 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                                 card.click()
 
                             page.wait_for_timeout(2000)
+
                             dumplink_elements = page.query_selector_all(".download-links a")
                             dumplinks = [link.get_attribute("href").strip() for link in dumplink_elements if
                                          link.get_attribute("href")]
+
+                            views_element = page.query_selector(".text-muted")
+                            views = views_element.inner_text().strip().replace("views:",
+                                                                               "").strip() if views_element else "Unknown"
+
+                            image_element = page.query_selector(".content-info img")
+                            image_url = image_element.get_attribute("src").strip() if image_element else None
+
+                            content_element = page.query_selector(".content-info")
+                            detailed_content = content_element.inner_text().strip() if content_element else "No detailed content"
+
+                            data_size_match = re.search(r"(\d+(?:\.\d+)? [TGMK]B)", detailed_content, re.IGNORECASE)
+                            data_size = data_size_match.group(1) if data_size_match else "Unknown"
+
+                            address_match = re.search(r"Address:\s*(.+)", detailed_content, re.IGNORECASE)
+                            address = address_match.group(1) if address_match else "Unknown"
+
+                            name_match = re.search(r"Name:\s*(.+)", detailed_content, re.IGNORECASE)
+                            name = name_match.group(1) if name_match else title_text
+
+                            weblinks = re.findall(r'https?://[^\s]+', detailed_content)
 
                             with page.expect_navigation(wait_until="domcontentloaded"):
                                 page.go_back()
@@ -130,28 +155,29 @@ class _mblogci3rudehaagbryjznltdp33ojwzkq6hn2pckvjq33rycmzczpid(leak_extractor_i
                                 m_important_content=content_text,
                                 m_dumplink=dumplinks,
                                 m_content_type=["leaks"],
-                                m_leak_date=datetime.strptime(datetime_text.split()[0], '%Y-%m-%d').date(),
+                                m_leak_date=leak_date,
+                                m_views=views,
+                                m_data_size=data_size,
+                                m_logo_or_images=[image_url] if image_url else [],
+                                m_weblink=weblinks,
                             )
 
                             entity_data = entity_model(
                                 m_email_addresses=helper_method.extract_emails(content_text),
                                 m_phone_numbers=helper_method.extract_phone_numbers(content_text),
+                                m_name=name,
+                                m_location_info=[address],
                             )
 
                             self.append_leak_data(card_data, entity_data)
 
-
                         except Exception as e:
-                            print({e})
+                            print(f"Error processing card: {e}")
 
                     for _ in range(3):
                         page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
                         page.wait_for_timeout(2000)
 
             except Exception as e:
-                print({e})
+                print(f"Error in parsing: {e}")
                 break
-
-
-
-
