@@ -95,22 +95,18 @@ class _vkvsgl7lhipjirmz6j5ubp3w3bwvxgcdbpi3fsbqngfynetqtw4w5hyd(leak_extractor_i
             image_sources = [img['src'] for img in soup.find_all('img', src=True)]
 
             download_button = soup.find('a', class_='app-academy-md-50 btn btn-label-primary d-flex align-items-center')
-            download_link = download_button['href'] if download_button and 'href' in download_button.attrs else None
+            download_link = download_button['href'] if download_button and 'href' in download_button.attrs else ""
 
-
-
-            link_elements = page.query_selector_all('a[href]')
-            web_links = [a.get_attribute('href') for a in link_elements]
+           
 
             card_data = leak_model(
-                m_screenshot=helper_method.get_screenshot_base64(page, title_text),
+                m_screenshot="",
                 m_title=title_text,
                 m_url=page.url,
                 m_base_url=self.base_url,
                 m_content=m_content,
                 m_important_content=combined_descriptions[:500],
                 m_network=helper_method.get_network_type(self.base_url),
-                m_weblink=web_links,
                 m_dumplink=[download_link],
                 m_content_type=["leaks"],
                 m_logo_or_images=image_sources,
