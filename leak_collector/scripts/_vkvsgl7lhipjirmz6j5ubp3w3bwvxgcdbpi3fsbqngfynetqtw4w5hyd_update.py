@@ -97,10 +97,10 @@ class _vkvsgl7lhipjirmz6j5ubp3w3bwvxgcdbpi3fsbqngfynetqtw4w5hyd(leak_extractor_i
             download_button = soup.find('a', class_='app-academy-md-50 btn btn-label-primary d-flex align-items-center')
             download_link = download_button['href'] if download_button and 'href' in download_button.attrs else ""
 
-           
+
 
             card_data = leak_model(
-                m_screenshot="",
+                m_screenshot=helper_method.get_screenshot_base64(page,title_text),
                 m_title=title_text,
                 m_url=page.url,
                 m_base_url=self.base_url,
