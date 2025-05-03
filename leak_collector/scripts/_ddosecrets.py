@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 from typing import List
 from urllib.parse import urljoin
@@ -100,16 +101,11 @@ class _ddosecrets(leak_extractor_interface, ABC):
                 published_date = helper_method.extract_and_convert_date(published_date)
 
                 metadata_div = content_div.find("div", class_="metadata")
-                source = ""
                 countries = []
                 download_size = ""
                 dumplinks = []
-
+                sources = re.findall(r'href=["\']/source/([^"\']+)', page.content())[0]
                 if metadata_div:
-                    source_element = metadata_div.find("p", string=lambda t: t and "Source:" in t)
-                    if source_element and source_element.find("a"):
-                        source = source_element.find("a").get_text(strip=True)
-
                     country_elements = metadata_div.find_all("a", href=lambda h: h and "/country/" in h)
                     countries = [country.get_text(strip=True) for country in country_elements]
 
@@ -146,10 +142,13 @@ class _ddosecrets(leak_extractor_interface, ABC):
                     m_leak_date=published_date,
                     m_data_size=download_size,
                 )
-
+                country = None
+                if len(countries)>0:
+                    country = " - ".join(countries)
                 entity_data = entity_model(
-                    m_company_name=source,
+                    m_attacker=[sources],
                     m_location_info=countries,
+                    m_country_name=country
                 )
 
                 self.append_leak_data(card_data, entity_data)

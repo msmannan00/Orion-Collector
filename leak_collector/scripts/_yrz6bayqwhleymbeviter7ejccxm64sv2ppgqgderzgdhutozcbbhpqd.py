@@ -1,4 +1,5 @@
 from abc import ABC
+from datetime import datetime
 from typing import List
 from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
@@ -53,9 +54,9 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
     def entity_data(self) -> List[entity_model]:
         return self._entity_data
 
-    def invoke_db(self, command: REDIS_COMMANDS, key: CUSTOM_SCRIPT_REDIS_KEYS, default_value):
+    def invoke_db(self, command: int, key: str, default_value):
 
-        return self._redis_instance.invoke_trigger(command, [key.value + self.__class__.__name__, default_value])
+        return self._redis_instance.invoke_trigger(command, [key + self.__class__.__name__, default_value])
 
     def contact_page(self) -> str:
         return "http://yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd.onion/contacts"
@@ -73,14 +74,26 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
         page_content = page.content()
         self.soup = BeautifulSoup(page_content, "html.parser")
 
-        card_links = [
-            self.base_url + a['href']
-            for a in self.soup.find_all("a", string="Learn more")
-            if a.has_attr("href")
-        ]
+        cards = self.soup.select("div.flex.flex-col.mt-3.mb-3.bg-stone-100")
+        card_links = []
+        for card in cards:
+            link_tag = card.select_one("a.underline.text-blue-500.font-semibold")
+            if not link_tag or not link_tag.has_attr("href"):
+                continue
+            full_url = self.base_url + link_tag['href']
 
+            leak_date = None
+            date_span = card.find("span", string=lambda s: s and s.strip().lower().startswith("updated"))
+            if date_span:
+                try:
+                    date_str = date_span.text.replace("Updated", "").strip()
+                    leak_date = datetime.strptime(date_str, "%d-%b-%Y").date()
+                except:
+                    pass
 
-        for card_url in card_links:
+            card_links.append((full_url, leak_date))
+
+        for card_url, leak_date in card_links:
             page.goto(card_url)
             detail_content = page.content()
             detail_soup = BeautifulSoup(detail_content, "html.parser")
@@ -103,29 +116,49 @@ class _yrz6bayqwhleymbeviter7ejccxm64sv2ppgqgderzgdhutozcbbhpqd(leak_extractor_i
                     if explore_data_link_tag and explore_data_link_tag.has_attr("href")
                     else ""
                 )
-                m_content=description
+
+                m_content = description
+                if len(description) == 0:
+                    continue
+
+                is_crawled = self.invoke_db(
+                    REDIS_COMMANDS.S_GET_BOOL,
+                    CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink,
+                    False
+                )
+                ref_html = None
+                if not is_crawled:
+                    ref_html = helper_method.extract_refhtml(weblink)
+                    if ref_html:
+                        self.invoke_db(
+                            REDIS_COMMANDS.S_SET_BOOL,
+                            CUSTOM_SCRIPT_REDIS_KEYS.URL_PARSED.value + weblink,
+                            True
+                        )
+
                 card_data = leak_model(
+                    ref_html=ref_html,
                     m_title=page.title(),
                     m_url=page.url,
                     m_base_url=self.base_url,
-                    m_screenshot=helper_method.get_screenshot_base64(page,page.title()),
+                    m_screenshot=helper_method.get_screenshot_base64(page, page.title()),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=m_content[:500],
                     m_weblink=[weblink],
                     m_dumplink=[explore_data_link],
                     m_content_type=["leaks"],
-                    m_revenue=revenue
-
+                    m_revenue=revenue,
+                    m_leak_date=leak_date
                 )
-                entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(m_content),
-                    m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-                    m_country_name=country
 
+                entity_data = entity_model(
+                    m_country_name=country,
+                    m_ip=[weblink],
+                    m_company_name=page.title()
                 )
 
                 self.append_leak_data(card_data, entity_data)
 
             except Exception as e:
-                        print(f"Failed to extract from {card_url}: {e}")
+                print(f"Failed to extract from {card_url}: {e}")

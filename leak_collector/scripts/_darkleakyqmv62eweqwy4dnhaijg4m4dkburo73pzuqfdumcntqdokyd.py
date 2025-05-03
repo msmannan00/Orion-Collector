@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 
 from typing import List
@@ -122,8 +123,6 @@ class _darkleakyqmv62eweqwy4dnhaijg4m4dkburo73pzuqfdumcntqdokyd(leak_extractor_i
                     )
 
                     entity_data = entity_model(
-                        m_email_addresses=helper_method.extract_emails(content) if content else [],
-                        m_phone_numbers=helper_method.extract_phone_numbers(content) if content else [],
                         m_company_name=title,
                     )
 
