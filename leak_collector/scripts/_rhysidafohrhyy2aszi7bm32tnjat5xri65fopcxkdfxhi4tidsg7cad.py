@@ -80,7 +80,7 @@ class _rhysidafohrhyy2aszi7bm32tnjat5xri65fopcxkdfxhi4tidsg7cad(leak_extractor_i
             try:
                 button.click()
                 page.wait_for_timeout(5000)
-                # page.wait_for_selector("div.col-8 p.h4", timeout=5000)
+                page.wait_for_selector("div.col-8 p.h4", timeout=5000)
 
                 title = page.locator("div.col-8 p.h4").first.text_content() or ""
                 print(title)
