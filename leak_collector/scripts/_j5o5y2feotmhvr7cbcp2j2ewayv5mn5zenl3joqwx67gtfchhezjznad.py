@@ -82,55 +82,63 @@ class _j5o5y2feotmhvr7cbcp2j2ewayv5mn5zenl3joqwx67gtfchhezjznad(leak_extractor_i
             has_more_pages = True
 
             while has_more_pages:
-
                 page.wait_for_selector('tr.ant-table-row.ant-table-row-level-0')
-
 
                 rows = page.query_selector_all(
                     'tr.ant-table-row.ant-table-row-level-0.odd-row, tr.ant-table-row.ant-table-row-level-0:not(.odd-row)')
 
                 for row in rows:
+                    # Look for location in td with span (as per your example)
+                    location = ""
+                    location_cells = row.query_selector_all('td.ant-table-cell span')
+                    for span_cell in location_cells:
+                        span_text = span_cell.inner_text().strip()
+                        if span_text:
+                            location = span_text
+                            break
 
-                    location_element = row.query_selector('td.ant-table-cell.ant-table-column-sort')
-                    location = location_element.inner_text().strip() if location_element else ""
-
+                    # Fallback to the previous method if no span found
+                    if not location:
+                        location_element = row.query_selector('td.ant-table-cell.ant-table-column-sort')
+                        location = location_element.inner_text().strip() if location_element else ""
 
                     cells = row.query_selector_all('td.ant-table-cell')
-
 
                     title = cells[1].inner_text().strip() if len(cells) > 1 else ""
                     web_url = cells[2].inner_text().strip() if len(cells) > 2 else ""
                     m_data_size = cells[3].inner_text().strip() if len(cells) > 3 else ""
-
 
                     dump_link = ""
                     link_element = row.query_selector('td.ant-table-cell a')
                     if link_element:
                         dump_link = link_element.get_attribute("href")
 
-
                     m_description = ""
                     description_element = row.query_selector('td.ant-table-cell[title]')
                     if description_element:
                         m_description = description_element.get_attribute("title")
 
-
                     entry_id = f"{location}_{title}_{web_url}"
                     if entry_id not in processed_entries:
                         card_data = leak_model(
-                            m_screenshot=helper_method.get_screenshot_base64(page, title),
+                            # m_screenshot=helper_method.get_screenshot_base64(page, title),
                             m_title=title,
+                            m_screenshot="",
                             m_url=web_url,
                             m_base_url=self.base_url,
                             m_content=m_description,
                             m_network=helper_method.get_network_type(self.base_url),
-                            m_important_content=m_description,
+                            m_important_content=m_description[:500],
                             m_content_type=["leaks"],
                             m_data_size=m_data_size,
-                            # m_location=location,
+
                             m_dumplink=[dump_link]
                         )
-                        entity_data = entity_model()
+                        entity_data = entity_model(
+                            m_location_info=[location],
+                            m_company_name=title,
+                        )
+
                         self.append_leak_data(card_data, entity_data)
                         processed_entries.add(entry_id)
 
@@ -152,4 +160,3 @@ class _j5o5y2feotmhvr7cbcp2j2ewayv5mn5zenl3joqwx67gtfchhezjznad(leak_extractor_i
 
         except Exception as e:
             print(f"Error parsing leak data: {str(e)}")
-
