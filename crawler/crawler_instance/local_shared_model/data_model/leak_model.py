@@ -22,6 +22,8 @@ class leak_model(BaseModel):
     m_data_size: Optional[str] = None
     m_revenue: Optional[str] = None
     m_password: Optional[str] = None
+    m_status: Optional[str] = None
+    m_views: Optional[str] = None
 
     @field_validator('m_leak_date', mode='before')
     def parse_leak_date(cls, value):
