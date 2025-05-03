@@ -84,19 +84,25 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
         for url in link_urls:
             page.goto(url)
             page.wait_for_load_state("networkidle")
-            title = page.query_selector('div.flex.js-c-sb h3').inner_text() if page.query_selector(
-                'div.flex.js-c-sb h3') else ""
-            description = page.query_selector('p.mt-3.publication-description').inner_text() if page.query_selector(
-                'p.mt-3.publication-description') else ""
-            date = page.query_selector('div.mt-3.date-view').inner_text() if page.query_selector(
-                'div.mt-3.date-view') else ""
-            views = page.query_selector('div.mt-3.count-view.mr-5').inner_text().strip() if page.query_selector(
-                'div.mt-3.count-view.mr-5') else ""
 
-            content = f"{title}: {description} Date: {date} Views: {views}"
-            important_content = description
+            # Title
+            title_element = page.query_selector('div.flex.js-c-sb h3')
+            title = title_element.inner_text().strip() if title_element else "No title found."
 
-            image_elements = page.query_selector_all('div a.form-image-preview img')
+            # Description
+            description_element = page.query_selector('p.mt-3.publication-description')
+            description = description_element.inner_text().strip() if description_element else "No description found."
+
+            # Date
+            date_element = page.query_selector('div.mt-3.date-view')
+            date = date_element.inner_text().strip() if date_element else "No date found."
+
+            # Views
+            views_element = page.query_selector('div.mt-3.count-view')
+            views = views_element.inner_text().strip() if views_element else "No views info."
+
+            # Images
+            image_elements = page.query_selector_all('a.form-image-preview img')
             images = []
             for img in image_elements:
                 img_src = img.get_attribute('src')
@@ -104,6 +110,11 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
                     parsed_url = urlparse(img_src)
                     images.append(parsed_url.path.strip())
 
+            # Content
+            content = f"{title}\n{description}\nDate: {date}\nViews: {views}"
+            important_content = description
+
+            # Prepare card data
             card_data = leak_model(
                 m_screenshot="",
                 m_title=title,
@@ -112,15 +123,17 @@ class _ransomocmou6mnbquqz44ewosbkjk3o5qjsl3orawojexfook2j7esad(leak_extractor_i
                 m_content=content,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=important_content,
-                m_dumplink=[],  # No explicit download link provided in this case
+                m_dumplink=[],
                 m_content_type=["leaks"],
                 m_logo_or_images=images,
                 m_weblink=[],
             )
 
+            # Extract emails & phone numbers
             entity_data = entity_model(
                 m_email_addresses=helper_method.extract_emails(content),
                 m_phone_numbers=helper_method.extract_phone_numbers(content),
             )
 
+            # Append data
             self.append_leak_data(card_data, entity_data)
