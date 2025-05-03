@@ -115,7 +115,6 @@ class _k7kg3jqxang3wh7hnmaiokchk7qoebupfgoik6rha6mjpzwupwtj25yd(leak_extractor_i
                             publication_date = publication_date_section[
                                                :10]
 
-
                     information = None
                     if "information:" in m_content:
                         information = m_content.split("information:")[1].split("comment:")[0].strip()
