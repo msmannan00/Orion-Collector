@@ -1,15 +1,43 @@
+import json
 import os
 import re
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from bs4 import BeautifulSoup
+from nltk import PorterStemmer
 from playwright.sync_api import Page
 from crawler.crawler_services.shared.helper_method import helper_method
 from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import telegram_chat_model
+from social_collector.local_client.services.translation_service import translation_service
 
 
 class telegram_message_helper:
+    __instance = None
+    __m_connection = None
+
+    @staticmethod
+    def get_instance():
+        if telegram_message_helper.__instance is None:
+            telegram_message_helper()
+        return telegram_message_helper.__instance
+
+    def __init__(self):
+        telegram_message_helper.__instance = self
+        self.stemmer = PorterStemmer()
+        self.classifiers = self.load_classifier_keywords()
+
+    @staticmethod
+    def load_classifier_keywords() -> dict:
+        try:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),  '..','..', 'constants'))
+            file_path = os.path.join(base_dir, 'classifier.json')
+
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        except Exception as e:
+            print(f"[load_classifier_keywords] Failed to load classifier.json: {e}")
+            return {}
 
     @staticmethod
     def extract_views(soup: BeautifulSoup) -> Optional[str]:
@@ -147,10 +175,15 @@ class telegram_message_helper:
                 return None
             raw_date = span.inner_text().strip()
             current_year = datetime.now().year
-            if re.search(r"\\b\\d{4}\\b", raw_date):
+            today = datetime.now().date()
+            if raw_date.lower() == "today":
+                return today
+            if raw_date.lower() == "yesterday":
+                return today.replace(day=today.day - 1)
+            if re.search(r"\b\d{4}\b", raw_date):
                 return datetime.strptime(raw_date, "%B %d, %Y").date()
             msg_date = datetime.strptime(f"{raw_date} {current_year}", "%B %d %Y").date()
-            if msg_date > datetime.now().date():
+            if msg_date > today:
                 msg_date = msg_date.replace(year=current_year - 1)
             return msg_date
         except:
@@ -266,28 +299,34 @@ class telegram_message_helper:
             return None
 
     @staticmethod
-    def _extract_refined_content(soup: BeautifulSoup) -> str:
+    def _extract_refined_content(soup: BeautifulSoup) -> tuple[str, str]:
         parts = []
 
         message = soup.select_one(".message span.translatable-message")
         if message:
             text = message.get_text(strip=True)
+            text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+            text = re.sub(r'\s+', ' ', text).strip()
             if not (text.startswith("http://") or text.startswith("https://")):
-                parts.append(text)
+                parts.append(" " + text + " ")
 
         preview_title = soup.select_one(".webpage-title")
         preview_desc = soup.select_one(".webpage-text")
-        if preview_title or preview_desc:
-            combined = " - ".join(filter(None, [preview_title.get_text(strip=True) if preview_title else "", preview_desc.get_text(strip=True) if preview_desc else ""]))
-            if combined:
-                parts.insert(0, combined)
+        title_text = preview_title.get_text(strip=True) if preview_title else ""
+        desc_text = preview_desc.get_text(strip=True) if preview_desc else ""
+        title_text = re.sub(r'[^\x00-\x7F]+', ' ', title_text)
+        title_text = re.sub(r'\s+', ' ', title_text).strip()
+        desc_text = re.sub(r'[^\x00-\x7F]+', ' ', desc_text)
+        desc_text = re.sub(r'\s+', ' ', desc_text).strip()
+        combined_caption = " ".join(filter(None, [title_text, desc_text]))
 
-        for caption in soup.select(".document-message .translatable-message"):
-            text = caption.get_text(strip=True)
-            if text and text not in parts:
-                parts.append(text)
+        file_names = []
+        for el in soup.select(".document-name middle-ellipsis-element"):
+            name = el.get_text(strip=True)
+            name = re.sub(r'[^\x00-\x7F]+', ' ', name)
+            name = re.sub(r'\s+', ' ', name).strip()
+            file_names.append(name)
 
-        file_names = [el.get_text(strip=True) for el in soup.select(".document-name middle-ellipsis-element")]
         urls = {a["href"] for a in soup.select(".message .anchor-url[href]") if a.get("href")}
 
         if file_names:
@@ -295,9 +334,13 @@ class telegram_message_helper:
         if urls:
             parts.extend(sorted(urls))
 
-        return " - ".join(filter(None, parts))
 
-    from playwright.sync_api import Page
+        final = " ".join(filter(None, parts))
+        final = re.sub(r'\s+', ' ', final).strip()
+
+        captions = combined_caption
+
+        return final, captions
 
     @staticmethod
     def open_sidebar(page: Page):
@@ -308,6 +351,7 @@ class telegram_message_helper:
                 return None
 
             avatar.click()
+            time.sleep(2)
             page.wait_for_selector('.row-clickable', timeout=5000)
 
             rows = page.query_selector_all('.row-clickable')
@@ -328,43 +372,116 @@ class telegram_message_helper:
         except:
             return None
 
+    def get_content_types(self, content: str) -> list[str]:
+        matched_types = []
+
+        tokens = re.split(r'[^a-zA-Z0-9]+', content.lower())
+
+        filtered_tokens = [word for word in tokens if len(word) > 2]
+        stemmed_words = {self.stemmer.stem(word) for word in filtered_tokens}
+
+        for category, keywords in self.classifiers.items():
+            stemmed_keywords = {self.stemmer.stem(k) for k in keywords}
+            if stemmed_words & stemmed_keywords:
+                matched_types.append(category)
+
+        return matched_types
+
     @staticmethod
-    def extract_messages(page, html: str, channel_name: str, message_id, telegram_channel_id, channel_url) -> telegram_chat_model | None:
+    def extract_hashtags(content: str) -> List[str]:
+        hashtags = re.findall(r'#\w+', content)
+        return hashtags
+
+    @staticmethod
+    def extract_time(html: str) -> Optional[str]:
+        soup = BeautifulSoup(html, 'html.parser')
+
+        date_el = soup.select_one(".time-inner")
+        if date_el and date_el.has_attr("title"):
+            raw_date = date_el["title"]
+            try:
+                dt = datetime.strptime(raw_date, "%d %B %Y, %H:%M:%S")
+                return dt.strftime("%H:%M:%S")
+            except ValueError:
+                return None
+        return None
+
+    def _extract_refhtml_and_content(self, links: list[str], soup: BeautifulSoup, file_info: list[dict]) -> tuple[str, str, list[str], str]:
+        m_ref_html = ""
+        if links and links.__len__()<3:
+            m_ref_html = helper_method.extract_refhtml(links[0])
+        refined_content, captions = self._extract_refined_content(soup)
+        refined_content = translation_service.get_instance().translate(refined_content)
+        m_ref_html = m_ref_html or ""
+        file_names = [f.get("file_name") for f in file_info if f.get("file_name")]
+        return m_ref_html, refined_content, file_names, captions
+
+    @staticmethod
+    def extract_mentions(content: str) -> List[str]:
+        mentions = re.findall(r'(?<![\w])@[\w]{5,32}', content)
+        return mentions
+
+    def extract_messages(self, page, html: str, channel_name: str, message_id, telegram_channel_id, channel_url) -> telegram_chat_model | None:
         try:
+            if not html:
+                return None
+
             soup = BeautifulSoup(html, 'html.parser')
 
             parent_bubble = soup.find('div', class_='bubble')
-            if parent_bubble and ('service' in parent_bubble.get('class') or 'is-sponsored' in parent_bubble.get('class')):
+            if parent_bubble and ('service' in parent_bubble.get('class', []) or 'is-sponsored' in parent_bubble.get('class', [])):
                 return None
 
-            views = telegram_message_helper.extract_views(soup)
-            forwarded_from = telegram_message_helper.extract_forwarded_from(soup)
-            reply_to = telegram_message_helper.extract_reply_to(soup)
-            file_info = telegram_message_helper.extract_file_info(soup)
-            media = telegram_message_helper.extract_media(soup)
-            status = telegram_message_helper.extract_status(soup)
-            message_link = telegram_message_helper.extract_message_link(page, message_id)
-            links = list(dict.fromkeys(a['href'] for a in soup.find_all('a', href=True)))
-            message_type = telegram_message_helper.extract_message_type(soup)
+            views = self.extract_views(soup)
+            forwarded_from = self.extract_forwarded_from(soup)
+            reply_to = self.extract_reply_to(soup)
+            file_info = self.extract_file_info(soup)
+            media = self.extract_media(soup)
+            status = self.extract_status(soup)
+            message_link = self.extract_message_link(page, message_id)
 
-            refined_content = telegram_message_helper._extract_refined_content(soup)
-            file_names = [f.get("file_name") for f in file_info if f.get("file_name")]
-            return telegram_chat_model(
-                m_message_id=str(message_id),
-                m_message_sharable_link=message_link,
-                m_channel_id=telegram_channel_id,
-                m_content=refined_content,
-                m_views=views,
-                m_file_name=file_names,
-                m_forwarded_from=forwarded_from,
-                m_weblink=links,
-                m_channel_name=channel_name,
-                m_message_type=message_type,
-                m_media_url=media.get("media_url"),
-                m_media_caption=media.get("media_caption"),
-                m_reply_to_message_id=reply_to,
-                m_message_status=status,
-                m_channel_url= channel_url
-            )
-        except:
+            all_links = [
+                a['href'] for a in soup.find_all('a', href=True)
+                if not a['href'].startswith(('https://t.me', 'http://t.me'))
+            ]
+            links = list(dict.fromkeys(all_links))
+
+            message_type = self.extract_message_type(soup)
+            m_ref_html, refined_content, file_names, captions = self._extract_refhtml_and_content(links, soup, file_info)
+            m_time = self.extract_time(html)
+            mentions = self.extract_mentions(soup.text or "")
+            hashtags = self.extract_hashtags(refined_content or "")
+            content_type = self.get_content_types(f"{refined_content or ''} {m_ref_html or ''}")
+            media_url = media.get("media_url") if media else None
+            media_caption = media.get("media_caption") if media else None
+            msg_type_list = [message_type] if message_type else None
+
+            data = {
+                "m_message_id": str(message_id),
+                "m_time": m_time,
+                "m_message_sharable_link": message_link,
+                "m_channel_id": telegram_channel_id,
+                "m_caption": captions,
+                "m_content": refined_content,
+                "m_users": mentions,
+                "m_ref_html": m_ref_html,
+                "m_views": views,
+                "m_hashtags": hashtags,
+                "m_file_name": file_names,
+                "m_forwarded_from": forwarded_from,
+                "m_weblink": links,
+                "m_content_type": content_type,
+                "m_channel_name": channel_name,
+                "m_message_type": msg_type_list,
+                "m_media_url": media_url,
+                "m_media_caption": media_caption,
+                "m_reply_to_message_id": reply_to,
+                "m_message_status": status,
+                "m_channel_url": channel_url
+            }
+
+            clean_data = {k: v for k, v in data.items() if v not in [None, [], "", {}]}
+            return telegram_chat_model(**clean_data)
+
+        except Exception:
             return None

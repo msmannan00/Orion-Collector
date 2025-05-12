@@ -24,6 +24,12 @@ class telegram_extractor_interface(ABC):
 
     @property
     @abstractmethod
+    def channel_name(self) -> str:
+        """Return the name of the Telegram channel."""
+        pass
+
+    @property
+    @abstractmethod
     def base_url(self) -> str:
         """Return the base domain URL of the source."""
         pass

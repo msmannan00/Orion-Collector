@@ -4,7 +4,7 @@ from typing import List, Optional
 from crawler.constants.enums import VALID_NETWORK_TYPES, VALID_CONTENT_TYPES
 
 class leak_model(BaseModel):
-    ref_html: Optional[str] = None
+    m_ref_html: Optional[str] = None
     m_title: str
     m_url: str
     m_base_url: str
@@ -21,9 +21,6 @@ class leak_model(BaseModel):
     m_leak_date: Optional[date] = None
     m_data_size: Optional[str] = None
     m_revenue: Optional[str] = None
-    m_password: Optional[str] = None
-    m_status: Optional[str] = None
-    m_views: Optional[str] = None
 
     @field_validator('m_leak_date', mode='before')
     def parse_leak_date(cls, value):

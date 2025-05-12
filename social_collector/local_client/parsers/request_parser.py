@@ -11,13 +11,13 @@ from bs4 import BeautifulSoup
 from crawler.constants.enums import PRESIDIO_TO_ENTITY_MODEL_MAP
 from crawler.crawler_instance.local_interface_model.leak.telegram_extractor_interface import telegram_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
-from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import ChatDataModel
+from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import ChatDataModel, telegram_chat_model
 from crawler.crawler_instance.local_shared_model.rule_model import FetchProxy
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS
 from crawler.crawler_services.shared.env_handler import env_handler
 from crawler.crawler_services.shared.helper_method import helper_method
-from telegram_collector.local_client.telegram_helper import parse_data
+from social_collector.local_client.helper.telegram.telegram_helper import parse_data
 
 
 class RequestParser:
@@ -47,6 +47,35 @@ class RequestParser:
 
     return entity_model(**entity_data)
 
+  @staticmethod
+  def index_dump(chat: telegram_chat_model, token: str, production: bool):
+    try:
+      server_url = env_handler.get_instance().env("S_SERVER") if production else "http://localhost:8080"
+      endpoint = f"{server_url}/api/index/dump"
+      headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+      payload = {
+        "id": chat.m_message_id,
+        "leak_url": chat.m_file_name,
+        "source": "telegram",
+        "group": chat.m_channel_name,
+        "link": chat.m_message_sharable_link
+      }
+
+      response = requests.post(endpoint, json=payload, headers=headers)
+      try:
+        response_data = response.json()
+      except ValueError:
+        response_data = {"detail": response.text}
+
+      return {
+        "message": response_data,
+        "status_code": response.status_code
+      }
+
+    except Exception as ex:
+      return {"message": {"detail": str(ex)}, "status_code": 500}
+
   def callback(self):
     if len(self.model.card_data) < 3:
       return False
@@ -64,7 +93,12 @@ class RequestParser:
 
       for chat in self.model.card_data:
         content = chat.m_content
+        if chat.m_file_name and chat.m_file_name.__len__()>0:
+          self.index_dump(chat, token, self.production)
         if not content:
+          continue
+
+        if not (chat.m_file_name or chat.m_hashtags or chat.m_weblink or chat.m_content_type or chat.m_caption):
           continue
 
         res = parse_data(content)
@@ -80,7 +114,7 @@ class RequestParser:
 
         merged_chat_data.append(chat_dict)
 
-      payload = {"m_chat_data": merged_chat_data, "m_network": "telegram", "m_source_channel_url": self.model.seed_url}
+      payload = {"m_channel_name": self.model.channel_name,"m_chat_data": merged_chat_data, "m_network": "telegram", "m_source_channel_url": self.model.seed_url}
 
       response = requests.post(endpoint, json=payload, headers=headers)
       if response.status_code == 200:
@@ -117,7 +151,7 @@ class RequestParser:
   def parse(self):
     default_data_model = ChatDataModel(
       m_chat_data=[],
-      m_network = "telegram"
+      m_network="telegram"
     )
 
     try:
@@ -166,13 +200,17 @@ class RequestParser:
     return default_data_model, None
 
   def _launch_persistent_context(self, playwright):
-    user_data_dir = os.path.join(os.getcwd(), "playwright_user_data")
+    user_data_dir = os.path.join(os.getcwd(), "session_data")
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
     os.makedirs(base_dir, exist_ok=True)
 
-    launch_args = {"user_data_dir": user_data_dir, "headless": False, "viewport": None, "accept_downloads": True, "args": ["--start-maximized"], "firefox_user_prefs": {"browser.download.folderList": 2, "browser.download.useDownloadDir": True, "browser.download.dir": base_dir,
-      "browser.helperApps.neverAsk.saveToDisk": ",".join(["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/zip", "application/octet-stream"]), "browser.download.manager.showWhenStarting": False, "browser.helperApps.alwaysAsk.force": False,
-      "pdfjs.disabled": True, "browser.download.panel.shown": False, "browser.download.manager.closeWhenDone": True, "browser.download.animateNotifications": False, "browser.download.improvements_to_download_panel": False}}
+    launch_args = {"user_data_dir": user_data_dir, "headless": False, "viewport": None, "accept_downloads": True, "args": ["--start-maximized"],
+                   "firefox_user_prefs": {"browser.download.folderList": 2, "browser.download.useDownloadDir": True, "browser.download.dir": base_dir,
+                                          "browser.helperApps.neverAsk.saveToDisk": ",".join(
+                                            ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/zip", "application/octet-stream"]),
+                                          "browser.download.manager.showWhenStarting": False, "browser.helperApps.alwaysAsk.force": False,
+                                          "pdfjs.disabled": True, "browser.download.panel.shown": False, "browser.download.manager.closeWhenDone": True, "browser.download.animateNotifications": False,
+                                          "browser.download.improvements_to_download_panel": False}}
 
     if self.model.rule_config.m_fetch_proxy is not FetchProxy.NONE:
       launch_args["proxy"] = self.proxy

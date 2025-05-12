@@ -3,17 +3,20 @@ import hashlib
 import json
 import re
 import datetime
-from pathlib import Path
-from typing import Optional
-from urllib.parse import urlparse
+import socket
 import base64
 import unicodedata
-from uuid import uuid4
+import requests
 
+from typing import Optional, OrderedDict
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from crawler.crawler_services.redis_manager.redis_controller import redis_controller
+from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, REDIS_KEYS
 
 
 class helper_method:
+  _refhtml_cache = OrderedDict()
 
   @staticmethod
   def generate_data_hash(data):
@@ -28,6 +31,83 @@ class helper_method:
     return hashlib.sha256(data_string.encode('utf-8')).hexdigest()
 
   @staticmethod
+  def extract_refhtml(url: str) -> str | None:
+    try:
+      if "t.me" in url:
+        return None
+
+      if not url.startswith("http"):
+        url = f"https://{url.lstrip('http://').lstrip('https://')}"
+
+      parsed = urlparse(url)
+      if not parsed.scheme or not parsed.netloc:
+        return None
+
+      if url in helper_method._refhtml_cache:
+        helper_method._refhtml_cache.move_to_end(url)
+        return helper_method._refhtml_cache[url]
+
+      headers = {
+        "User-Agent": (
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+          "AppleWebKit/537.36 (KHTML, like Gecko) "
+          "Chrome/120.0.0.0 Safari/537.36"
+        )
+      }
+
+      socket.setdefaulttimeout(15)
+      response = requests.get(url, headers=headers, timeout=(5, 15))
+
+      if response.status_code != 200 or not response.text:
+        return None
+
+      soup = BeautifulSoup(response.text, "html.parser")
+      parts = [(soup.find("meta", {"name": "description"}) or {}).get("content", "").strip()]
+      parts += [e.get_text(strip=True) for e in soup.select("h1,h2,h3,h4,h5,h6,p")]
+
+      result, total = [], 0
+      for part in filter(None, parts):
+        total += len(part) + (3 if result else 0)
+        result.append(part)
+        if total > 1500:
+          break
+
+      text = " - ".join(result)[:2000]
+      clean_text = re.sub(r"\s{2,}", " ", text).strip(" -.,:;") or None
+
+      if clean_text:
+        helper_method._refhtml_cache[url] = clean_text
+        if len(helper_method._refhtml_cache) > 20:
+          helper_method._refhtml_cache.popitem(last=False)
+
+      return clean_text
+
+    except (requests.RequestException, socket.timeout):
+      pass
+    except Exception:
+      pass
+    return None
+
+  @staticmethod
+  def get_host_name(p_url):
+    m_parsed_uri = urlparse(p_url)
+    m_netloc = m_parsed_uri.netloc
+
+    if m_netloc.startswith('www.'):
+      m_netloc = m_netloc[4:]
+
+    netloc_parts = m_netloc.split('.')
+
+    if len(netloc_parts) > 2:
+      m_host_name = netloc_parts[-2]
+    elif len(netloc_parts) == 2:
+      m_host_name = netloc_parts[0]
+    else:
+      m_host_name = m_netloc
+
+    return m_host_name
+
+  @staticmethod
   def clean_text(text):
     text = unicodedata.normalize("NFKC", text)
     text = re.sub(r'\s+', ' ', text)
@@ -36,29 +116,23 @@ class helper_method:
     return text.strip()
 
   @staticmethod
-  def get_screenshot_base64(page, search_string):
+  def get_screenshot_base64(page, search_string, base_url):
     try:
-      page.set_viewport_size({"width": 1100, "height": 800})
-      page.wait_for_load_state("load", timeout=10000)
+      storage_key = REDIS_KEYS.LEAK_PARSED + helper_method.get_host_name(base_url)
+      url_previously_parsed = redis_controller().invoke_trigger(REDIS_COMMANDS.S_GET_BOOL,[storage_key, False, None])
+      if url_previously_parsed:
+        return ""
 
-      page.add_style_tag(content=(
-        "*,*::before,*::after{"
-        "transition:none!important;"
-        "animation:none!important;"
-        "animation-delay:0s!important;"
-        "animation-duration:0s!important;"
-        "scroll-behavior:auto!important;"
-        "}"
-      ))
-
+      search_string = re.sub(r"[^\w\s-]", "", search_string).strip()
+      page.wait_for_load_state("networkidle", timeout=1000)
       element = page.locator(f":text('{search_string}')").first
-      element.wait_for(timeout=10000)
-      element.evaluate("element => element.scrollIntoView({ block: 'start' })")
-
-      screenshot_bytes = page.screenshot(full_page=False, type="jpeg", quality=30)
-      return base64.b64encode(screenshot_bytes).decode('utf-8')
-    except Exception:
-      return ""
+      element.wait_for(timeout=1000)
+      element.evaluate("el => el.scrollIntoView({ block: 'center', behavior: 'instant' })")
+      screenshot_bytes = element.screenshot(timeout=1000)
+      return base64.b64encode(screenshot_bytes).decode("utf-8")
+    except Exception as ex:
+      print(f"Error in get_screenshot_base64: {ex}")
+    return ""
 
   @staticmethod
   def get_network_type(url: str):
@@ -116,6 +190,7 @@ class helper_method:
 
     return filtered_phone_numbers
 
+  # noinspection PyArgumentList
   @staticmethod
   def extract_text_from_html(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
