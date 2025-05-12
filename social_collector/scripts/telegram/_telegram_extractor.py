@@ -116,8 +116,8 @@ class _telegram_extractor(telegram_extractor_interface, ABC):
       self._channel_name= channel_name
 
       channel_url = telegram_message_helper.get_instance().open_sidebar(page)
-      if channel_name not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_NAMES and channel_url not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_ID:
-        continue
+      # if channel_name not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_NAMES and channel_url not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_ID:
+      #   continue
 
       stored_date = self.invoke_db(REDIS_COMMANDS.S_GET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value + channel_name, None)
       if stored_date:
