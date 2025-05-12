@@ -1,3 +1,5 @@
+import os
+import subprocess
 import sys
 import time
 import redis
@@ -74,6 +76,12 @@ def check_orion_status_and_token():
     except Exception as ex:
         print(f"Token request setup failed. Details: {ex}")
         sys.exit(1)
+
+def run_env_update_script():
+    script_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
+    script_path = os.path.join(script_dir, "run.sh")
+    subprocess.run(["chmod", "+x", script_path], check=True)
+    subprocess.run([script_path], check=True, cwd=script_dir)
 
 def parse_data(model):
     try:

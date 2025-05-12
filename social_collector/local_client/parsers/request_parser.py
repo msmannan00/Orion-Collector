@@ -101,6 +101,9 @@ class RequestParser:
         if not (chat.m_file_name or chat.m_hashtags or chat.m_weblink or chat.m_content_type or chat.m_caption):
           continue
 
+        if len(chat.m_content_type)==0:
+          continue
+
         res = parse_data(content)
         entity = self.generate_entity_model(res).model_dump()
         entity["m_cluster_id"] = "chat"
@@ -113,7 +116,7 @@ class RequestParser:
             chat_dict[key] = value
 
         merged_chat_data.append(chat_dict)
-
+        print("parsing : " + self.model.channel_name + " : " + str(chat.m_message_id))
       payload = {"m_channel_name": self.model.channel_name,"m_chat_data": merged_chat_data, "m_network": "telegram", "m_source_channel_url": self.model.seed_url}
 
       response = requests.post(endpoint, json=payload, headers=headers)

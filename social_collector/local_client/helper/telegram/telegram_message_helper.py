@@ -3,7 +3,7 @@ import os
 import re
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from bs4 import BeautifulSoup
 from nltk import PorterStemmer
 from playwright.sync_api import Page
@@ -30,7 +30,7 @@ class telegram_message_helper:
     @staticmethod
     def load_classifier_keywords() -> dict:
         try:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),  '..','..', 'constants'))
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),  '..','..', 'assets'))
             file_path = os.path.join(base_dir, 'classifier.json')
 
             with open(file_path, 'r', encoding='utf-8') as file:
@@ -196,6 +196,11 @@ class telegram_message_helper:
         time.sleep(1)
 
     @staticmethod
+    def scroll_down(page: Page, scrollable):
+        page.evaluate("(el) => el.scrollTop += el.offsetHeight", scrollable)
+        time.sleep(1)
+
+    @staticmethod
     def get_channel_shareable_link(page) -> Optional[str]:
         try:
             rows = page.query_selector_all(".sidebar-left-section-content .row.row-clickable")
@@ -351,8 +356,17 @@ class telegram_message_helper:
                 return None
 
             avatar.click()
-            time.sleep(2)
-            page.wait_for_selector('.row-clickable', timeout=5000)
+
+            page.wait_for_function(
+                """() => {
+                    const rows = document.querySelectorAll('.row-clickable');
+                    return Array.from(rows).some(row => {
+                        const subtitle = row.querySelector('.row-subtitle');
+                        return subtitle && subtitle.innerText.trim().toLowerCase() === 'link';
+                    });
+                }""",
+                timeout=10000
+            )
 
             rows = page.query_selector_all('.row-clickable')
             for row in rows:

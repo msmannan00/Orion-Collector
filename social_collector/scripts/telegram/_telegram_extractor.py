@@ -10,7 +10,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.env_handler import env_handler
-from social_collector.local_client.constants.enums import TelegramConfig
+from social_collector.local_client.assets.enums import TelegramConfig
 from social_collector.local_client.helper.telegram.telegram_message_helper import telegram_message_helper
 
 
@@ -119,7 +119,7 @@ class _telegram_extractor(telegram_extractor_interface, ABC):
       # if channel_name not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_NAMES and channel_url not in TelegramConfig.ALLOWED_TELEGRAM_CHANNEL_ID:
       #   continue
 
-      stored_date = self.invoke_db(REDIS_COMMANDS.S_GET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value + channel_name, None)
+      stored_date = self.invoke_db(REDIS_COMMANDS.S_GET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value + peer_id, None)
       if stored_date:
         stored_date = datetime.strptime(stored_date, "%Y-%m-%d").date()
 
@@ -148,7 +148,6 @@ class _telegram_extractor(telegram_extractor_interface, ABC):
             if channel_date is None:
               time.sleep(5)
               break
-            self.invoke_db(REDIS_COMMANDS.S_SET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value + channel_name, channel_date.isoformat())
           if message_date and stored_date and message_date <= stored_date and env_handler.get_instance().env("PRODUCTION") == "1":
             scroll_count = max_scrolls
             break
@@ -178,7 +177,7 @@ class _telegram_extractor(telegram_extractor_interface, ABC):
         telegram_message_helper.get_instance().scroll_up(page, scrollable)
         scroll_count += 1
       if channel_date:
-        self.invoke_db(REDIS_COMMANDS.S_SET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value, channel_date.isoformat())
+        self.invoke_db(REDIS_COMMANDS.S_SET_STRING, CUSTOM_SCRIPT_REDIS_KEYS.TELEGRAM_CHANNEL_PARSED.value + peer_id, channel_date.isoformat())
       self.callback()
       self._card_data.clear()
       self._entity_data.clear()
