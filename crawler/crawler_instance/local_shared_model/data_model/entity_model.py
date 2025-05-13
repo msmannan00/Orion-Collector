@@ -16,6 +16,8 @@ class entity_model(BaseModel):
     m_ip: Optional[List[str]] = None
     m_team: Optional[str] = None
     m_attacker: List[str] = []
+    m_records: str = ""
+
 
     m_au_abn: List[str] = []
     m_au_acn: List[str] = []
