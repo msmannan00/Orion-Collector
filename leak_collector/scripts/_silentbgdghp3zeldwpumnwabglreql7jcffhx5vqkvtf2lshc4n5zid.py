@@ -80,8 +80,6 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
             title = card.find('div', class_='_companyName_48fxr_51').text.strip() if card.find('div', class_='_companyName_48fxr_51') else None
             country_name = card.find('span', class_='_countryName_48fxr_223').text.strip() if card.find('span', class_='_countryName_48fxr_223') else None
             custom_link = card.find('a', class_='_productLink_48fxr_147')['href'] if card.find('a', class_='_productLink_48fxr_147') else None
-            open_button_link = card.find('button', class_='ant-btn')['type'] if card.find('button',
-                                                                                          class_='ant-btn') else None
             revenue = card.find_all('div', class_='_companyCardInfo_48fxr_63')[0].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 0 else None
             employees = card.find_all('div', class_='_companyCardInfo_48fxr_63')[1].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 1 else None
 
@@ -91,13 +89,14 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
                 m_title=title,
                 m_url=page.url,
                 m_base_url=self.base_url,
-                m_screenshot="",
+                m_screenshot=helper_method.get_screenshot_base64(page,title,self.base_url),
                 m_content=m_content,
                 m_network=helper_method.get_network_type(self.base_url),
                 m_important_content=m_content,
                 m_weblink=[custom_link],
-                m_dumplink=[open_button_link],
+                m_dumplink=[page.url],
                 m_content_type=["leaks"],
+
             )
 
             entity_data = entity_model(
