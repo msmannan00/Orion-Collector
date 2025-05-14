@@ -8,7 +8,7 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
-
+from bs4 import BeautifulSoup
 
 class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_interface, ABC):
     _instance = None
@@ -43,7 +43,7 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT,m_resoource_block=False)
 
     @property
     def card_data(self) -> List[leak_model]:
@@ -68,25 +68,42 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
             self.callback()
 
     def parse_leak_data(self, page: Page):
+        page.wait_for_timeout(5000)
 
-        m_content = ""
+        content = page.content()
+        self.soup = BeautifulSoup(content, 'html.parser')
 
-        card_data = leak_model(
-            m_title=page.title(),
-            m_url=page.url,
-            m_base_url=self.base_url,
-            m_screenshot="",
-            m_content=m_content,
-            m_network=helper_method.get_network_type(self.base_url),
-            m_important_content=m_content,
-            m_weblink=[],
-            m_dumplink=[],
-            m_content_type=["leaks"],
-        )
+        cards = self.soup.find_all('div', class_='_companieInfoCard_48fxr_1')
 
-        entity_data = entity_model(
-            m_email_addresses=helper_method.extract_emails(m_content),
-            m_phone_numbers=helper_method.extract_phone_numbers(m_content),
-        )
+        for card in cards:
 
-        self.append_leak_data(card_data, entity_data)
+            title = card.find('div', class_='_companyName_48fxr_51').text.strip() if card.find('div', class_='_companyName_48fxr_51') else None
+            country_name = card.find('span', class_='_countryName_48fxr_223').text.strip() if card.find('span', class_='_countryName_48fxr_223') else None
+            custom_link = card.find('a', class_='_productLink_48fxr_147')['href'] if card.find('a', class_='_productLink_48fxr_147') else None
+            open_button_link = card.find('button', class_='ant-btn')['type'] if card.find('button',
+                                                                                          class_='ant-btn') else None
+            revenue = card.find_all('div', class_='_companyCardInfo_48fxr_63')[0].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 0 else None
+            employees = card.find_all('div', class_='_companyCardInfo_48fxr_63')[1].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 1 else None
+
+            m_content = f"Title: {title}, Country: {country_name}, Revenue: {revenue}, Employees: {employees}"
+
+            card_data = leak_model(
+                m_title=title,
+                m_url=page.url,
+                m_base_url=self.base_url,
+                m_screenshot="",
+                m_content=m_content,
+                m_network=helper_method.get_network_type(self.base_url),
+                m_important_content=m_content,
+                m_weblink=[custom_link],
+                m_dumplink=[open_button_link],
+                m_content_type=["leaks"],
+            )
+
+            entity_data = entity_model(
+
+            )
+
+            self.append_leak_data(card_data, entity_data)
+
+
