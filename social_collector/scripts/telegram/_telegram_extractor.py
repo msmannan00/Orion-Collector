@@ -10,7 +10,6 @@ from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, Fe
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.env_handler import env_handler
-from social_collector.local_client.assets.enums import TelegramConfig
 from social_collector.local_client.helper.telegram.telegram_message_helper import telegram_message_helper
 
 
@@ -132,7 +131,7 @@ class _telegram_extractor(telegram_extractor_interface, ABC):
 
       telegram_channel_id = telegram_message_helper.get_instance().get_channel_shareable_link(page)
       seen_messages = set()
-      threshold_date = datetime.now().date() - timedelta(days=2500)
+      threshold_date = datetime.now().date() - timedelta(days=365)
       scroll_count = 0
       max_scrolls = 200
       self._seed_url = peer_id

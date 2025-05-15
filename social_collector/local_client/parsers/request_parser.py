@@ -8,7 +8,6 @@ from threading import Timer
 from playwright.sync_api import sync_playwright, Route
 from bs4 import BeautifulSoup
 
-from crawler.constants.enums import PRESIDIO_TO_ENTITY_MODEL_MAP
 from crawler.crawler_instance.local_interface_model.leak.telegram_extractor_interface import telegram_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_instance.local_shared_model.data_model.telegram_chat_model import ChatDataModel, telegram_chat_model
@@ -37,13 +36,10 @@ class RequestParser:
 
     for item in res.get("result", []):
       for key, value in item.items():
-        field = PRESIDIO_TO_ENTITY_MODEL_MAP.get(key)
-        if not field:
-          continue
         if isinstance(value, str):
-          entity_data.setdefault(field, []).append(value)
+          entity_data.setdefault(key, []).append(value)
         elif isinstance(value, list):
-          entity_data.setdefault(field, []).extend(value)
+          entity_data.setdefault(key, []).extend(value)
 
     return entity_model(**entity_data)
 
@@ -92,16 +88,17 @@ class RequestParser:
       merged_chat_data = []
 
       for chat in self.model.card_data:
-        content = chat.m_content
+        content = str(chat.m_content) + " " + str(chat.m_media_caption) + " " + str(chat.m_caption)
+
+        if not helper_method.is_sentence(content):
+          continue
+
         if chat.m_file_name and chat.m_file_name.__len__()>0:
           self.index_dump(chat, token, self.production)
-        if not content:
+        if not chat.m_content and not chat.m_caption and not chat.m_media_caption:
           continue
 
-        if not (chat.m_file_name or chat.m_hashtags or chat.m_weblink or chat.m_content_type or chat.m_caption):
-          continue
-
-        if len(chat.m_content_type)==0:
+        if not (chat.m_file_name or chat.m_hashtags or chat.m_weblink or chat.m_content_type or chat.m_caption or chat.m_media_caption):
           continue
 
         res = parse_data(content)
@@ -115,13 +112,19 @@ class RequestParser:
           if value not in (None, "", [], {}):
             chat_dict[key] = value
 
+        chat_dict["m_ai_summary"] = helper_method.clean_summary(entity["m_summary"][0])
         merged_chat_data.append(chat_dict)
         print("parsing : " + self.model.channel_name + " : " + str(chat.m_message_id))
+
+      if len(merged_chat_data)==0:
+        return
+
       payload = {"m_channel_name": self.model.channel_name,"m_chat_data": merged_chat_data, "m_network": "telegram", "m_source_channel_url": self.model.seed_url}
 
       response = requests.post(endpoint, json=payload, headers=headers)
       if response.status_code == 200:
-        self.model.card_data.clear()
+        pass
+      self.model.card_data.clear()
 
       return True
 
@@ -207,7 +210,7 @@ class RequestParser:
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
     os.makedirs(base_dir, exist_ok=True)
 
-    launch_args = {"user_data_dir": user_data_dir, "headless": False, "viewport": None, "accept_downloads": True, "args": ["--start-maximized"],
+    launch_args = {"user_data_dir": user_data_dir, "headless": True, "viewport": None, "accept_downloads": True, "args": ["--start-maximized"],
                    "firefox_user_prefs": {"browser.download.folderList": 2, "browser.download.useDownloadDir": True, "browser.download.dir": base_dir,
                                           "browser.helperApps.neverAsk.saveToDisk": ",".join(
                                             ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/zip", "application/octet-stream"]),

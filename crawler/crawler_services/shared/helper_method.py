@@ -19,6 +19,27 @@ class helper_method:
   _refhtml_cache = OrderedDict()
 
   @staticmethod
+  def is_sentence(text):
+    words = text.split()
+    count = 0
+
+    for word in words:
+        if len(word) > 3 and re.fullmatch(r'[\w]+', word):
+            count += 1
+            if count >= 4:
+                return True
+        else:
+            count = 0
+    return False
+
+  @staticmethod
+  def clean_summary(text: str, max_length: int = 300) -> str:
+    text = re.sub(r'\[.*?\]', '', text)
+    text = re.sub(r'[\s\t\n\r]+', ' ', text)
+    text = text.strip()
+    return text[:max_length]
+
+  @staticmethod
   def generate_data_hash(data):
     if isinstance(data, dict):
       data_copy = {key: value for key, value in data.items() if key not in {'m_update_date', 'm_base_url', 'm_url'}}

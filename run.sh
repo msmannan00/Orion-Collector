@@ -16,7 +16,6 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Extract PRODUCTION value
 PROD_VALUE=$(grep "^PRODUCTION=" "$ENV_FILE" | cut -d '=' -f2 | tr -d "'\"")
 
 if [ "$PROD_VALUE" == "1" ]; then

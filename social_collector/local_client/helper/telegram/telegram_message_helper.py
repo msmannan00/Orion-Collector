@@ -428,6 +428,7 @@ class telegram_message_helper:
         refined_content = translation_service.get_instance().translate(refined_content)
         m_ref_html = m_ref_html or ""
         file_names = [f.get("file_name") for f in file_info if f.get("file_name")]
+        captions = translation_service.get_instance().translate(captions)
         return m_ref_html, refined_content, file_names, captions
 
     @staticmethod
@@ -467,7 +468,7 @@ class telegram_message_helper:
             hashtags = self.extract_hashtags(refined_content or "")
             content_type = self.get_content_types(f"{refined_content or ''} {m_ref_html or ''}")
             media_url = media.get("media_url") if media else None
-            media_caption = media.get("media_caption") if media else None
+            media_caption = translation_service.get_instance().translate(media.get("media_caption")) if media else None
             msg_type_list = [message_type] if message_type else None
 
             data = {

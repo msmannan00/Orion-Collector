@@ -87,7 +87,7 @@ def parse_data(model):
     try:
         production = env_handler.get_instance().env("PRODUCTION") == "1"
         server_url = env_handler.get_instance().env("S_SERVER") if production else "http://localhost:8080"
-        url = f"{server_url}/api/nlp/parse"
+        url = f"{server_url}/api/nlp/parse/ai"
 
         token = redis_controller().invoke_trigger(REDIS_COMMANDS.S_GET_STRING, ["bearertoken", None, None])
         headers = {"Authorization": f"Bearer {token}"} if token else {}
