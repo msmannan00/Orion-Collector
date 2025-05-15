@@ -43,7 +43,7 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
 
     @property
     def rule_config(self) -> RuleModel:
-        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT,m_resoource_block=False)
+        return RuleModel(m_fetch_proxy=FetchProxy.TOR, m_fetch_config=FetchConfig.PLAYRIGHT)
 
     @property
     def card_data(self) -> List[leak_model]:
@@ -77,13 +77,36 @@ class _silentbgdghp3zeldwpumnwabglreql7jcffhx5vqkvtf2lshc4n5zid(leak_extractor_i
 
         for card in cards:
 
-            title = card.find('div', class_='_companyName_48fxr_51').text.strip() if card.find('div', class_='_companyName_48fxr_51') else None
-            country_name = card.find('span', class_='_countryName_48fxr_223').text.strip() if card.find('span', class_='_countryName_48fxr_223') else None
-            custom_link = card.find('a', class_='_productLink_48fxr_147')['href'] if card.find('a', class_='_productLink_48fxr_147') else None
-            revenue = card.find_all('div', class_='_companyCardInfo_48fxr_63')[0].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 0 else None
-            employees = card.find_all('div', class_='_companyCardInfo_48fxr_63')[1].find_all('span')[1].text.strip() if len(card.find_all('div', class_='_companyCardInfo_48fxr_63')) > 1 else None
+            title = card.find('div', class_='_companyName_48fxr_51')
+            title = title.text.strip() if title else None
 
-            m_content = f"Title: {title}, Country: {country_name}, Revenue: {revenue}, Employees: {employees}"
+            country_name = card.find('span', class_='_countryName_48fxr_223')
+            country_name = country_name.text.strip() if country_name else None
+
+            custom_link = card.find('a', class_='_productLink_48fxr_147')
+            custom_link = custom_link['href'] if custom_link else None
+
+            info_cards = card.find_all('div', class_='_companyCardInfo_48fxr_63')
+
+            revenue = None
+            employees = None
+            disclosures = None
+
+            for info in info_cards:
+                spans = info.find_all('span')
+                if len(spans) >= 2:
+                    label = spans[0].text.strip()
+                    value = spans[1].text.strip()
+
+                    if label == "Revenue":
+                        revenue = value
+                    elif label == "Employees":
+                        employees = value
+                    elif label == "Disclosures":
+                        disclosures = value
+
+
+            m_content = f"Title: {title}, Country: {country_name}, Revenue: {revenue}, Employees: {employees}, Disclosures: {disclosures}"
 
             card_data = leak_model(
                 m_title=title,
