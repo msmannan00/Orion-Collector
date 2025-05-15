@@ -80,7 +80,6 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                 if len(parts) >= 2:
                     post_ids.append(parts[1])
 
-        print(f"Collected post IDs: {post_ids}")
 
         for post_id in post_ids:
             try:
@@ -98,6 +97,7 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                 description = ""
                 revenue = ""
                 data_size = ""
+                attachment_links = []
 
                 if content_elem:
                     paragraphs = content_elem.query_selector_all("p")
@@ -128,7 +128,6 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
 
                         i += 1
 
-                    attachment_links = []
                     anchors = content_elem.query_selector_all("a")
                     for a in anchors:
                         href = a.get_attribute("href")
@@ -142,14 +141,16 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                     m_title=title,
                     m_url=post_url,
                     m_base_url=self.base_url,
-                    m_screenshot="",
+                    m_screenshot=helper_method.get_screenshot_base64(page, title, self.base_url),
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=description,
                     m_weblink=[title],
                     m_dumplink=attachment_links,
                     m_content_type=["leaks"],
-                    m_leak_date=helper_method.extract_and_convert_date(date)
+                    m_leak_date=helper_method.extract_and_convert_date(date),
+                    m_revenue=revenue,
+                    m_data_size=data_size
                 )
 
                 entity_data = entity_model(
