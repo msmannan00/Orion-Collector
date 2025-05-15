@@ -108,7 +108,7 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                         if text == "revenue:":
                             if i + 1 < len(paragraphs):
                                 revenue = paragraphs[i + 1].inner_text().strip()
-                            i += 1  # skip next since we just used it
+                            i += 1
 
                         elif text.startswith("revenue:"):
                             revenue = text.split(":", 1)[-1].strip()
@@ -116,7 +116,7 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                         elif text == "data:":
                             if i + 1 < len(paragraphs):
                                 data_size = paragraphs[i + 1].inner_text().strip()
-                            i += 1  # skip next since we just used it
+                            i += 1
 
                         elif text.startswith("data:"):
                             data_size = text.split(":", 1)[-1].strip()
@@ -146,14 +146,15 @@ class _twniiyed6mydtbe64i5mdl56nihl7atfaqtpww6gqyaiohgc75apzpad(leak_extractor_i
                     m_content=m_content,
                     m_network=helper_method.get_network_type(self.base_url),
                     m_important_content=description,
-                    m_weblink=attachment_links,
-                    m_dumplink=[],
+                    m_weblink=[title],
+                    m_dumplink=attachment_links,
                     m_content_type=["leaks"],
+                    m_leak_date=helper_method.extract_and_convert_date(date)
                 )
 
                 entity_data = entity_model(
-                    m_email_addresses=helper_method.extract_emails(m_content),
-                    m_phone_numbers=helper_method.extract_phone_numbers(m_content),
+                    m_email_addresses=helper_method.extract_emails(description),
+                    m_phone_numbers=helper_method.extract_phone_numbers(description),
                 )
 
                 self.append_leak_data(card_data, entity_data)
