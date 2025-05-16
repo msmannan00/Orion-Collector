@@ -6,10 +6,10 @@ from playwright.sync_api import Page
 from crawler.crawler_instance.local_interface_model.leak.leak_extractor_interface import leak_extractor_interface
 from crawler.crawler_instance.local_shared_model.data_model.defacement_model import defacement_model
 from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
-from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model  # still needed for interface
+from crawler.crawler_instance.local_shared_model.data_model.leak_model import leak_model
 from crawler.crawler_instance.local_shared_model.rule_model import RuleModel, FetchProxy, FetchConfig
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
-from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, CUSTOM_SCRIPT_REDIS_KEYS
+from crawler.crawler_services.redis_manager.redis_enums import CUSTOM_SCRIPT_REDIS_KEYS
 from crawler.crawler_services.shared.helper_method import helper_method
 
 
@@ -99,11 +99,8 @@ class _example(leak_extractor_interface, ABC):
         m_content = "This is a sample defacement content."
 
         card_data = defacement_model(
-            m_location=["United States", "California"],
-            m_attacker=["HackerX", "AnonUser"],
             m_screenshot="",
             m_url=self.base_url,
-            m_team="CyberCrew",
             m_web_server=["Apache/2.4.41", "nginx/1.18.0"],
             m_base_url=self.base_url,
             m_network=helper_method.get_network_type(self.base_url),

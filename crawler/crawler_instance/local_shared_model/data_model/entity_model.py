@@ -4,10 +4,10 @@ from typing import List, Optional
 
 class entity_model(BaseModel):
   m_password: Optional[str] = None
-  m_email_addresses: List[str] = []
+  m_email: List[str] = []
   m_phone_numbers: List[str] = []
   m_states: List[str] = []
-  m_location_info: List[str] = []
+  m_location: List[str] = []
   m_social_media_profiles: List[str] = []
   m_social_channel: List[str] = []
   m_name: str = ""

@@ -43,9 +43,9 @@ VALID_CONTENT_TYPES = [
 ]
 
 PRESIDIO_TO_ENTITY_MODEL_MAP = {
-    "EMAIL_ADDRESS": "m_email_addresses",
+    "EMAIL_ADDRESS": "m_email",
     "PHONE_NUMBER": "m_phone_numbers",
-    "LOCATION": "m_location_info",
+    "LOCATION": "m_location",
     "IP_ADDRESS": "m_ip",
     "AU_ABN": "m_au_abn",
     "AU_ACN": "m_au_acn",

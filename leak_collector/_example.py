@@ -111,7 +111,7 @@ class _example(leak_extractor_interface, ABC):
         )
 
         entity_data = entity_model(
-            m_email_addresses=helper_method.extract_emails(m_content),
+            m_email=helper_method.extract_emails(m_content),
             m_phone_numbers=helper_method.extract_phone_numbers(m_content),
         )
 

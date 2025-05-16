@@ -3,6 +3,11 @@ import redis
 import requests
 from playwright.async_api import Browser, BrowserContext
 
+from crawler.constants.constants import RAW_PATH_CONSTANTS
+
+
+def init_services():
+  RAW_PATH_CONSTANTS.MICROSERVER = "http://localhost:8010"
 
 def check_services_status():
   try:

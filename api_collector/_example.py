@@ -129,7 +129,7 @@ class _example(api_collector_interface, ABC):
     )
 
     entity_data = entity_model(
-      m_email_addresses=[email],
+      m_email=[email],
       m_name=username
     )
 

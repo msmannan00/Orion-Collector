@@ -141,8 +141,9 @@ class _threeamkelxicjsaf2czjyz2lc4q3ngqkxhhlexyfcp2o6raw4rphyad(leak_extractor_i
                     )
 
                     entity_data = entity_model(
-                        m_email_addresses=helper_method.extract_emails(description_text),
+                        m_email=helper_method.extract_emails(description_text),
                     )
+                    entity_data = helper_method.extract_entities(description_text, entity_data)
                     self.append_leak_data(card_data, entity_data)
 
                 except Exception as e:

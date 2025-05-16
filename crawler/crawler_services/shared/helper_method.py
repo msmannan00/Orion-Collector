@@ -11,6 +11,9 @@ import requests
 from typing import Optional, OrderedDict
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+
+from crawler.crawler_instance.genbot_service.shared.shared_data_controller import shared_data_controller
+from crawler.crawler_instance.local_shared_model.data_model.entity_model import entity_model
 from crawler.crawler_services.redis_manager.redis_controller import redis_controller
 from crawler.crawler_services.redis_manager.redis_enums import REDIS_COMMANDS, REDIS_KEYS
 
@@ -186,6 +189,30 @@ class helper_method:
         except ValueError:
           continue
     return None
+
+  @staticmethod
+  def extract_entities(text: str, model: entity_model) -> entity_model:
+    emails = set(re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', text))
+    if emails:
+      model.m_email_addresses.extend(list(emails))
+
+    result = shared_data_controller.get_instance().trigger_nlp_classifier(text)
+
+    for entry in result:
+      for key, value in entry.items():
+        if key in {"m_domains", "m_file_path"} or not value:
+          continue
+        existing = getattr(model, key, [])
+        if not isinstance(existing, list):
+          existing = []
+        if isinstance(value, str):
+          if value not in existing:
+            existing.append(value)
+        elif isinstance(value, list):
+          existing.extend([v for v in value if v not in existing])
+        setattr(model, key, existing)
+
+    return model
 
   @staticmethod
   def extract_emails(text: str) -> list:
